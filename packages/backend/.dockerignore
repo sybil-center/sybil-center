@@ -1,0 +1,13 @@
+.editorconfig
+.env
+Dockerfile
+.dockerignore
+.gitignore
+project
+.idea
+.git
+test
+node_modules/
+types/
+.env
+dist/

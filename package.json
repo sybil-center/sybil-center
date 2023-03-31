@@ -1,0 +1,9 @@
+{
+  "name": "sybil-center",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Monorepo for SybilCenter",
+  "scripts": {
+    "build": "pnpm run -r build"
+  }
+}
