@@ -18,8 +18,8 @@ import { LightMyRequestResponse } from "fastify";
 import { solanaSupport } from "../../support/solana.js";
 import { bitcoinSupport } from "../../support/bitcoin.js";
 import type {
-  GitHubAccOwnershipPayload,
-  GitHubAccOwnershipVC
+  GitHubAccountChallenge,
+  GitHubAccountVC
 } from "../../../src/mates/github/issuers/github-account/index.js";
 import { AnyObject } from "../../../src/util/model.util.js";
 
@@ -57,9 +57,14 @@ test.after(async () => {
   sinon.restore();
 });
 
-async function preIssue(
-  custom?: any
-): Promise<{ sessionId: string; issueChallenge: string }> {
+type PreIssueArgs = {
+  custom?: AnyObject,
+  expirationDate?: Date,
+}
+
+const preIssue = async (
+  args?: PreIssueArgs
+): Promise<{ sessionId: string; issueChallenge: string }> => {
   const { fastify } = app.context.resolve("httpServer");
 
   const payloadResp = await fastify.inject({
@@ -67,14 +72,15 @@ async function preIssue(
     path: challengeEP(VCType.GitHubAccount),
     payload: {
       redirectUrl: redirectUrl,
-      custom: custom
+      custom: args?.custom,
+      expirationDate: args?.expirationDate
     }
   });
   a.is(payloadResp.statusCode, 200, "payload status code is not 200");
 
   const { sessionId, authUrl, issueChallenge } = JSON.parse(
     payloadResp.body
-  ) as GitHubAccOwnershipPayload;
+  ) as GitHubAccountChallenge;
   a.ok(authUrl, "payload not contains oauth url");
   a.ok(sessionId, "payload not contains sessionId");
   a.ok(issueChallenge, "payload not contains issueChallenge");
@@ -139,36 +145,46 @@ async function preIssue(
     sessionId: sessionId,
     issueChallenge: issueChallenge
   };
+};
+
+type AssertIssueRespArgs = {
+  issueResp: LightMyRequestResponse,
+  subjectDID: string;
 }
 
-async function checkVCResponse(
-  vcResponse: LightMyRequestResponse,
-  didPkh: string
-) {
-  const issuerId = app.context.resolve("didService").id;
-  a.is(vcResponse.statusCode, 200, "vc response status code is not 200");
-  const vc = JSON.parse(vcResponse.body) as GitHubAccOwnershipVC;
+const assertIssueResp = async (args: AssertIssueRespArgs) => {
+  const { issueResp, subjectDID } = args;
+  const issuerDID = app.context.resolve("didService").id;
+  a.is(issueResp.statusCode, 200, "vc response status code is not 200");
+  const vc = JSON.parse(issueResp.body) as GitHubAccountVC;
   const { id, github } = vc.credentialSubject;
-  a.is(vc.issuer.id, issuerId, "issuer id is not matched");
-  a.is(vc.type.includes(VCType.GitHubAccount), true);
-  a.is(id, didPkh, "vc credential subject id not matched");
+  a.is(vc.issuer.id, issuerDID, "issuer id is not matched");
+  a.is(
+    vc.type[0], VCType.VerifiableCredential,
+    "first credential type is not matched"
+  );
+  a.is(
+    vc.type[1], VCType.GitHubAccount,
+    "second credential type is not matched"
+  );
+  a.is(id, subjectDID, "credential subject id not matched");
   a.is(github.id, 1337, "github user id not matched");
   a.is(github.username, username, "github username not matched");
   a.is(github.userPage, "test", "github user page not matched");
   a.is(await isValidVC(vc), true, "vc is not valid");
-}
+};
 
-function assertSessionDeleted(sessionId: string) {
+const assertSessionDeleted = (sessionId: string) => {
   const { sessionCache } = app.context.resolve("gitHubAccountIssuer");
   a.throws(() => {
     sessionCache.get(sessionId);
   }, "session is not deleted after issue");
-}
+};
 
 test("should issue GitHub ownership credential with eth did-pkh", async () => {
   const {
     address: ethAddress,
-    didPkh: ethDidPkh,
+    didPkh: subjectDID,
     didPkhPrefix: ethDidPkhPrefix
   } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
@@ -176,7 +192,7 @@ test("should issue GitHub ownership credential with eth did-pkh", async () => {
   const { issueChallenge, sessionId } = await preIssue();
   const signature = await ethereumSupport.sign(issueChallenge);
 
-  const vcResp = await fastify.inject({
+  const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP(VCType.GitHubAccount),
     payload: {
@@ -186,14 +202,14 @@ test("should issue GitHub ownership credential with eth did-pkh", async () => {
       signAlg: ethDidPkhPrefix
     }
   });
+  await assertIssueResp({ issueResp, subjectDID });
   assertSessionDeleted(sessionId);
-  await checkVCResponse(vcResp, ethDidPkh);
 });
 
 test("should issue GitHub ownership credential with solana did-pkh", async () => {
   const {
     didPkhPrefix: solanaDidPkhPrefix,
-    didPkh: solanaDidPkh,
+    didPkh: subjectDID,
     address: solanaAddress
   } = solanaSupport.info;
 
@@ -202,7 +218,7 @@ test("should issue GitHub ownership credential with solana did-pkh", async () =>
   const { issueChallenge, sessionId } = await preIssue();
   const signature = await solanaSupport.sign(issueChallenge);
 
-  const vcResp = await fastify.inject({
+  const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP(VCType.GitHubAccount),
     payload: {
@@ -212,14 +228,14 @@ test("should issue GitHub ownership credential with solana did-pkh", async () =>
       signAlg: solanaDidPkhPrefix
     }
   });
+  await assertIssueResp({ subjectDID, issueResp });
   assertSessionDeleted(sessionId);
-  await checkVCResponse(vcResp, solanaDidPkh);
 });
 
 test("should issue GitHub ownership credential with bitcoin did-pkh", async () => {
   const {
     didPkhPrefix: bitcoinDidPkhPrefix,
-    didPkh: bitcoinDidPkh,
+    didPkh: subjectDID,
     address: bitcoinAddress
   } = bitcoinSupport.info;
 
@@ -228,7 +244,7 @@ test("should issue GitHub ownership credential with bitcoin did-pkh", async () =
   const { issueChallenge, sessionId } = await preIssue();
   const signature = await bitcoinSupport.sing(issueChallenge);
 
-  const vcResp = await fastify.inject({
+  const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP(VCType.GitHubAccount),
     payload: {
@@ -238,8 +254,8 @@ test("should issue GitHub ownership credential with bitcoin did-pkh", async () =
       signAlg: bitcoinDidPkhPrefix
     }
   });
+  await assertIssueResp({ issueResp, subjectDID });
   assertSessionDeleted(sessionId);
-  await checkVCResponse(vcResp, bitcoinDidPkh);
 });
 
 test("should redirect to default page after authorization", async () => {
@@ -251,7 +267,7 @@ test("should redirect to default page after authorization", async () => {
     path: challengeEP(VCType.GitHubAccount)
   });
   a.is(payloadResp.statusCode, 200, "payload resp status code is not 200");
-  const { authUrl } = JSON.parse(payloadResp.body) as GitHubAccOwnershipPayload;
+  const { authUrl } = JSON.parse(payloadResp.body) as GitHubAccountChallenge;
   const { query } = url.parse(authUrl, true);
   const state = query.state as string;
   a.type(state, "string");
@@ -265,8 +281,7 @@ test("should redirect to default page after authorization", async () => {
     }
   });
   a.is(
-    callbackResp.statusCode,
-    302,
+    callbackResp.statusCode, 302,
     "callback response status code is not 302"
   );
   const defaultRedirectUrl = callbackResp.headers.location as string;
@@ -281,7 +296,7 @@ test("should issue credential with custom property", async () => {
   const custom = { test: { hello: "world" } };
   const { address, didPkhPrefix } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
-  const { sessionId, issueChallenge } = await preIssue(custom);
+  const { sessionId, issueChallenge } = await preIssue({ custom });
   const signature = await ethereumSupport.sign(issueChallenge);
   const vcResp = await fastify.inject({
     method: "POST",
@@ -294,7 +309,7 @@ test("should issue credential with custom property", async () => {
     }
   });
   a.is(vcResp.statusCode, 200, "vc resp status code is not 200");
-  const vc = JSON.parse(vcResp.body) as GitHubAccOwnershipVC;
+  const vc = JSON.parse(vcResp.body) as GitHubAccountVC;
   const { custom: vcCustom } = vc.credentialSubject;
   a.is(await isValidVC(vc), true, "vc is not valid");
   a.ok(vcCustom, "custom property is not present");
@@ -310,7 +325,6 @@ test("should issue credential with custom property", async () => {
 test("should not find GitHub code", async () => {
   const { address: ethAddress } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
-
   const payloadResp = await fastify.inject({
     method: "POST",
     url: challengeEP(VCType.GitHubAccount),
@@ -318,19 +332,15 @@ test("should not find GitHub code", async () => {
       redirectUrl: redirectUrl
     }
   });
-
   a.is(
-    payloadResp.statusCode,
-    200,
+    payloadResp.statusCode, 200,
     "payload response status code is not 200"
   );
-
-  const { sessionId, issueChallenge } = JSON.parse(
-    payloadResp.body
-  ) as GitHubAccOwnershipPayload;
-
+  const {
+    sessionId,
+    issueChallenge
+  } = JSON.parse(payloadResp.body) as GitHubAccountChallenge;
   const signature = await ethereumSupport.sign(issueChallenge);
-
   const errResp = await fastify.inject({
     method: "POST",
     url: issueEP(VCType.GitHubAccount),
@@ -340,13 +350,43 @@ test("should not find GitHub code", async () => {
       publicId: ethAddress
     }
   });
-
-  a.is(errResp.statusCode, 400, "error response status code is not 400");
+  a.is(
+    errResp.statusCode, 400,
+    "error response status code is not 400"
+  );
   const { message } = JSON.parse(errResp.body);
   a.is(
-    message,
-    "GitHub processing your authorization. Wait!",
+    message, "GitHub processing your authorization. Wait!",
     "error message not matched"
+  );
+});
+
+test("issue github account credential with expiration date", async () => {
+  const fastify = app.context.resolve("httpServer").fastify;
+  const {
+    didPkh: subjectDID,
+    didPkhPrefix: signAlg,
+    address: ethAddress
+  } = ethereumSupport.info.celo;
+  const expirationDate = new Date();
+  const { sessionId, issueChallenge } = await preIssue({ expirationDate });
+  const signature = await ethereumSupport.sign(issueChallenge);
+  const issueResp = await fastify.inject({
+    method: "POST",
+    url: issueEP(VCType.GitHubAccount),
+    payload: {
+      sessionId: sessionId,
+      signAlg: signAlg,
+      signature: signature,
+      publicId: ethAddress
+    }
+  });
+  await assertIssueResp({ issueResp, subjectDID });
+  assertSessionDeleted(sessionId);
+  const credential = JSON.parse(issueResp.body) as GitHubAccountVC;
+  a.is(
+    credential.expirationDate, expirationDate.toISOString(),
+    "credential expiration date is not matched"
   );
 });
 

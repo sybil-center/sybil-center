@@ -1,6 +1,6 @@
 import { VCRoutes } from "../../../../base/model/route/route.js";
 import { VCType } from "../../../../base/model/const/vc-type.js";
-import { canIssueEP, issueEP, challengeEP } from "../../../../util/vc-route-util.js";
+import { canIssueEP, challengeEP, issueEP } from "../../../../util/vc-route-util.js";
 
 const tags = ["Twitter account ownership verifiable credential"];
 export const twitterAccountRoutes: VCRoutes = {
@@ -17,11 +17,11 @@ export const twitterAccountRoutes: VCRoutes = {
           sessionId: { type: "string" },
           signAlg: { type: "string" },
           publicId: { type: "string" },
-          signature: { type: "string" },
+          signature: { type: "string" }
         },
-        required: ["sessionId", "signature", "publicId"],
-      },
-    },
+        required: ["sessionId", "signature", "publicId"]
+      }
+    }
   },
 
   canIssue: {
@@ -32,19 +32,19 @@ export const twitterAccountRoutes: VCRoutes = {
       querystring: {
         type: "object",
         properties: {
-          sessionId: { type: "string" },
+          sessionId: { type: "string" }
         },
-        required: ["sessionId"],
+        required: ["sessionId"]
       },
       response: {
         200: {
           type: "object",
           properties: {
-            canIssue: { type: "boolean" },
-          },
-        },
-      },
-    },
+            canIssue: { type: "boolean" }
+          }
+        }
+      }
+    }
   },
 
   payload: {
@@ -53,20 +53,24 @@ export const twitterAccountRoutes: VCRoutes = {
     schema: {
       tags: tags,
       body: {
-        anyOf: [
-          {
-            type: "null",
+        type: "object",
+        nullable: true,
+        properties: {
+          redirectUrl: {
+            type: "string",
+            format: "uri",
+            nullable: true
           },
-          {
+          custom: {
             type: "object",
-            properties: {
-              redirectUrl: { type: "string" },
-              custom: {
-                anyOf: [{ type: "null" }, { type: "object" }],
-              },
-            },
+            nullable: true
           },
-        ],
+          expirationDate: {
+            type: "string",
+            format: "date-time",
+            nullable: true
+          }
+        }
       },
       response: {
         200: {
@@ -74,10 +78,10 @@ export const twitterAccountRoutes: VCRoutes = {
           properties: {
             authUrl: { type: "string", format: "uri" },
             sessionId: { type: "string" },
-            issueChallenge: { type: "string" },
-          },
-        },
-      },
-    },
-  },
+            issueChallenge: { type: "string" }
+          }
+        }
+      }
+    }
+  }
 };

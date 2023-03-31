@@ -1,6 +1,6 @@
 import { VCRoutes } from "../../../../base/model/route/route.js";
 import { VCType } from "../../../../base/model/const/vc-type.js";
-import { canIssueEP, issueEP, challengeEP } from "../../../../util/vc-route-util.js";
+import { canIssueEP, challengeEP, issueEP } from "../../../../util/vc-route-util.js";
 
 const tags = ["Discord account ownership verifiable credential"];
 export const discordAccountRoutes: VCRoutes = {
@@ -54,23 +54,24 @@ export const discordAccountRoutes: VCRoutes = {
     schema: {
       tags: tags,
       body: {
-        anyOf: [
-          {
-            type: "null"
+        type: "object",
+        nullable: true,
+        properties: {
+          redirectUrl: {
+            type: "string",
+            format: "uri",
+            nullable: true
           },
-          {
+          custom: {
             type: "object",
-            properties: {
-              redirectUrl: { type: "string", format: "uri"},
-              custom: {
-                anyOf: [
-                  { type: "null" },
-                  { type: "object" },
-                ]
-              }
-            }
+            nullable: true
+          },
+          expirationDate: {
+            type: "string",
+            format: "date-time",
+            nullable: true
           }
-        ]
+        },
       },
       response: {
         200: {

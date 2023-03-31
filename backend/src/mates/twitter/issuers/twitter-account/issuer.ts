@@ -24,8 +24,9 @@ import { fromIssueChallenge, toIssueChallenge } from "../../../../util/challenge
 import { TimedCache } from "../../../../base/timed-cache.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/oauth.js";
+import { AnyObject } from "../../../../util/model.util.js";
 
-export interface TwitterAccOwnershipVC extends VC {
+export interface TwitterAccountVC extends VC {
   credentialSubject: {
     id: string;
     twitter: {
@@ -36,17 +37,18 @@ export interface TwitterAccOwnershipVC extends VC {
   };
 }
 
-interface TwitterAccOwnershipPayloadRequest {
+interface TwitterAccountChallengeReq {
   body: {
     redirectUrl?: string;
     custom?: object;
+    expirationDate?: Date;
   };
 }
 
 /**
- * Request entity for generate twitter account ownership VC
+ * Request entity for generating twitter account ownership VC
  */
-interface TwitterAccOwnershipRequest {
+interface TwitterAccountIssueReq {
   sessionId: string;
   signAlg?: SignAlgAlias;
   publicId: string;
@@ -62,46 +64,45 @@ interface TwitterAccOwnershipRequest {
  * {@see https://www.rfc-editor.org/rfc/rfc6749}
  * {@see https://developer.twitter.com/en/docs/authentication/oauth-2-0/authorization-code}
  */
-export interface TwitterAccOwnershipPayload {
-  /**
-   * Ref to authenticate user in Twitter
-   */
+export interface TwitterAccountChallenge {
+  /** Ref to authenticate user in Twitter */
   authUrl: string;
 
-  /**
-   * Property responsible for save user session for
-   * safe get "code" needed to authenticate user
-   */
+  /** Property responsible for save user session for
+   * safe get "code" needed to authenticate user */
   sessionId: string;
 
-  /**
-   * Message for sign by wallet / private key
-   */
+  /** Message for sign by wallet / private key */
   issueChallenge: string;
 }
 
-/**
- * Return Twitter account ownership VC
- */
-async function getTwitterAccOwnerVC(
-  issuer: string,
-  subjectDID: string,
-  twitterUser: TwitterUser,
-  custom?: object
-): Promise<TwitterAccOwnershipVC> {
+type GetTwitterAccountArgs = {
+  issuer: string;
+  subjectDID: string;
+  twitterUser: TwitterUser;
+  custom?: AnyObject;
+  expirationDate?: Date;
+}
+
+/** Return Twitter account ownership VC */
+async function getTwitterAccountVC(
+  args: GetTwitterAccountArgs
+): Promise<TwitterAccountVC> {
+  const twitterUser = args.twitterUser;
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
       type: [DEFAULT_CREDENTIAL_TYPE, VCType.TwitterAccount],
-      issuer: { id: issuer },
+      issuer: { id: args.issuer },
       credentialSubject: {
-        id: subjectDID,
+        id: args.subjectDID,
         twitter: {
           id: twitterUser.id,
           username: twitterUser.username
         },
-        custom: custom
+        custom: args.custom
       },
+      expirationDate: args.expirationDate,
       issuanceDate: new Date()
     },
     { deep: true }
@@ -115,15 +116,13 @@ type TwitterOAuthSession = {
   codeVerifier: string;
 };
 
-/**
- * Issue Twitter account ownership VC
- */
+/** Issue Twitter account ownership VC */
 export class TwitterAccountIssuer
   implements ICredentialIssuer<
-    TwitterAccOwnershipRequest,
+    TwitterAccountIssueReq,
     VC,
-    TwitterAccOwnershipPayloadRequest,
-    TwitterAccOwnershipPayload,
+    TwitterAccountChallengeReq,
+    TwitterAccountChallenge,
     CanIssueReq,
     CanIssueRes
   >,
@@ -156,15 +155,18 @@ export class TwitterAccountIssuer
 
   async getChallenge({
     body
-  }: TwitterAccOwnershipPayloadRequest): Promise<TwitterAccOwnershipPayload> {
+  }: TwitterAccountChallengeReq): Promise<TwitterAccountChallenge> {
+    const sessionId = absoluteId();
     const userRedirectUrl = body?.redirectUrl
       ? new URL(body?.redirectUrl)
       : undefined;
     const custom = body?.custom;
-
-    const sessionId = absoluteId();
-    const issueChallenge = toIssueChallenge(this.getProvidedVC(), custom);
-
+    const expirationDate = body?.expirationDate;
+    const issueChallenge = toIssueChallenge({
+      type: this.getProvidedVC(),
+      custom: custom,
+      expirationDate: expirationDate
+    });
     const { authUrl, codeVerifier } = this.twitterService.getOAuthLink({
       sessionId: sessionId,
       vcType: this.getProvidedVC(),
@@ -200,7 +202,7 @@ export class TwitterAccountIssuer
     signAlg,
     publicId,
     signature
-  }: TwitterAccOwnershipRequest): Promise<VC> {
+  }: TwitterAccountIssueReq): Promise<VC> {
     const session = this.sessionCache.get(sessionId);
     const { code, codeVerifier, issueChallenge } = session;
     if (!code) {
@@ -209,19 +211,20 @@ export class TwitterAccountIssuer
     const subjectDID = await this.multiSignService
       .signAlg(signAlg)
       .did(signature, issueChallenge, publicId);
-    const { custom } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate } = fromIssueChallenge(issueChallenge);
     const accessToken = await this.twitterService.getAccessToken({
       code: code,
       codeVerifier: codeVerifier
     });
     const twitterUser = await this.twitterService.getUser(accessToken);
     this.sessionCache.delete(sessionId);
-    const vc = await getTwitterAccOwnerVC(
-      this.didService.id,
-      subjectDID,
-      twitterUser,
-      custom
-    );
+    const vc = await getTwitterAccountVC({
+      issuer: this.didService.id,
+      subjectDID: subjectDID,
+      twitterUser: twitterUser,
+      custom: custom,
+      expirationDate: expirationDate
+    });
     return this.proofService.jwsSing(vc);
   }
 

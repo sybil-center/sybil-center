@@ -62,7 +62,7 @@ export async function verifyEthSign(
 ): Promise<boolean> {
   try {
     const sign = `0x${Buffer.from(signature).toString("hex")}`;
-    const actualAddress = ethers.utils.verifyMessage(message, sign);
+    const actualAddress = ethers.verifyMessage(message, sign);
     return actualAddress.toLowerCase() === address.toLowerCase();
   } catch (e) {
     return false;

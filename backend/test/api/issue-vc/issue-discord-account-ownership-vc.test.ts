@@ -19,11 +19,10 @@ import { solanaSupport } from "../../support/solana.js";
 import { SignAlgAlias } from "../../../src/base/service/multi-sign.service.js";
 import type { CanIssueRes } from "../../../src/base/credentials.js";
 import type {
-  DiscordAccOwnershipPayload,
-  DiscordAccOwnershipVC
+  DiscordAccountChallenge,
+  DiscordAccountVC
 } from "../../../src/mates/discord/issuers/discord-account/index.js";
 import { AnyObject } from "../../../src/util/model.util.js";
-import { TimedCache } from "../../../src/base/timed-cache.js";
 
 const test = suite("Integration: Issue Discord account ownership vc");
 
@@ -36,7 +35,7 @@ const accessToken = "access_token";
 const discordUser = {
   discriminator: "8822",
   id: "123456789",
-  username: "test user name",
+  username: "test user name"
 };
 
 test.before(async () => {
@@ -58,27 +57,29 @@ test.after(async () => {
   sinon.restore();
 });
 
-async function preIssue(
-  custom?: object
-): Promise<{ sessionId: string; issueChallenge: string }> {
+type PreIssueEntry = {
+  custom?: AnyObject;
+  expirationDate?: Date;
+}
+
+async function preIssue(args?: PreIssueEntry): Promise<{ sessionId: string; issueChallenge: string }> {
+  const custom = args?.custom;
+  const expirationDate = args?.expirationDate;
   const fastify = app.context.resolve("httpServer").fastify;
 
-  const payloadResp = await fastify.inject({
+  const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP(VCType.DiscordAccount),
     payload: {
       redirectUrl: redirectUrl,
       custom: custom,
-    },
+      expirationDate: expirationDate
+    }
   });
-  a.is(
-    payloadResp.statusCode,
-    200,
-    "payload response status code is not 200"
-  );
-  const { sessionId, issueChallenge, authUrl } = JSON.parse(
-    payloadResp.body
-  ) as DiscordAccOwnershipPayload;
+  a.is(challengeResp.statusCode, 200,
+    "payload response status code is not 200");
+  const { sessionId, issueChallenge, authUrl } =
+    JSON.parse(challengeResp.body) as DiscordAccountChallenge;
 
   const { query } = url.parse(authUrl, true);
   const state = query.state as string;
@@ -87,8 +88,8 @@ async function preIssue(
     method: "GET",
     url: canIssueEP(VCType.DiscordAccount),
     query: {
-      sessionId: sessionId,
-    },
+      sessionId: sessionId
+    }
   });
   a.is(
     canIssueBeforeResp.statusCode,
@@ -105,8 +106,8 @@ async function preIssue(
     url: oauthCallbackEP(),
     query: {
       code: code,
-      state: state,
-    },
+      state: state
+    }
   });
   a.is(
     callbackResp.statusCode,
@@ -120,8 +121,8 @@ async function preIssue(
     method: "GET",
     url: canIssueEP(VCType.DiscordAccount),
     query: {
-      sessionId: sessionId,
-    },
+      sessionId: sessionId
+    }
   });
   a.is(
     canIssueAfterResp.statusCode,
@@ -135,29 +136,29 @@ async function preIssue(
 
   return {
     sessionId: sessionId,
-    issueChallenge: issueChallenge,
+    issueChallenge: issueChallenge
   };
 }
 
-async function checkVCResponse(
-  vcResponse: LightMyRequestResponse,
-  didPkh: string
+async function assertIssueResp(
+  issueResp: LightMyRequestResponse,
+  subjectDID: string
 ) {
   const issuerId = app.context.resolve("didService").id;
-  a.is(vcResponse.statusCode, 200, "vc response status code is not 200");
+  a.is(issueResp.statusCode, 200,
+    `issue resp status code is not 200. error: ${issueResp.body}`);
 
-  const vc = JSON.parse(vcResponse.body) as DiscordAccOwnershipVC;
+  const vc = JSON.parse(issueResp.body) as DiscordAccountVC;
   const {
     discriminator,
     id: discordId,
-    username,
+    username
   } = vc.credentialSubject.discord;
 
   a.is(vc.issuer.id, issuerId, "issuer id is not matched");
   a.is(vc.type.includes(VCType.DiscordAccount), true);
   a.is(
-    vc.credentialSubject.id,
-    didPkh,
+    vc.credentialSubject.id, subjectDID,
     "vc credential subject id is not matched"
   );
   a.is(
@@ -172,17 +173,17 @@ async function checkVCResponse(
 
 function assertSessionDeleted(sessionId: string) {
   //@ts-ignore
-  let { sessionCache } = app.context.resolve("discordAccountIssuer");
+  const { sessionCache } = app.context.resolve("discordAccountIssuer");
   a.throws(() => {
-    sessionCache.get(sessionId)
-  }, "session is not deleted")
+    sessionCache.get(sessionId);
+  }, "session is not deleted");
 }
 
 test("should issue discord ownership credential with ethereum did-pkh", async () => {
   const {
     address: ethAddress,
     didPkhPrefix: ethDidPkhPrefix,
-    didPkh: ethDidPkh,
+    didPkh: ethDidPkh
   } = ethereumSupport.info.ethereum;
 
   const fastify = app.context.resolve("httpServer").fastify;
@@ -197,18 +198,18 @@ test("should issue discord ownership credential with ethereum did-pkh", async ()
       sessionId: sessionId,
       signature: signature,
       signAlg: ethDidPkhPrefix,
-      publicId: ethAddress,
-    },
+      publicId: ethAddress
+    }
   });
   assertSessionDeleted(sessionId);
-  await checkVCResponse(vcResponse, ethDidPkh);
+  await assertIssueResp(vcResponse, ethDidPkh);
 });
 
 test("should issue discord ownership credential with solana did-pkh", async () => {
   const {
     didPkhPrefix: solanaDidPkhPrefix,
     didPkh: solanaDidPkh,
-    address: solanaAddress,
+    address: solanaAddress
   } = solanaSupport.info;
 
   const { fastify } = app.context.resolve("httpServer");
@@ -223,18 +224,18 @@ test("should issue discord ownership credential with solana did-pkh", async () =
       sessionId: sessionId,
       signature: signature,
       signAlg: solanaDidPkhPrefix,
-      publicId: solanaAddress,
-    },
+      publicId: solanaAddress
+    }
   });
   assertSessionDeleted(sessionId);
-  await checkVCResponse(vcResponse, solanaDidPkh);
+  await assertIssueResp(vcResponse, solanaDidPkh);
 });
 
 test("should issue discord ownership credential with bitcoin did-pkh", async () => {
   const {
     address: bitcoinAddress,
     didPkh: bitcoinDidPkh,
-    didPkhPrefix: bitcoinDidPkhPrefix,
+    didPkhPrefix: bitcoinDidPkhPrefix
   } = bitcoinSupport.info;
 
   const { fastify } = app.context.resolve("httpServer");
@@ -249,11 +250,11 @@ test("should issue discord ownership credential with bitcoin did-pkh", async () 
       sessionId: sessionId,
       signature: signature,
       signAlg: bitcoinDidPkhPrefix,
-      publicId: bitcoinAddress,
-    },
+      publicId: bitcoinAddress
+    }
   });
   assertSessionDeleted(sessionId);
-  await checkVCResponse(vcResponse, bitcoinDidPkh);
+  await assertIssueResp(vcResponse, bitcoinDidPkh);
 });
 
 test("should redirect to default page after authorization", async () => {
@@ -261,12 +262,12 @@ test("should redirect to default page after authorization", async () => {
   const config = app.context.resolve("config");
   const payloadResp = await fastify.inject({
     method: "POST",
-    url: challengeEP(VCType.DiscordAccount),
+    url: challengeEP(VCType.DiscordAccount)
   });
   a.is(payloadResp.statusCode, 200, "payload resp status code is not 200");
   const { authUrl } = JSON.parse(
     payloadResp.body
-  ) as DiscordAccOwnershipPayload;
+  ) as DiscordAccountChallenge;
   const { query } = url.parse(authUrl, true);
   const state = query.state as string;
 
@@ -275,8 +276,8 @@ test("should redirect to default page after authorization", async () => {
     url: oauthCallbackEP(),
     query: {
       code: code,
-      state: state,
-    },
+      state: state
+    }
   });
   a.is(
     callbackResp.statusCode,
@@ -299,7 +300,7 @@ test("should issue vc with custom properties", async () => {
   const custom = { hello: { test: "test", world: "world" } };
   const { address, didPkhPrefix, didPkh } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
-  const { sessionId, issueChallenge } = await preIssue(custom);
+  const { sessionId, issueChallenge } = await preIssue({ custom });
   const signature = await ethereumSupport.sign(issueChallenge);
   const vcResp = await fastify.inject({
     method: "POST",
@@ -308,12 +309,12 @@ test("should issue vc with custom properties", async () => {
       sessionId: sessionId,
       signature: signature,
       signAlg: didPkhPrefix as SignAlgAlias,
-      publicId: address,
-    },
+      publicId: address
+    }
   });
   a.is(vcResp.statusCode, 200, "vc resp status code is not 200");
-  await checkVCResponse(vcResp, didPkh);
-  const vc = JSON.parse(vcResp.body) as DiscordAccOwnershipVC;
+  await assertIssueResp(vcResp, didPkh);
+  const vc = JSON.parse(vcResp.body) as DiscordAccountVC;
   const vcCustom = vc.credentialSubject.custom;
   a.ok(vcCustom, "custom property is not present");
   a.ok(vcCustom.hello, "custom hello is not present");
@@ -329,8 +330,8 @@ test("should not find Discord code", async () => {
     method: "POST",
     url: challengeEP(VCType.DiscordAccount),
     payload: {
-      redirectUrl: redirectUrl,
-    },
+      redirectUrl: redirectUrl
+    }
   });
   a.is(
     payloadResp.statusCode,
@@ -340,7 +341,7 @@ test("should not find Discord code", async () => {
 
   const { sessionId, issueChallenge } = JSON.parse(
     payloadResp.body
-  ) as DiscordAccOwnershipPayload;
+  ) as DiscordAccountChallenge;
   const signature = await ethereumSupport.sign(issueChallenge);
 
   const errResp = await fastify.inject({
@@ -350,18 +351,55 @@ test("should not find Discord code", async () => {
       sessionId: sessionId,
       signature: signature,
       publicId: "test",
-      signAlg: "test",
-    },
+      signAlg: "test"
+    }
   });
   a.is(errResp.statusCode, 400, "error response status code is not 400");
   const { message } = JSON.parse(errResp.body);
-
-  a.is(
-    message,
-    "Discord processing your authorization. Wait!",
-    "error message not matched"
-  );
+  a.is(message, "Discord processing your authorization. Wait!",
+    "error message not matched");
   await fastify.ready();
+});
+
+test("issue discord account credential with expiration date", async () => {
+  const { didPkhPrefix, address, didPkh: subjectDID } = ethereumSupport.info.ethereum;
+  const { fastify } = app.context.resolve("httpServer");
+  const expirationDate = new Date();
+  const { sessionId, issueChallenge } = await preIssue({ expirationDate });
+  const signature = await ethereumSupport.sign(issueChallenge);
+
+  const issueResp = await fastify.inject({
+    method: "POST",
+    url: issueEP(VCType.DiscordAccount),
+    payload: {
+      sessionId: sessionId,
+      signature: signature,
+      signAlg: didPkhPrefix,
+      publicId: address
+    }
+  });
+  await assertIssueResp(issueResp, subjectDID);
+  assertSessionDeleted(sessionId);
+  const credential = JSON.parse(issueResp.body) as DiscordAccountVC;
+  a.ok(credential.expirationDate, "credential expiration date is not present");
+  a.is(
+    credential.expirationDate,
+    expirationDate.toISOString(),
+    "credential expiration date is not matched");
+});
+
+test("not valid date-time format for expiration date", async () => {
+  const { fastify } = app.context.resolve("httpServer");
+  const errResp = await fastify.inject({
+    method: "POST",
+    url: challengeEP(VCType.DiscordAccount),
+    payload: {
+      redirectUrl: redirectUrl,
+      expirationDate: 'not a date'
+    }
+  });
+  a.is(errResp.statusCode, 400,
+    `invalid expiration date is ok. error: ${errResp.body}`);
 });
 
 test.run();

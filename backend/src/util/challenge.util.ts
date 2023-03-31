@@ -1,52 +1,66 @@
 import { randomUUID } from "node:crypto";
 import { ClientError, ServerError } from "../backbone/errors.js";
 import { VCType } from "../base/model/const/vc-type.js";
+import { AnyObject } from "./model.util.js";
 
-export interface FromMessageResult {
+export interface FromChallenge {
   id: string;
   custom?: object;
   description: string;
+  expirationDate: Date;
+}
+
+export interface IssueChallengeOpt {
+  type: VCType;
+  custom?: AnyObject;
+  expirationDate?: Date;
 }
 
 export interface ChallengeEntry {
   description: string;
   nonce: string;
-  custom?: object;
+  custom?: AnyObject;
+  expirationDate?: Date;
 }
 
 /**
- *
- * @param type type of credential
- * @param custom object with custom properties
+ * @param opt - options for issue challenge
  */
-export function toIssueChallenge(type: VCType, custom?: object): string {
-  let description = `Sign this message to issue '${type}' credential.`;
+export function toIssueChallenge(opt: IssueChallengeOpt): string {
+  let description = `Sign this message to issue '${opt.type}' credential.`;
   const nonce = randomUUID();
   const challenge: ChallengeEntry = {
     description: description,
     nonce: nonce
-  }
-  if (custom) {
+  };
+
+  if (opt.custom) {
     challenge.description +=
-      ` In 'custom' property you can see additional fields which will be in credential`
-    challenge.custom = custom;
+      ` In 'custom' field you can see additional fields which will be in credential.`;
+    challenge.custom = opt.custom;
   }
+  if (opt.expirationDate) {
+    challenge.description +=
+      ` Credential expiration date represented in 'expirationDate' field.`;
+    challenge.expirationDate = opt.expirationDate;
+  }
+
   try {
     return JSON.stringify(challenge, null, 2);
   } catch (e) {
-    throw new ClientError(`Incorrect "custom" properties`)
+    throw new ClientError(`Incorrect "custom" properties`);
   }
 }
 
-export function fromIssueChallenge(message: string): FromMessageResult {
+export function fromIssueChallenge(challenge: string): FromChallenge {
   try {
-    return JSON.parse(message) as FromMessageResult
+    return JSON.parse(challenge) as FromChallenge;
   } catch (e) {
-    throw new ServerError("Internal server error",  {
+    throw new ServerError("Internal server error", {
       props: {
         _place: fromIssueChallenge.name,
-        _log: `From sign message conversion error. Input message: ${message}. Error: ${e}`
+        _log: `From sign message conversion error. Input message: ${challenge}. Error: ${e}`
       }
-    })
+    });
   }
 }

@@ -24,6 +24,7 @@ import { TimedCache } from "../../../../base/timed-cache.js";
 import { absoluteId } from "../../../../util/id-util.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/oauth.js";
+import { AnyObject } from "../../../../util/model.util.js";
 
 export type DiscordOAuthSession = {
   redirectUrl?: URL;
@@ -31,7 +32,7 @@ export type DiscordOAuthSession = {
   code?: string;
 };
 
-export interface DiscordAccOwnershipVC extends VC {
+export interface DiscordAccountVC extends VC {
   credentialSubject: {
     id: string;
     discord: {
@@ -43,46 +44,52 @@ export interface DiscordAccOwnershipVC extends VC {
   };
 }
 
-type DiscordAccOwnershipRequest = {
+type DiscordAccountReq = {
   sessionId: string;
   signAlg?: SignAlgAlias;
   publicId: string;
   signature: string;
 };
 
-type DiscordAccOwnershipPayloadRequest = {
+type DiscordAccountChallengeReq = {
   body: {
     custom?: object;
     redirectUrl?: string;
+    expirationDate?: Date;
   };
 };
 
-export type DiscordAccOwnershipPayload = {
+export type DiscordAccountChallenge = {
   authUrl: string;
   sessionId: string;
   issueChallenge: string;
 };
 
-export function getDiscordAccOwnVC(
-  issuer: string,
-  didPkh: string,
-  { id, username, discriminator }: DiscordUser,
-  custom?: object
-): DiscordAccOwnershipVC {
+export type GetDiscordAccountVC = {
+  issuer: string;
+  subjectDID: string;
+  discordUser: DiscordUser;
+  custom?: AnyObject;
+  expirationDate?: Date;
+}
+
+export function getDiscordAccountVC(args: GetDiscordAccountVC): DiscordAccountVC {
+  const discordUser = args.discordUser;
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
       type: [DEFAULT_CREDENTIAL_TYPE, VCType.DiscordAccount],
-      issuer: { id: issuer },
+      issuer: { id: args.issuer },
       credentialSubject: {
-        id: didPkh,
+        id: args.subjectDID,
         discord: {
-          id: id,
-          username: username,
-          discriminator: discriminator
+          id: discordUser.id,
+          username: discordUser.username,
+          discriminator: discordUser.discriminator
         },
-        custom: custom
+        custom: args.custom
       },
+      expirationDate: args.expirationDate,
       issuanceDate: new Date()
     },
     { deep: true }
@@ -91,16 +98,21 @@ export function getDiscordAccOwnVC(
 
 export class DiscordAccountIssuer
   implements ICredentialIssuer<
-    DiscordAccOwnershipRequest,
+    DiscordAccountReq,
     VC,
-    DiscordAccOwnershipPayloadRequest,
-    DiscordAccOwnershipPayload,
+    DiscordAccountChallengeReq,
+    DiscordAccountChallenge,
     CanIssueReq,
     CanIssueRes
   >,
     IOAuthCallback,
     Disposable {
-  static inject = tokens("multiSignService", "proofService", "didService", "config");
+  static inject = tokens(
+    "multiSignService",
+    "proofService",
+    "didService",
+    "config"
+  );
 
   readonly discordService: DiscordService;
   private readonly sessionCache: TimedCache<string, DiscordOAuthSession>;
@@ -122,13 +134,18 @@ export class DiscordAccountIssuer
 
   async getChallenge({
     body
-  }: DiscordAccOwnershipPayloadRequest): Promise<DiscordAccOwnershipPayload> {
+  }: DiscordAccountChallengeReq): Promise<DiscordAccountChallenge> {
     const custom = body?.custom;
+    const expirationDate = body?.expirationDate;
     const redirectUrl = body?.redirectUrl
       ? new URL(body?.redirectUrl)
       : undefined;
 
-    const issueChallenge = toIssueChallenge(this.getProvidedVC(), custom);
+    const issueChallenge = toIssueChallenge({
+      type: this.getProvidedVC(),
+      custom: custom,
+      expirationDate: expirationDate
+    });
     const sessionId = absoluteId();
     this.sessionCache.set(sessionId, {
       redirectUrl: redirectUrl,
@@ -168,26 +185,27 @@ export class DiscordAccountIssuer
     signAlg,
     publicId,
     signature
-  }: DiscordAccOwnershipRequest): Promise<VC> {
+  }: DiscordAccountReq): Promise<VC> {
     const session = this.sessionCache.get(sessionId);
     const { code, issueChallenge } = session;
     if (!code) {
       throw new ClientError("Discord processing your authorization. Wait!");
     }
-    const did = await this.multiSignService
+    const subjectDID = await this.multiSignService
       .signAlg(signAlg)
       .did(signature, issueChallenge, publicId);
 
-    const { custom } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate } = fromIssueChallenge(issueChallenge);
     const accessToken = await this.discordService.getAccessToken(code);
     const discordUser = await this.discordService.getUser(accessToken);
     this.sessionCache.delete(sessionId);
-    const credential = getDiscordAccOwnVC(
-      this.didService.id,
-      did,
-      discordUser,
-      custom
-    );
+    const credential = getDiscordAccountVC({
+      issuer: this.didService.id,
+      subjectDID: subjectDID,
+      discordUser: discordUser,
+      custom: custom,
+      expirationDate: expirationDate
+    });
     return this.proofService.jwsSing(credential);
   }
 

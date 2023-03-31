@@ -35,13 +35,13 @@ export class EthService implements IEthService {
 
   constructor(
     config: { ethNodeUrl: string },
-    readonly provider = new ethers.providers.JsonRpcProvider(config.ethNodeUrl)
+    readonly provider = new ethers.JsonRpcProvider(config.ethNodeUrl)
   ) {}
 
   async isAddressExist(address: string): Promise<boolean> {
     try {
       const balance = await this.provider.getBalance(address);
-      return balance.gt(0);
+      return balance > 0;
     } catch (err) {
       console.log(`ethereum account: ${address} not exists`);
       return false;
@@ -50,7 +50,7 @@ export class EthService implements IEthService {
 
   getAddress(signMessage: string, signature: string): string {
     try {
-      return ethers.utils.verifyMessage(signMessage, signature);
+      return ethers.verifyMessage(signMessage, signature);
     } catch (err) {
       throw new ClientError(`Can not verify signature: ${signature}`);
     }

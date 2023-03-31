@@ -18,44 +18,44 @@ import { TimedCache } from "../../../../base/timed-cache.js";
 import sortKeys from "sort-keys";
 import { ClientError } from "../../../../backbone/errors.js";
 import { randomUUID } from "crypto";
+import { AnyObject } from "../../../../util/model.util.js";
 
-export interface EthAccountPayloadReq {
+export interface EthAccountChallengeReq {
   body: {
     custom?: object;
+    expirationDate?: Date;
   };
 }
 
-export interface EthAccOwnershipVC extends VC {
+export interface EthAccountVC extends VC {
   credentialSubject: {
     id: string;
     ethereum: {
       address: string;
+      chainId: string;
     }
-    custom?: { [key: string]: any };
+    custom?: AnyObject;
   };
 }
 
-export interface EthAccOwnershipIssueVCPayload {
+export interface EthAccountChallenge {
   sessionId: string;
   issueChallenge: string;
   ownerChallenge: string;
 }
 
-/**
- * Request interface for generate ethereum account ownership VC
- */
-export interface EthAccOwnershipRequest {
-  /**
-   * sign message id
-   */
+/** Request interface for generate ethereum account ownership VC */
+export interface EthAccountReq {
+  /** Sign message id */
   sessionId: string;
 
-  /**
-   * signed message by eth private key
-   */
+  /** Signed message by private key */
   signature: string;
 
+  /** Public key or chain address */
   publicId: string;
+
+  /** Algorithm of signing */
   signAlg?: SignAlgAlias;
 }
 
@@ -70,25 +70,30 @@ export interface EthProofResult {
   address: string;
 }
 
-function getEthAccountOwnershipVC(
-  issuer: string,
-  subjectDID: string,
-  ethAddress: string,
-  custom?: object
-): EthAccOwnershipVC {
+export interface GetEthAccountVC {
+  issuerDID: string;
+  subjectDID: string;
+  ethAddress: string;
+  expirationDate?: Date;
+  custom?: AnyObject;
+}
+
+function getEthAccountVC(args: GetEthAccountVC): EthAccountVC {
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
       type: [DEFAULT_CREDENTIAL_TYPE, VCType.EthereumAccount],
-      issuer: { id: issuer },
+      issuer: { id: args.issuerDID },
       issuanceDate: new Date(),
       credentialSubject: {
-        id: subjectDID,
+        id: args.subjectDID,
         ethereum: {
-          address: ethAddress
+          chainId: "eip155:1",
+          address: args.ethAddress
         },
-        custom: custom
-      }
+        custom: args.custom
+      },
+      expirationDate: args.expirationDate
     },
     { deep: true }
   );
@@ -101,15 +106,13 @@ function ethOwnerChallenge(): string {
   }, null, " ");
 }
 
-/**
- * Issuer provide
- */
+/** ETH Account Issuer */
 export class EthereumAccountIssuer
   implements ICredentialIssuer<
-    EthAccOwnershipRequest,
+    EthAccountReq,
     VC,
-    EthAccountPayloadReq,
-    EthAccOwnershipIssueVCPayload,
+    EthAccountChallengeReq,
+    EthAccountChallenge,
     void,
     CanIssueRes
   >,
@@ -134,11 +137,16 @@ export class EthereumAccountIssuer
 
   async getChallenge({
     body
-  }: EthAccountPayloadReq): Promise<EthAccOwnershipIssueVCPayload> {
+  }: EthAccountChallengeReq): Promise<EthAccountChallenge> {
     const custom = body?.custom;
-    const issueChallenge = toIssueChallenge(this.getProvidedVC(), custom);
-    const ownerChallenge = ethOwnerChallenge();
+    const expirationDate = body?.expirationDate;
     const sessionId = absoluteId();
+    const ownerChallenge = ethOwnerChallenge();
+    const issueChallenge = toIssueChallenge({
+      type: this.getProvidedVC(),
+      custom: custom,
+      expirationDate: expirationDate
+    });
     this.sessionCache.set(sessionId, { issueChallenge, ownerChallenge });
     return {
       sessionId: sessionId,
@@ -165,16 +173,17 @@ export class EthereumAccountIssuer
     return { canIssue: true };
   }
 
-  async issue(issueReq: EthAccOwnershipRequest): Promise<VC> {
+  async issue(issueReq: EthAccountReq): Promise<VC> {
     const { subjectDID, address, issueChallenge } = await this.#resolve(issueReq);
-    const { custom } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate } = fromIssueChallenge(issueChallenge);
     this.sessionCache.delete(issueReq.sessionId);
-    const vc = getEthAccountOwnershipVC(
-      this.didService.id,
-      subjectDID,
-      address,
-      custom
-    );
+    const vc = getEthAccountVC({
+      issuerDID: this.didService.id,
+      subjectDID: subjectDID,
+      ethAddress: address,
+      custom: custom,
+      expirationDate: expirationDate
+    });
     return this.proofService.jwsSing(vc);
   }
 
@@ -186,7 +195,7 @@ export class EthereumAccountIssuer
    * @private
    */
   async #resolve(
-    issueReq: EthAccOwnershipRequest
+    issueReq: EthAccountReq
   ): Promise<{ address: string, subjectDID: string, issueChallenge: string }> {
     const { sessionId, signAlg, signature, publicId } = issueReq;
 

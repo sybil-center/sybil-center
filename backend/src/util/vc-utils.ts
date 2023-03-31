@@ -17,8 +17,7 @@ export async function isValidVC(vc: VC): Promise<boolean> {
     vc.proof = undefined;
     const fullJWS = toFullJWT(detachedJWS, vc);
     const resolver = KeyResolver.getResolver();
-    const did = new DID({ resolver: resolver });
-    await did.verifyJWS(fullJWS);
+    await new DID({ resolver: resolver }).verifyJWS(fullJWS);
     return true;
   } catch (e) {
     console.log(e);

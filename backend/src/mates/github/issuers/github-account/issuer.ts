@@ -24,6 +24,7 @@ import { TimedCache } from "../../../../base/timed-cache.js";
 import { absoluteId } from "../../../../util/id-util.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/oauth.js";
+import { AnyObject } from "../../../../util/model.util.js";
 
 export type GitHubOAuthSession = {
   redirectUrl?: URL;
@@ -31,7 +32,7 @@ export type GitHubOAuthSession = {
   code?: string;
 };
 
-export interface GitHubAccOwnershipVC extends VC {
+export interface GitHubAccountVC extends VC {
   credentialSubject: {
     id: string;
     github: {
@@ -43,46 +44,54 @@ export interface GitHubAccOwnershipVC extends VC {
   };
 }
 
-export type GitHubAccOwnershipRequest = {
+export type GitHubAccountIssueReq = {
   sessionId: string;
   signAlg?: SignAlgAlias;
   publicId: string;
   signature: string;
 };
 
-export type GitHubAccOwnershipPayload = {
+export type GitHubAccountChallenge = {
   authUrl: string;
   sessionId: string;
   issueChallenge: string;
 };
 
-export type GitHubAccOwnershipPayloadRequest = {
-  body: {
+export type GitHubAccountChallengeReq = {
+  body?: {
     redirectUrl?: string;
     custom?: object;
+    expirationDate?: Date;
   };
 };
 
-async function getGitHubAccOwnVC(
-  issuer: string,
-  subjectDID: string,
-  gitHubUser: GitHubUser,
-  custom?: object
-): Promise<GitHubAccOwnershipVC> {
+type GetGitHubAccountVCArgs = {
+  issuer: string;
+  subjectDID: string;
+  gitHubUser: GitHubUser;
+  custom?: AnyObject;
+  expirationDate?: Date;
+}
+
+async function getGitHubAccountVC(
+  args: GetGitHubAccountVCArgs
+): Promise<GitHubAccountVC> {
+  const gitHubUser = args.gitHubUser;
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
       type: [DEFAULT_CREDENTIAL_TYPE, VCType.GitHubAccount],
-      issuer: { id: issuer },
+      issuer: { id: args.issuer },
       credentialSubject: {
-        id: subjectDID,
+        id: args.subjectDID,
         github: {
           id: gitHubUser.id,
           username: gitHubUser.login,
           userPage: gitHubUser.html_url
         },
-        custom: custom
+        custom: args.custom
       },
+      expirationDate: args.expirationDate,
       issuanceDate: new Date()
     },
     { deep: true }
@@ -91,10 +100,10 @@ async function getGitHubAccOwnVC(
 
 export class GitHubAccountIssuer
   implements ICredentialIssuer<
-    GitHubAccOwnershipRequest,
+    GitHubAccountIssueReq,
     VC,
-    GitHubAccOwnershipPayloadRequest,
-    GitHubAccOwnershipPayload,
+    GitHubAccountChallengeReq,
+    GitHubAccountChallenge,
     CanIssueReq,
     CanIssueRes
   >,
@@ -127,14 +136,18 @@ export class GitHubAccountIssuer
 
   async getChallenge({
     body
-  }: GitHubAccOwnershipPayloadRequest): Promise<GitHubAccOwnershipPayload> {
+  }: GitHubAccountChallengeReq): Promise<GitHubAccountChallenge> {
+    const sessionId = absoluteId();
     const redirectUrl = body?.redirectUrl
       ? new URL(body.redirectUrl)
       : undefined;
     const custom = body?.custom;
-
-    const issueChallenge = toIssueChallenge(this.getProvidedVC(), custom);
-    const sessionId = absoluteId();
+    const expirationDate = body?.expirationDate;
+    const issueChallenge = toIssueChallenge({
+      type: this.getProvidedVC(),
+      custom: custom,
+      expirationDate: expirationDate
+    });
     this.sessionCache.set(sessionId, {
       redirectUrl: redirectUrl,
       issueChallenge: issueChallenge
@@ -172,7 +185,7 @@ export class GitHubAccountIssuer
     signAlg,
     publicId,
     signature
-  }: GitHubAccOwnershipRequest): Promise<VC> {
+  }: GitHubAccountIssueReq): Promise<VC> {
     const session = this.sessionCache.get(sessionId);
     const { issueChallenge, code } = session;
     if (!code) {
@@ -181,16 +194,17 @@ export class GitHubAccountIssuer
     const subjectDID = await this.multiSignService
       .signAlg(signAlg)
       .did(signature, issueChallenge, publicId);
-    const { custom } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate } = fromIssueChallenge(issueChallenge);
     const accessToken = await this.gitHubService.getAccessToken(code);
     const gitHubUser = await this.gitHubService.getUser(accessToken);
     this.sessionCache.delete(sessionId);
-    const vc = await getGitHubAccOwnVC(
-      this.didService.id,
-      subjectDID,
-      gitHubUser,
-      custom
-    );
+    const vc = await getGitHubAccountVC({
+      issuer: this.didService.id,
+      subjectDID: subjectDID,
+      gitHubUser: gitHubUser,
+      custom: custom,
+      expirationDate: expirationDate
+    });
     return this.proofService.jwsSing(vc);
   }
 
