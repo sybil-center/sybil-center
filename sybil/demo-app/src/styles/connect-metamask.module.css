@@ -1,0 +1,7 @@
+.button {
+  @apply ml-2 bg-blue-700 rounded-md px-2 py-0.5 text-white;
+}
+
+.account {
+  @apply ml-2 bg-blue-700 rounded-md px-2 py-0.5 text-white inline-block;
+}

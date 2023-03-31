@@ -51,7 +51,7 @@ importers:
       '@noble/ed25519': 1.7.3
       '@solana/web3.js': 1.74.0
       '@stablelib/sha256': 1.0.1
-      '@sybil-center/sdk': 0.0.3
+      '@sybil-center/sdk': link:../sybil
       bitcoinjs-message: 2.2.0
       bs58: 5.0.0
       cache-clock: 1.5.0
@@ -85,7 +85,7 @@ importers:
   frontend:
     specifiers:
       '@reduxjs/toolkit': ^1.9.2
-      '@sybil-center/sdk': ^0.0.3
+      '@sybil-center/sdk': workspace:*
       '@testing-library/jest-dom': ^5.16.5
       '@testing-library/react': ^13.4.0
       '@testing-library/user-event': ^13.5.0
@@ -120,7 +120,7 @@ importers:
       web-vitals: ^2.1.4
     dependencies:
       '@reduxjs/toolkit': 1.9.3_k4ae6lp43ej6mezo3ztvx6pykq
-      '@sybil-center/sdk': 0.0.3
+      '@sybil-center/sdk': link:../sybil
       '@testing-library/jest-dom': 5.16.5
       '@testing-library/react': 13.4.0_biqbaboplfbrettd7655fr4n2y
       '@testing-library/user-event': 13.5.0
@@ -154,6 +154,21 @@ importers:
       dotenv: 16.0.3
       prettier: 2.8.7
       tsm: 2.3.0
+
+  sybil:
+    specifiers:
+      prettier: ^2.8.4
+      tsm: ^2.3.0
+      typescript: ^4.9.5
+      uint8arrays: ^4.0.3
+      uvu: ^0.5.6
+    dependencies:
+      uint8arrays: 4.0.3
+    devDependencies:
+      prettier: 2.8.7
+      tsm: 2.3.0
+      typescript: 4.9.5
+      uvu: 0.5.6
 
 packages:
 
@@ -3251,12 +3266,6 @@ packages:
       loader-utils: 2.0.4
     transitivePeerDependencies:
       - supports-color
-    dev: false
-
-  /@sybil-center/sdk/0.0.3:
-    resolution: {integrity: sha512-Nc8NbjjA3Da5g4aEJR+9ioOE3t8MfcMgylvp0MSC13VQ4Nc3y4h5aGk8Z++lt+M/+IWKOZAaJiU8NCprFMWd1g==}
-    dependencies:
-      uint8arrays: 4.0.3
     dev: false
 
   /@tanstack/query-core/4.27.0:

@@ -1,0 +1,49 @@
+{
+  "name": "@sybil-center/sdk",
+  "version": "0.0.3",
+  "description": "Request a Verifiable Credential from the web",
+  "license": "(Apache-2.0 AND MIT)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sybil-center/sybil.git"
+  },
+  "type": "module",
+  "files": [
+    "/dist"
+  ],
+  "sideEffects": false,
+  "typesVersions": {
+    "*": {
+      "*": [ "dist/index.d.ts" ],
+      "types": [ "dist/types/index.d.ts" ],
+      "util": [ "dist/util/index.d.ts" ]
+    }
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/types/index.js"
+    },
+    "./util": {
+      "types": "./dist/util/index.d.ts",
+      "default": "./dist/util/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "./node_modules/.bin/tsc -p ."
+  },
+  "dependencies": {
+    "uint8arrays": "^4.0.3"
+  },
+  "devDependencies": {
+    "prettier": "^2.8.4",
+    "tsm": "^2.3.0",
+    "typescript": "^4.9.5",
+    "uvu": "^0.5.6"
+  }
+}

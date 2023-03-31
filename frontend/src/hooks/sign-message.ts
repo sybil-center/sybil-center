@@ -1,5 +1,5 @@
 import { useAccount, useNetwork, useSignMessage } from "wagmi";
-import { SignResult, ChainAlias } from "@sybil-center/sdk";
+import type { SignResult } from "@sybil-center/sdk";
 import * as uint8array from "uint8arrays";
 
 export function useSign() {
@@ -8,18 +8,15 @@ export function useSign() {
   const { chain } = useNetwork();
 
   const signMessage = async (args: { message: string }): Promise<SignResult> => {
-    const message = args.message
-    const sign = await signMessageAsync({message: message});
-    const signature = uint8array.toString(
-      uint8array.fromString(sign.substring(2), 'hex'),
-      "base64"
-    );
+    const message = args.message;
+    const sign = await signMessageAsync({ message: message });
+    const signature = uint8array.toString(uint8array.fromString(sign.substring(2), "hex"), "base64");
     return {
       signature: signature,
       address: address!,
-      chain: `did:pkh:eip155:${chain?.id!}` as ChainAlias
-    }
-  }
+      chain: `did:pkh:eip155:${chain?.id!}`,
+    } as unknown as SignResult;
+  };
 
-  return { signMessage }
+  return { signMessage };
 }

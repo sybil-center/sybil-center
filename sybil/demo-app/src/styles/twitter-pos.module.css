@@ -1,0 +1,15 @@
+.posForm {
+  @apply m-2;
+}
+
+.posForm button {
+  @apply ml-2 bg-blue-700 rounded-md px-2 py-0.5 text-white;
+}
+
+.posForm textarea {
+  display: block;
+  width: 100%;
+  height: 80vh;
+  font-family: monospace;
+  @apply border p-2;
+}
