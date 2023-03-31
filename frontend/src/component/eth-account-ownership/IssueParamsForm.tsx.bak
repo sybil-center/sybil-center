@@ -1,0 +1,78 @@
+import React, { useEffect, useState } from "react";
+import { EthAccOwnershipIssueParams } from "../../service/vc-issuer/eth/data-flow";
+import { VCSubjectProperty } from "./VCSubjectProperty";
+
+export interface VCSubjProperty {
+  fieldName: string;
+  fieldValue: string | number;
+  valueType: "string" | "number";
+}
+
+interface IssueParamsFormProps {
+  setVCParams: React.Dispatch<React.SetStateAction<EthAccOwnershipIssueParams | null>>;
+}
+
+/**
+ * Set properties form for vcSubject
+ * @param setVCParams
+ * @constructor
+ */
+export function IssueParamsForm({ setVCParams }: IssueParamsFormProps) {
+  const [vcSubjProperties, setVCSubjProperties] = useState<VCSubjProperty[]>([]);
+
+  useEffect(() => {
+    setVCParams((prev) => {
+      return {
+        vcId: prev?.vcId,
+        credentialSubject: toCredentialSubject(vcSubjProperties),
+      };
+    });
+  }, [vcSubjProperties]);
+
+  // In out package
+  function toCredentialSubject(vcSubjProperties: VCSubjProperty[]): object {
+    const vcSubject: { [k: string]: any } = {};
+    vcSubjProperties.forEach((property) => {
+      const fieldName = property.fieldName;
+      vcSubject[fieldName] = property.fieldValue;
+    });
+    return vcSubject;
+  }
+
+  function addNewProperty() {
+    setVCSubjProperties((prev) => {
+      const newProperty: VCSubjProperty = { fieldName: "", fieldValue: "", valueType: "string" };
+      return [...prev, newProperty];
+    });
+  }
+
+  function getVCSubjectPropertyElementList(): React.ReactNode {
+    return vcSubjProperties.map((property: VCSubjProperty, index: number) => {
+      return (
+        <VCSubjectProperty
+          index={index}
+          key={index}
+          fieldProperty={property}
+          setVCSubjProperties={setVCSubjProperties}
+        />
+      );
+    });
+  }
+
+  return (
+    <div>
+      {vcSubjProperties.length !== 0 && (
+        <div>
+          <span>Properties</span>
+
+          {getVCSubjectPropertyElementList()}
+        </div>
+      )}
+      <div>
+        <button onClick={() => addNewProperty()}>
+          {vcSubjProperties.length !== 0 ? "add property" : "set subject properties"}
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,54 @@
+import { VCSubjProperty } from "./IssueParamsForm";
+import React, { ChangeEvent } from "react";
+
+interface VCSubjectPropertyProps {
+  index: number;
+  fieldProperty: VCSubjProperty;
+  setVCSubjProperties: React.Dispatch<React.SetStateAction<VCSubjProperty[]>>;
+}
+
+/**
+ * Provide operations and presentation on VC subject property {@see VCSubjProperty}
+ * @param index index of property
+ * @param fieldProperty field of VC property
+ * @param setVCSubjProperties function for set VCSubject property state
+ * @constructor
+ */
+export function VCSubjectProperty({ index, fieldProperty, setVCSubjProperties }: VCSubjectPropertyProps) {
+  function changeName(event: ChangeEvent<HTMLInputElement>) {
+    const newName = event.currentTarget.value;
+    setVCSubjProperties((prev) => {
+      prev[index].fieldName = newName;
+      return [...prev];
+    });
+  }
+
+  function changeValue(event: ChangeEvent<HTMLInputElement>) {
+    const newValue = event.currentTarget.value;
+    setVCSubjProperties((prev) => {
+      prev[index].fieldValue = newValue;
+      return [...prev];
+    });
+  }
+
+  function deleteProperty() {
+    setVCSubjProperties((prev) => {
+      return prev.filter((prop, i) => i !== index);
+    });
+  }
+
+  return (
+    <div>
+      <span>
+        name <input value={fieldProperty.fieldName} onChange={changeName} />
+      </span>
+
+      <span>
+        value <input value={fieldProperty.fieldValue} onChange={changeValue} />
+      </span>
+      <span>
+        <button onClick={() => deleteProperty()}>x</button>
+      </span>
+    </div>
+  );
+}
