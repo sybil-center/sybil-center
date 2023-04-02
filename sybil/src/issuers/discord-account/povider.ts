@@ -1,14 +1,14 @@
-import { ICredentialProvider } from "./credential-provider.type.js";
-import { HttpClient } from "../util/http-client.js";
-import type { SignFn } from "../types/index.js";
-import { CredentialType } from "../types/index.js";
+import { ICredentialProvider } from "../../base/credential-provider.type.js";
+import { HttpClient } from "../../base/http-client.js";
+import type { SignFn } from "../../types/index.js";
+import { CredentialType } from "../../types/index.js";
 import {
   DiscordAccountChallenge as Challenge,
   DiscordAccountChallengeReq as ChallengeReq,
   DiscordAccountIssueReq,
   DiscordAccountReq,
   DiscordAccountVC
-} from "../types/discord/account-credential.type.js";
+} from "./types.js";
 
 export class DiscordAccountProvider
   implements ICredentialProvider<ChallengeReq, Challenge, DiscordAccountReq, DiscordAccountVC> {

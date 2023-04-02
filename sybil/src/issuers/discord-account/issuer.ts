@@ -1,13 +1,13 @@
-import type { IClient } from "./client.type.js";
-import { DiscordAccountProvider } from "../providers/discord-account.provider.js";
-import { HttpClient } from "../util/http-client.js";
-import type { SignFn } from "../types/index.js";
-import { DiscordAccountOptions, DiscordAccountVC } from "../types/index.js";
-import { popupFeatures } from "../util/view.js";
-import { repeatUntil } from "../util/repeat-until.js";
+import type { Issuer } from "../../base/issuer.type.js";
+import { DiscordAccountProvider } from "./povider.js";
+import { HttpClient } from "../../base/http-client.js";
+import type { SignFn } from "../../types/index.js";
+import { DiscordAccountOptions, DiscordAccountVC } from "./types.js";
+import { popupFeatures } from "../../util/view.util.js";
+import { repeatUntil } from "../../util/repeat.until.js";
 
-export class DiscordAccountClient
-  implements IClient<DiscordAccountVC, DiscordAccountOptions> {
+export class DiscordAccountIssuer
+  implements Issuer<DiscordAccountVC, DiscordAccountOptions> {
 
   constructor(
     httpClient: HttpClient,

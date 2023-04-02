@@ -1,10 +1,12 @@
-import type { IClient } from "./client.type.js";
-import { EthAccountProvider } from "../providers/eth-account.provider.js";
-import { HttpClient } from "../util/http-client.js";
-import type { SignFn } from "../types/index.js";
-import { EthAccountOptions, EthAccountVC } from "../types/index.js";
+import type { Issuer } from "../../base/issuer.type.js";
+import { EthAccountProvider } from "./provider.js";
+import { HttpClient } from "../../base/http-client.js";
+import type { SignFn } from "../../types/index.js";
+import { EthAccountOptions, EthAccountVC } from "./types.js";
 
-export class EthAccountClient implements IClient<EthAccountVC, EthAccountOptions> {
+export class EthAccountIssuer
+  implements Issuer<EthAccountVC, EthAccountOptions> {
+
   private readonly provider: EthAccountProvider;
 
   constructor(backend: HttpClient) {

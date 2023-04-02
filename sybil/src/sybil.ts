@@ -1,20 +1,27 @@
-import type { IClient } from "./clients/client.type.js";
-import { TwitterAccountClient } from "./clients/twitter-account.client.js";
-import { DiscordAccountClient } from "./clients/discord-account.client.js";
-import { EthAccountClient } from "./clients/eth-account.client.js";
-import { GithubAccountClient } from "./clients/github-account.client.js";
-import { HttpClient } from "./util/http-client.js";
-import type { SignFn } from "./types/index.js";
+import type { Issuer } from "./base/issuer.type.js";
 import {
-  DiscordAccountOptions,
-  DiscordAccountVC,
-  EthAccountOptions,
-  EthAccountVC,
-  GitHubAccountOptions,
-  GitHubAccountVC,
+  TwitterAccountIssuer,
   TwitterAccountOptions,
   TwitterAccountVC
-} from "./types/index.js";
+} from "./issuers/twitter-account/index.js";
+import {
+  DiscordAccountIssuer,
+  DiscordAccountOptions,
+  DiscordAccountVC
+} from "./issuers/discord-account/index.js";
+import {
+  EthAccountIssuer,
+  EthAccountOptions,
+  EthAccountVC
+} from "./issuers/ethereum-account/index.js";
+import {
+  GithubAccountIssuer,
+  GitHubAccountOptions,
+  GitHubAccountVC
+} from "./issuers/github-account/index.js";
+import { HttpClient } from "./base/http-client.js";
+import { SignFn } from "./base/types/index.js";
+
 
 export type CredentialKinds = {
   "twitter-account": {
@@ -36,7 +43,7 @@ export type CredentialKinds = {
 };
 
 export type Clients = {
-  [K in keyof CredentialKinds]: IClient<CredentialKinds[K]["kind"], CredentialKinds[K]["options"]>;
+  [K in keyof CredentialKinds]: Issuer<CredentialKinds[K]["kind"], CredentialKinds[K]["options"]>;
 };
 
 const DEFAULT_ENDPOINT = new URL("https://api.sybil.center");
@@ -47,10 +54,10 @@ export class Sybil {
   constructor(readonly issuerDomain: URL = DEFAULT_ENDPOINT) {
     const httpClient = new HttpClient(issuerDomain);
     this.clients = {
-      "twitter-account": new TwitterAccountClient(httpClient),
-      "discord-account": new DiscordAccountClient(httpClient),
-      "ethereum-account": new EthAccountClient(httpClient),
-      "github-account": new GithubAccountClient(httpClient)
+      "twitter-account": new TwitterAccountIssuer(httpClient),
+      "discord-account": new DiscordAccountIssuer(httpClient),
+      "ethereum-account": new EthAccountIssuer(httpClient),
+      "github-account": new GithubAccountIssuer(httpClient)
     };
   }
 

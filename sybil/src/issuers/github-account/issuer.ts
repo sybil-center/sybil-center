@@ -1,13 +1,13 @@
-import type { IClient } from "./client.type.js";
-import { GithubAccountProvider } from "../providers/github-account.provider.js";
-import { HttpClient } from "../util/http-client.js";
-import type { SignFn } from "../types/index.js";
-import { GitHubAccountOptions, GitHubAccountVC } from "../types/index.js";
-import { popupFeatures } from "../util/view.js";
-import { repeatUntil } from "../util/repeat-until.js";
+import type { Issuer } from "../../base/issuer.type.js";
+import { GithubAccountProvider } from "./provider.js";
+import { HttpClient } from "../../base/http-client.js";
+import type { SignFn } from "../../types/index.js";
+import { GitHubAccountOptions, GitHubAccountVC } from "./types.js";
+import { popupFeatures } from "../../util/view.util.js";
+import { repeatUntil } from "../../util/repeat.until.js";
 
-export class GithubAccountClient
-  implements IClient<GitHubAccountVC, GitHubAccountOptions> {
+export class GithubAccountIssuer
+  implements Issuer<GitHubAccountVC, GitHubAccountOptions> {
 
   constructor(
     httpClient: HttpClient,

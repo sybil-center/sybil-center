@@ -1,4 +1,4 @@
-import { canIssueEP, challengeEP, issueEP, ownerProofEP } from "./endpoint.util.js";
+import { canIssueEP, challengeEP, issueEP, ownerProofEP } from "../util/index.js";
 import { CredentialType } from "../types/index.js";
 
 export class HttpClient {
