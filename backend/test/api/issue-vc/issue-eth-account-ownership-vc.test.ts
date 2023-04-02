@@ -10,7 +10,7 @@ import { configDotEnv } from "../../../src/util/dotenv.js";
 import { ethereumSupport } from "../../support/ethereum.js";
 import type {
   EthAccountVC,
-  EthAccOwnershipIssueVCPayload
+  EthAccountChallenge
 } from "../../../src/mates/ethereum/issuers/ethereum-account/index.js";
 import { EthProofResult } from "../../../src/mates/ethereum/issuers/ethereum-account/index.js";
 //@ts-ignore
@@ -70,7 +70,7 @@ const preIssue = async (
   );
   const { sessionId, issueChallenge, ownerChallenge } = JSON.parse(
     payloadResp.body
-  ) as EthAccOwnershipIssueVCPayload;
+  ) as EthAccountChallenge;
   return { sessionId, issueChallenge, ownerChallenge };
 };
 
@@ -162,7 +162,7 @@ test("should not issue vc because not valid signature", async () => {
   const {
     sessionId,
     issueChallenge
-  } = JSON.parse(challengeResp.body) as EthAccOwnershipIssueVCPayload;
+  } = JSON.parse(challengeResp.body) as EthAccountChallenge;
   const errResp = await fastify.inject({
     method: "POST",
     url: issueEP(VCType.EthereumAccount),
