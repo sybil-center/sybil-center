@@ -27,7 +27,7 @@ export class ProofService implements IProofService {
     const jws = jwsSignature?.protected + ".." + jwsSignature?.signature;
 
     vc.proof = {
-      type: ProofType.JsonWebSignature2020,
+      type: "JsonWebSignature2020",
       created: new Date().toISOString(),
       proofPurpose: "assertionMethod",
       verificationMethod: this.didService.verificationMethod,

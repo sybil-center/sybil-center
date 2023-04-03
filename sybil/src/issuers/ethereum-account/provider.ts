@@ -1,17 +1,17 @@
-import { ICredentialProvider, IOwnerProofProvider } from "./credential-provider.type.js";
-import { HttpClient } from "../util/http-client.js";
+import { ICredentialProvider, IOwnerProofProvider } from "../../base/credential-provider.type.js";
+import { HttpClient } from "../../base/http-client.js";
 import type {
   EthAccountChallengeReq as ChallengeReq, EthAccountProofResp,
   OwnerProofEthAccount,
   SignFn
-} from "../types/index.js";
+} from "../../types/index.js";
 import {
   CredentialType,
   EthAccountChallenge as Challenge,
   EthAccountIssueReq,
   EthAccountReq,
   EthAccountVC
-} from "../types/index.js";
+} from "../../types/index.js";
 
 /**
  * Ethereum account ownership VC provider

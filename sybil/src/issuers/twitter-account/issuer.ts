@@ -1,15 +1,15 @@
-import type { IClient } from "./client.type.js";
+import type { Issuer } from "../../base/issuer.type.js";
 import {
   TwitterAccountProvider,
-} from "../providers/twitter-account.provider.js";
-import { HttpClient } from "../util/http-client.js";
-import type { SignFn } from "../types/index.js";
-import { popupFeatures } from "../util/view.js";
-import { repeatUntil } from "../util/repeat-until.js";
-import { TwitterAccountVC, TwitterAccountOptions } from "../types/index.js";
+} from "./provider.js";
+import { HttpClient } from "../../base/http-client.js";
+import type { SignFn } from "../../types/index.js";
+import { popupFeatures } from "../../util/view.util.js";
+import { repeatUntil } from "../../util/repeat.until.js";
+import { TwitterAccountVC, TwitterAccountOptions } from "./types.js";
 
-export class TwitterAccountClient
-  implements IClient<TwitterAccountVC, TwitterAccountOptions> {
+export class TwitterAccountIssuer
+  implements Issuer<TwitterAccountVC, TwitterAccountOptions> {
 
   constructor(
     httpClient: HttpClient,
@@ -22,7 +22,8 @@ export class TwitterAccountClient
   ): Promise<TwitterAccountVC> {
     const payload = await this.provider.getPayload({
       redirectUrl: opt?.redirectUrl,
-      custom: opt?.custom
+      custom: opt?.custom,
+      expirationDate: opt?.expirationDate
     });
     const popup = window.open(
       payload.authUrl,
