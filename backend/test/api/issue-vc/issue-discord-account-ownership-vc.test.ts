@@ -2,27 +2,18 @@ import { suite } from "uvu";
 import * as a from "uvu/assert";
 import { App } from "../../../src/app/app.js";
 import sinon, { stub } from "sinon";
-import {
-  canIssueEP,
-  challengeEP,
-  issueEP,
-  oauthCallbackEP
-} from "../../../src/util/vc-route-util.js";
+import { canIssueEP, challengeEP, issueEP, } from "@sybil-center/sdk/util";
 import * as url from "url";
-import { isValidVC } from "../../../src/util/vc-utils.js";
-import { VCType } from "../../../src/base/model/const/vc-type.js";
+import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.js";
 import { LightMyRequestResponse } from "fastify";
 import { ethereumSupport } from "../../support/ethereum.js";
 import { bitcoinSupport } from "../../support/bitcoin.js";
 import { solanaSupport } from "../../support/solana.js";
 import { SignAlgAlias } from "../../../src/base/service/multi-sign.service.js";
-import type { CanIssueRes } from "../../../src/base/credentials.js";
-import type {
-  DiscordAccountChallenge,
-  DiscordAccountVC
-} from "../../../src/mates/discord/issuers/discord-account/index.js";
+import { CanIssueResp, DiscordAccountChallenge, DiscordAccountVC } from "@sybil-center/sdk/types";
 import { AnyObject } from "../../../src/util/model.util.js";
+import { oauthCallbackEP } from "../../../src/util/route.util.js";
 
 const test = suite("Integration: Issue Discord account ownership vc");
 
@@ -69,7 +60,7 @@ async function preIssue(args?: PreIssueEntry): Promise<{ sessionId: string; issu
 
   const challengeResp = await fastify.inject({
     method: "POST",
-    url: challengeEP(VCType.DiscordAccount),
+    url: challengeEP("DiscordAccount"),
     payload: {
       redirectUrl: redirectUrl,
       custom: custom,
@@ -86,7 +77,7 @@ async function preIssue(args?: PreIssueEntry): Promise<{ sessionId: string; issu
 
   const canIssueBeforeResp = await fastify.inject({
     method: "GET",
-    url: canIssueEP(VCType.DiscordAccount),
+    url: canIssueEP("DiscordAccount"),
     query: {
       sessionId: sessionId
     }
@@ -96,9 +87,8 @@ async function preIssue(args?: PreIssueEntry): Promise<{ sessionId: string; issu
     200,
     "can issue before callback resp status is not 200"
   );
-  const { canIssue: canIssueBefore } = JSON.parse(
-    canIssueBeforeResp.body
-  ) as CanIssueRes;
+  const { canIssue: canIssueBefore } =
+    JSON.parse(canIssueBeforeResp.body) as CanIssueResp;
   a.is(canIssueBefore, false, "can issue before callback is not false");
 
   const callbackResp = await fastify.inject({
@@ -119,7 +109,7 @@ async function preIssue(args?: PreIssueEntry): Promise<{ sessionId: string; issu
 
   const canIssueAfterResp = await fastify.inject({
     method: "GET",
-    url: canIssueEP(VCType.DiscordAccount),
+    url: canIssueEP("DiscordAccount"),
     query: {
       sessionId: sessionId
     }
@@ -129,9 +119,8 @@ async function preIssue(args?: PreIssueEntry): Promise<{ sessionId: string; issu
     200,
     "can issue after callback resp status is not 200"
   );
-  const { canIssue: canIssueAfter } = JSON.parse(
-    canIssueAfterResp.body
-  ) as CanIssueRes;
+  const { canIssue: canIssueAfter } =
+    JSON.parse(canIssueAfterResp.body) as CanIssueResp;
   a.is(canIssueAfter, true, "can issue after callback is not true");
 
   return {
@@ -156,7 +145,7 @@ async function assertIssueResp(
   } = vc.credentialSubject.discord;
 
   a.is(vc.issuer.id, issuerId, "issuer id is not matched");
-  a.is(vc.type.includes(VCType.DiscordAccount), true);
+  a.is(vc.type.includes("DiscordAccount"), true);
   a.is(
     vc.credentialSubject.id, subjectDID,
     "vc credential subject id is not matched"
@@ -193,7 +182,7 @@ test("should issue discord ownership credential with ethereum did-pkh", async ()
 
   const vcResponse = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.DiscordAccount),
+    url: issueEP("DiscordAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -219,7 +208,7 @@ test("should issue discord ownership credential with solana did-pkh", async () =
 
   const vcResponse = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.DiscordAccount),
+    url: issueEP("DiscordAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -245,7 +234,7 @@ test("should issue discord ownership credential with bitcoin did-pkh", async () 
 
   const vcResponse = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.DiscordAccount),
+    url: issueEP("DiscordAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -262,7 +251,7 @@ test("should redirect to default page after authorization", async () => {
   const config = app.context.resolve("config");
   const payloadResp = await fastify.inject({
     method: "POST",
-    url: challengeEP(VCType.DiscordAccount)
+    url: challengeEP("DiscordAccount")
   });
   a.is(payloadResp.statusCode, 200, "payload resp status code is not 200");
   const { authUrl } = JSON.parse(
@@ -304,7 +293,7 @@ test("should issue vc with custom properties", async () => {
   const signature = await ethereumSupport.sign(issueChallenge);
   const vcResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.DiscordAccount),
+    url: issueEP("DiscordAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -328,7 +317,7 @@ test("should not find Discord code", async () => {
   await fastify.ready();
   const payloadResp = await fastify.inject({
     method: "POST",
-    url: challengeEP(VCType.DiscordAccount),
+    url: challengeEP("DiscordAccount"),
     payload: {
       redirectUrl: redirectUrl
     }
@@ -346,7 +335,7 @@ test("should not find Discord code", async () => {
 
   const errResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.DiscordAccount),
+    url: issueEP("DiscordAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -370,7 +359,7 @@ test("issue discord account credential with expiration date", async () => {
 
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.DiscordAccount),
+    url: issueEP("DiscordAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -392,10 +381,10 @@ test("not valid date-time format for expiration date", async () => {
   const { fastify } = app.context.resolve("httpServer");
   const errResp = await fastify.inject({
     method: "POST",
-    url: challengeEP(VCType.DiscordAccount),
+    url: challengeEP("DiscordAccount"),
     payload: {
       redirectUrl: redirectUrl,
-      expirationDate: 'not a date'
+      expirationDate: "not a date"
     }
   });
   a.is(errResp.statusCode, 400,

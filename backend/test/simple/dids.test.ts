@@ -1,5 +1,5 @@
 import { test } from "uvu";
-import * as assert from "uvu/assert";
+import * as a from "uvu/assert";
 import { getPayload, toJWS } from "../../src/util/jwt.js";
 import sortKeys from "sort-keys";
 import { DIDService } from "../../src/base/service/did-service.js";
@@ -31,8 +31,8 @@ test("should order payload from jws", async () => {
   const jws = toJWS(dagJWS);
   const payload = getPayload(jws);
 
-  assert.is(payload, JSON.stringify(ordered));
-  assert.is.not(payload, JSON.stringify(unordered));
+  a.is(payload, JSON.stringify(ordered));
+  a.is.not(payload, JSON.stringify(unordered));
 });
 
 test.run();

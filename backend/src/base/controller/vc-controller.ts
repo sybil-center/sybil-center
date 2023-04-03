@@ -7,6 +7,7 @@ import { ClientError } from "../../backbone/errors.js";
 import { OAuthState } from "../oauth.js";
 import { ThrowDecoder } from "../throw-decoder.js";
 import { AnyObject } from "../../util/model.util.js";
+import { CanIssueReq, ChallengeReq, IssueReq } from "@sybil-center/sdk/types";
 
 type ConfigFields = {
   pathToExposeDomain: URL;
@@ -28,60 +29,54 @@ export function vcController(
   issuerContainer: IssuerContainer,
   config: ConfigFields
 ): FastifyInstance {
-  genVCRotes.forEach((vcRoutes) => {
+  genVCRotes.forEach((routes) => {
     // initialize issuer endpoints
-    const issueRoute = vcRoutes.issue;
+    const issueRoute = routes.issue;
     // @ts-ignore
-    fastifyServ.route({
+    fastifyServ.route<{ Body: IssueReq }>({
       method: issueRoute.method,
       url: issueRoute.url,
       schema: issueRoute.schema,
       handler: (req) => {
         const credentialRequest = req.body;
-        return issuerContainer.issue(vcRoutes.vcType, credentialRequest);
+        return issuerContainer.issue(routes.credentialType, credentialRequest);
       }
     });
 
     // initialize payload endpoints
-    const payloadRoute = vcRoutes.payload;
-    if (payloadRoute) {
+    const challengeRoute = routes.challenge;
+    if (challengeRoute) {
       // @ts-ignore
-      fastifyServ.route<{ Body: { custom?: object } }>({
-        method: payloadRoute.method,
-        url: payloadRoute.url,
-        schema: payloadRoute.schema,
+      fastifyServ.route<{ Body: ChallengeReq }>({
+        method: challengeRoute.method,
+        url: challengeRoute.url,
+        schema: challengeRoute.schema,
         preHandler: async (request) => {
           const custom = request.body?.custom;
           if (custom) validateCustomSize(custom, config.customSizeLimit);
         },
         handler: async (req) => {
-          const headers = req.headers;
-          const body = req.body;
-          const query = req.query;
-          return issuerContainer.getIssueVCPayload(vcRoutes.vcType, {
-            headers: headers,
-            body: body,
-            query: query
-          });
+          const challengeReq = req.body;
+          return issuerContainer.getChallenge(routes.credentialType, challengeReq);
         }
       });
     }
 
-    const canIssueRoute = vcRoutes.canIssue;
+    const canIssueRoute = routes.canIssue;
     if (canIssueRoute) {
       // @ts-ignore
-      fastifyServ.route({
+      fastifyServ.route<{ Querystring: CanIssueReq }>({
         method: canIssueRoute.method,
         url: canIssueRoute.url,
         schema: canIssueRoute.schema,
         handler: async (req) => {
           const canIssueEntry = req.query;
-          return issuerContainer.canIssue(vcRoutes.vcType, canIssueEntry);
+          return issuerContainer.canIssue(routes.credentialType, canIssueEntry);
         }
       });
     }
 
-    const ownerProofRoute = vcRoutes.ownerProof;
+    const ownerProofRoute = routes.ownerProof;
     if (ownerProofRoute) {
       fastifyServ.route<{ Body: AnyObject }>({
         method: ownerProofRoute.method,
@@ -89,7 +84,7 @@ export function vcController(
         schema: ownerProofRoute.schema,
         handler: async (req, resp) => {
           const ownerProof = req.body;
-          return await issuerContainer.handleOwnerProof(vcRoutes.vcType, ownerProof);
+          return await issuerContainer.handleOwnerProof(routes.credentialType, ownerProof);
         }
       });
     }

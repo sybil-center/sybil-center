@@ -34,6 +34,7 @@ export type Credential = {
 }
 
 export type CredentialSubject = {
+  id: string;
   custom?: { [key: string]: any }
 };
 
@@ -70,7 +71,7 @@ export type CanIssueReq = {
 }
 
 /** Response on "can issue" request */
-export type CanIssuerResp = {
+export type CanIssueResp = {
   /** If true - VC can be issued, else - otherwise */
   canIssue: boolean;
 }

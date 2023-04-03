@@ -10,15 +10,10 @@ export const OAuthState = t.string
   .pipe(
     t.type({
       sessionId: t.string,
-      vcType: t.string,
+      credentialType: t.string,
     })
   );
 export type OAuthState = t.TypeOf<typeof OAuthState>;
-
-export interface OAuthCallback {
-  code: string,
-  state: OAuthState
-}
 
 /**
  * Response from OAuth server contains `access_token`.

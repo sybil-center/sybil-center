@@ -2,16 +2,12 @@ import { suite } from "uvu";
 import * as a from "uvu/assert";
 import { App } from "../../../src/app/app.js";
 import sinon from "sinon";
-import { challengeEP, issueEP, ownerProofEP } from "../../../src/util/vc-route-util.js";
-import { VCType } from "../../../src/base/model/const/vc-type.js";
-import { isValidVC } from "../../../src/util/vc-utils.js";
+import { challengeEP, issueEP, ownerProofEP } from "@sybil-center/sdk/util";
+import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.js";
 //@ts-ignore
 import { ethereumSupport } from "../../support/ethereum.js";
-import type {
-  EthAccountVC,
-  EthAccountChallenge
-} from "../../../src/mates/ethereum/issuers/ethereum-account/index.js";
+import { EthAccountChallenge, EthAccountVC } from "@sybil-center/sdk/types";
 import { EthProofResult } from "../../../src/mates/ethereum/issuers/ethereum-account/index.js";
 //@ts-ignore
 import { solanaSupport } from "../../support/solana.js";
@@ -25,8 +21,6 @@ let app: App;
 
 const {
   address: ethAddress,
-  privateKey: ethPrivateKey,
-  didPkh: ethDidPkh
 } = ethereumSupport.info.ethereum;
 
 test.before(async () => {
@@ -57,7 +51,7 @@ const preIssue = async (
   const fastify = app.context.resolve("httpServer").fastify;
   const payloadResp = await fastify.inject({
     method: "POST",
-    url: challengeEP(VCType.EthereumAccount),
+    url: challengeEP("EthereumAccount"),
     payload: {
       custom: custom,
       expirationDate: expirationDate
@@ -99,11 +93,11 @@ const assertIssueResp = async ({
     "credential subject did is not matched"
   );
   a.is(
-    credential.type[0], VCType.VerifiableCredential,
+    credential.type[0], "VerifiableCredential",
     "credential type first item is not correct"
   );
   a.is(
-    credential.type[1], VCType.EthereumAccount,
+    credential.type[1], "EthereumAccount",
     "credential type second item is not correct"
   );
   a.is(
@@ -139,7 +133,7 @@ test("should issue ethereum account vc", async () => {
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.EthereumAccount),
+    url: issueEP("EthereumAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -154,7 +148,7 @@ test("should not issue vc because not valid signature", async () => {
   const fastify = app.context.resolve("httpServer").fastify;
   const challengeResp = await fastify.inject({
     method: "POST",
-    url: challengeEP(VCType.EthereumAccount)
+    url: challengeEP("EthereumAccount")
   });
   a.is(challengeResp.statusCode, 200,
     "payload response status code is not 200"
@@ -165,7 +159,7 @@ test("should not issue vc because not valid signature", async () => {
   } = JSON.parse(challengeResp.body) as EthAccountChallenge;
   const errResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.EthereumAccount),
+    url: issueEP("EthereumAccount"),
     payload: {
       sessionId: sessionId,
       signature: issueChallenge
@@ -189,7 +183,7 @@ test("should issue ethereum account credential with custom property", async () =
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.EthereumAccount),
+    url: issueEP("EthereumAccount"),
     payload: {
       publicId: ethereumAddress,
       signature: signature,
@@ -223,7 +217,7 @@ test("issue ethereum account credential with different subject and address", asy
   const ethSignAlg: SignAlgAlias = "ethereum";
   const ownerProofResp = await fastify.inject({
     method: "POST",
-    url: ownerProofEP(VCType.EthereumAccount),
+    url: ownerProofEP("EthereumAccount"),
     payload: {
       signature: ethSignature,
       signAlg: ethSignAlg,
@@ -247,7 +241,7 @@ test("issue ethereum account credential with different subject and address", asy
   const solanaSignAlg: SignAlgAlias = "solana";
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.EthereumAccount),
+    url: issueEP("EthereumAccount"),
     payload: {
       signature: solanaSignature,
       publicId: solanaAddress,
@@ -271,7 +265,7 @@ test("issue eth account credential with expiration date", async () => {
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.EthereumAccount),
+    url: issueEP("EthereumAccount"),
     payload: {
       sessionId: sessionId,
       signAlg: didPkhPrefix,

@@ -1,8 +1,7 @@
 import { suite } from "uvu";
-import * as assert from "uvu/assert";
+import * as a from "uvu/assert";
 import { ProofService } from "../../src/base/service/proof-service.js";
-import type { VC } from "../../src/base/credentials.js";
-import { VCType } from "../../src/base/model/const/vc-type.js";
+import { Credential } from "@sybil-center/sdk/types";
 import { toJWTPayload } from "../../src/util/jwt.js";
 import sortKeys from "sort-keys";
 import { createInjector, Injector } from "typed-inject";
@@ -22,7 +21,7 @@ test.before.each(async () => {
   await injector.resolve("didService").init();
 
   vc = {
-    type: [VCType.VerifiableCredential, VCType.Empty],
+    type: ["VerifiableCredential", "Empty"],
     issuer: { id: "issuer" },
     "@context": ["test"],
     id: "testId",
@@ -33,20 +32,20 @@ test.before.each(async () => {
   };
 });
 
-let vc: VC | null = null;
+let vc: Credential | null = null;
 
 test("should correct sign JWS", async () => {
   const proofService = injector.resolve("proofService");
   const didService = injector.resolve("didService");
   const { proof } = await proofService.jwsSing(vc!);
-  assert.ok(proof, "proof is undefined after signing by ProofService");
-  assert.ok(
+  a.ok(proof, "proof is undefined after signing by ProofService");
+  a.ok(
     proof.jws,
     "proof.jws property is undefined after signing by ProofService"
   );
-  assert.type(proof.jws, "string", 'proof.jws should be "string" type');
-  assert.is(proof.proofPurpose, "assertionMethod");
-  assert.is(
+  a.type(proof.jws, "string", 'proof.jws should be "string" type');
+  a.is(proof.proofPurpose, "assertionMethod");
+  a.is(
     proof.verificationMethod,
     didService.verificationMethod,
     `proof.verification method have to be ${didService.verificationMethod}`

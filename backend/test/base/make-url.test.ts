@@ -1,5 +1,5 @@
 import { test } from "uvu";
-import * as assert from "uvu/assert";
+import * as a from "uvu/assert";
 import { makeURL } from "../../src/base/make-url.util.js";
 
 test("makeURL", async () => {
@@ -11,7 +11,7 @@ test("makeURL", async () => {
     },
     "test"
   );
-  assert.equal(actual.href, expectUrl);
+  a.equal(actual.href, expectUrl);
 });
 
 test.run();

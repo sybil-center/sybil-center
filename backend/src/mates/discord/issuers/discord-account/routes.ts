@@ -1,15 +1,15 @@
-import { VCRoutes } from "../../../../base/model/route/route.js";
-import { VCType } from "../../../../base/model/const/vc-type.js";
-import { canIssueEP, challengeEP, issueEP } from "../../../../util/vc-route-util.js";
+import { CredentialRoutes } from "../../../../base/model/route/route.js";
+import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
+
 
 const tags = ["Discord account ownership verifiable credential"];
-export const discordAccountRoutes: VCRoutes = {
+export const discordAccountRoutes: CredentialRoutes = {
 
-  vcType: VCType.DiscordAccount,
+  credentialType: "DiscordAccount",
 
   issue: {
     method: ["POST"],
-    url: issueEP(VCType.DiscordAccount),
+    url: issueEP("DiscordAccount"),
     schema: {
       tags: tags,
       body: {
@@ -27,7 +27,7 @@ export const discordAccountRoutes: VCRoutes = {
 
   canIssue: {
     method: ["GET"],
-    url: canIssueEP(VCType.DiscordAccount),
+    url: canIssueEP("DiscordAccount"),
     schema: {
       tags: tags,
       querystring: {
@@ -48,9 +48,9 @@ export const discordAccountRoutes: VCRoutes = {
     }
   },
 
-  payload: {
+  challenge: {
     method: ["POST"],
-    url: challengeEP(VCType.DiscordAccount),
+    url: challengeEP("DiscordAccount"),
     schema: {
       tags: tags,
       body: {

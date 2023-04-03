@@ -1,10 +1,9 @@
-import type { VC } from "../credentials.js";
-import { ProofType } from "@sybil-center/sdk";
 import type { DIDService } from "./did-service.js";
 import { tokens } from "typed-inject";
+import { Credential } from "@sybil-center/sdk/types"
 
 export interface IProofService {
-  jwsSing(vc: VC): Promise<VC>;
+  jwsSing(vc: Credential): Promise<Credential>;
 }
 
 /**
@@ -20,7 +19,7 @@ export class ProofService implements IProofService {
    * @see https://www.w3.org/TR/vc-jws-2020/#ref-for-dfn-jsonwebsignature2020-3
    * @param vc
    */
-  async jwsSing(vc: VC): Promise<VC> {
+  async jwsSing(vc: Credential): Promise<Credential> {
     const dagJWS = await this.didService.createJWS(vc);
     const [jwsSignature] = dagJWS.signatures;
     //convert to detached JWS
@@ -28,7 +27,7 @@ export class ProofService implements IProofService {
 
     vc.proof = {
       type: "JsonWebSignature2020",
-      created: new Date().toISOString(),
+      created: new Date(),
       proofPurpose: "assertionMethod",
       verificationMethod: this.didService.verificationMethod,
       jws: jws,

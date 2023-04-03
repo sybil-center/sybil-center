@@ -1,68 +1,32 @@
-import type {
-  CanIssueReq,
-  CanIssueRes,
-  ICredentialIssuer,
-  IOAuthCallback,
-  VC
-} from "../../../../base/credentials.js";
-import {
-  DEFAULT_CREDENTIAL_CONTEXT,
-  DEFAULT_CREDENTIAL_TYPE
-} from "../../../../base/credentials.js";
+import type { ICredentialIssuer, IOAuthCallback, } from "../../../../base/credentials.js";
+import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../../base/credentials.js";
 import { Disposable, tokens } from "typed-inject";
 import { DiscordService, type DiscordUser } from "../../discord.service.js";
 import { IProofService } from "../../../../base/service/proof-service.js";
 import { DIDService } from "../../../../base/service/did-service.js";
-import { VCType } from "../../../../base/model/const/vc-type.js";
 import { ClientError } from "../../../../backbone/errors.js";
-import type {
-  IMultiSignService,
-  SignAlgAlias
-} from "../../../../base/service/multi-sign.service.js";
+import type { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
 import { fromIssueChallenge, toIssueChallenge } from "../../../../util/challenge.util.js";
 import { TimedCache } from "../../../../base/timed-cache.js";
 import { absoluteId } from "../../../../util/id-util.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/oauth.js";
 import { AnyObject } from "../../../../util/model.util.js";
+import {
+  CanIssueReq,
+  CanIssueResp,
+  Credential,
+  CredentialType,
+  DiscordAccountChallenge,
+  DiscordAccountChallengeReq,
+  DiscordAccountIssueReq,
+  DiscordAccountVC
+} from "@sybil-center/sdk/types";
 
 export type DiscordOAuthSession = {
   redirectUrl?: URL;
   issueChallenge: string;
   code?: string;
-};
-
-export interface DiscordAccountVC extends VC {
-  credentialSubject: {
-    id: string;
-    discord: {
-      id: string;
-      username: string;
-      discriminator: string;
-    };
-    custom?: { [key: string]: any };
-  };
-}
-
-type DiscordAccountReq = {
-  sessionId: string;
-  signAlg?: SignAlgAlias;
-  publicId: string;
-  signature: string;
-};
-
-type DiscordAccountChallengeReq = {
-  body: {
-    custom?: object;
-    redirectUrl?: string;
-    expirationDate?: Date;
-  };
-};
-
-export type DiscordAccountChallenge = {
-  authUrl: string;
-  sessionId: string;
-  issueChallenge: string;
 };
 
 export type GetDiscordAccountVC = {
@@ -78,7 +42,7 @@ export function getDiscordAccountVC(args: GetDiscordAccountVC): DiscordAccountVC
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
-      type: [DEFAULT_CREDENTIAL_TYPE, VCType.DiscordAccount],
+      type: [DEFAULT_CREDENTIAL_TYPE, "DiscordAccount"],
       issuer: { id: args.issuer },
       credentialSubject: {
         id: args.subjectDID,
@@ -98,12 +62,12 @@ export function getDiscordAccountVC(args: GetDiscordAccountVC): DiscordAccountVC
 
 export class DiscordAccountIssuer
   implements ICredentialIssuer<
-    DiscordAccountReq,
-    VC,
+    DiscordAccountIssueReq,
+    Credential,
     DiscordAccountChallengeReq,
     DiscordAccountChallenge,
     CanIssueReq,
-    CanIssueRes
+    CanIssueResp
   >,
     IOAuthCallback,
     Disposable {
@@ -132,17 +96,15 @@ export class DiscordAccountIssuer
     this.sessionCache = new TimedCache(config.oAuthSessionTtl);
   }
 
-  async getChallenge({
-    body
-  }: DiscordAccountChallengeReq): Promise<DiscordAccountChallenge> {
-    const custom = body?.custom;
-    const expirationDate = body?.expirationDate;
-    const redirectUrl = body?.redirectUrl
-      ? new URL(body?.redirectUrl)
+  async getChallenge(req?: DiscordAccountChallengeReq): Promise<DiscordAccountChallenge> {
+    const custom = req?.custom;
+    const expirationDate = req?.expirationDate;
+    const redirectUrl = req?.redirectUrl
+      ? new URL(req?.redirectUrl)
       : undefined;
 
     const issueChallenge = toIssueChallenge({
-      type: this.getProvidedVC(),
+      type: this.providedCredential,
       custom: custom,
       expirationDate: expirationDate
     });
@@ -153,7 +115,7 @@ export class DiscordAccountIssuer
     });
     const authUrl = this.discordService.getOAuthLink({
       sessionId: sessionId,
-      vcType: this.getProvidedVC(),
+      credentialType: this.providedCredential,
       scope: ["identify"]
     });
     return {
@@ -175,7 +137,7 @@ export class DiscordAccountIssuer
     return session.redirectUrl;
   }
 
-  async canIssue({ sessionId }: CanIssueReq): Promise<CanIssueRes> {
+  async canIssue({ sessionId }: CanIssueReq): Promise<CanIssueResp> {
     const session = this.sessionCache.get(sessionId);
     return { canIssue: Boolean(session?.code) };
   }
@@ -185,7 +147,7 @@ export class DiscordAccountIssuer
     signAlg,
     publicId,
     signature
-  }: DiscordAccountReq): Promise<VC> {
+  }: DiscordAccountIssueReq): Promise<Credential> {
     const session = this.sessionCache.get(sessionId);
     const { code, issueChallenge } = session;
     if (!code) {
@@ -209,8 +171,8 @@ export class DiscordAccountIssuer
     return this.proofService.jwsSing(credential);
   }
 
-  getProvidedVC(): VCType {
-    return VCType.DiscordAccount;
+  get providedCredential(): CredentialType {
+    return "DiscordAccount";
   }
 
   dispose(): void {

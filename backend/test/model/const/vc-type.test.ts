@@ -1,33 +1,29 @@
 import { suite } from "uvu";
-import * as assert from "uvu/assert";
-import {
-  toEnumVCType,
-  toUrlVCType,
-  VCType,
-} from "../../../src/base/model/const/vc-type.js";
+import * as a from "uvu/assert";
+import { toCredentialType, urlCredentialType } from "@sybil-center/sdk/util";
+
 
 const test = suite("VC Type test");
 
 test("should convert url vc type to VCType enum", async () => {
   const emptyUrlVCType = "empty";
-  const vcType = toEnumVCType(emptyUrlVCType);
-  assert.equal(VCType.Empty, vcType);
+  const vcType = toCredentialType(emptyUrlVCType);
+  a.equal("Empty", vcType);
 });
 
 test("should throw exception because invalid url vc type from", async () => {
   const testUrlForm = "test1234324";
-
-  assert.throws(() => toEnumVCType(testUrlForm), "should throw error");
+  a.throws(() => toCredentialType(testUrlForm), "should throw error");
 });
 
 test("should convert VCType enum to vc type url form", async () => {
   const expVCTypeUrlForm = "empty";
-  const actVCTypeUrlForm = toUrlVCType(VCType.Empty);
-  assert.is(actVCTypeUrlForm, expVCTypeUrlForm);
+  const actVCTypeUrlForm = urlCredentialType("Empty");
+  a.is(actVCTypeUrlForm, expVCTypeUrlForm);
 
   const expEthUrlVCType = "ethereum-account";
-  const actEthUrlVCType = toUrlVCType(VCType.EthereumAccount);
-  assert.is(actEthUrlVCType, expEthUrlVCType);
+  const actEthUrlVCType = urlCredentialType("EthereumAccount");
+  a.is(actEthUrlVCType, expEthUrlVCType);
 });
 
 test.run();

@@ -1,9 +1,6 @@
 import type {
-  CanIssueReq,
-  CanIssueRes,
   ICredentialIssuer,
   IOAuthCallback,
-  VC
 } from "../../../../base/credentials.js";
 import {
   DEFAULT_CREDENTIAL_CONTEXT,
@@ -13,18 +10,24 @@ import { type Disposable, tokens } from "typed-inject";
 import { GitHubService, type GitHubUser } from "../../github.service.js";
 import { IProofService } from "../../../../base/service/proof-service.js";
 import { DIDService } from "../../../../base/service/did-service.js";
-import { VCType } from "../../../../base/model/const/vc-type.js";
 import { ClientError } from "../../../../backbone/errors.js";
-import type {
-  IMultiSignService,
-  SignAlgAlias
-} from "../../../../base/service/multi-sign.service.js";
+import type { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
 import { fromIssueChallenge, toIssueChallenge } from "../../../../util/challenge.util.js";
 import { TimedCache } from "../../../../base/timed-cache.js";
 import { absoluteId } from "../../../../util/id-util.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/oauth.js";
 import { AnyObject } from "../../../../util/model.util.js";
+import {
+  CanIssueResp,
+  CredentialType,
+  CanIssueReq,
+  Credential,
+  GitHubAccountChallenge,
+  GitHubAccountChallengeReq,
+  GitHubAccountVC,
+  GitHubAccountIssueReq,
+} from "@sybil-center/sdk/types"
 
 export type GitHubOAuthSession = {
   redirectUrl?: URL;
@@ -32,40 +35,7 @@ export type GitHubOAuthSession = {
   code?: string;
 };
 
-export interface GitHubAccountVC extends VC {
-  credentialSubject: {
-    id: string;
-    github: {
-      id: number;
-      username: string;
-      userPage: string;
-    };
-    custom?: { [key: string]: any };
-  };
-}
-
-export type GitHubAccountIssueReq = {
-  sessionId: string;
-  signAlg?: SignAlgAlias;
-  publicId: string;
-  signature: string;
-};
-
-export type GitHubAccountChallenge = {
-  authUrl: string;
-  sessionId: string;
-  issueChallenge: string;
-};
-
-export type GitHubAccountChallengeReq = {
-  body?: {
-    redirectUrl?: string;
-    custom?: object;
-    expirationDate?: Date;
-  };
-};
-
-type GetGitHubAccountVCArgs = {
+type GetGitHubAccountVC = {
   issuer: string;
   subjectDID: string;
   gitHubUser: GitHubUser;
@@ -74,13 +44,13 @@ type GetGitHubAccountVCArgs = {
 }
 
 async function getGitHubAccountVC(
-  args: GetGitHubAccountVCArgs
+  args: GetGitHubAccountVC
 ): Promise<GitHubAccountVC> {
   const gitHubUser = args.gitHubUser;
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
-      type: [DEFAULT_CREDENTIAL_TYPE, VCType.GitHubAccount],
+      type: [DEFAULT_CREDENTIAL_TYPE, "GitHubAccount"],
       issuer: { id: args.issuer },
       credentialSubject: {
         id: args.subjectDID,
@@ -101,11 +71,9 @@ async function getGitHubAccountVC(
 export class GitHubAccountIssuer
   implements ICredentialIssuer<
     GitHubAccountIssueReq,
-    VC,
+    Credential,
     GitHubAccountChallengeReq,
-    GitHubAccountChallenge,
-    CanIssueReq,
-    CanIssueRes
+    GitHubAccountChallenge
   >,
     IOAuthCallback,
     Disposable {
@@ -134,17 +102,15 @@ export class GitHubAccountIssuer
     this.gitHubService = new GitHubService(config);
   }
 
-  async getChallenge({
-    body
-  }: GitHubAccountChallengeReq): Promise<GitHubAccountChallenge> {
+  async getChallenge(req?: GitHubAccountChallengeReq): Promise<GitHubAccountChallenge> {
     const sessionId = absoluteId();
-    const redirectUrl = body?.redirectUrl
-      ? new URL(body.redirectUrl)
+    const redirectUrl = req?.redirectUrl
+      ? new URL(req.redirectUrl)
       : undefined;
-    const custom = body?.custom;
-    const expirationDate = body?.expirationDate;
+    const custom = req?.custom;
+    const expirationDate = req?.expirationDate;
     const issueChallenge = toIssueChallenge({
-      type: this.getProvidedVC(),
+      type: this.providedCredential,
       custom: custom,
       expirationDate: expirationDate
     });
@@ -154,7 +120,7 @@ export class GitHubAccountIssuer
     });
     const authUrl = this.gitHubService.getOAuthLink({
       sessionId: sessionId,
-      vcType: this.getProvidedVC(),
+      credentialType: this.providedCredential,
       scope: ["read:user"]
     });
     return {
@@ -175,7 +141,7 @@ export class GitHubAccountIssuer
     return session.redirectUrl;
   }
 
-  async canIssue({ sessionId }: CanIssueReq): Promise<CanIssueRes> {
+  async canIssue({ sessionId }: CanIssueReq): Promise<CanIssueResp> {
     const session = this.sessionCache.get(sessionId);
     return { canIssue: Boolean(session?.code) };
   }
@@ -185,7 +151,7 @@ export class GitHubAccountIssuer
     signAlg,
     publicId,
     signature
-  }: GitHubAccountIssueReq): Promise<VC> {
+  }: GitHubAccountIssueReq): Promise<Credential> {
     const session = this.sessionCache.get(sessionId);
     const { issueChallenge, code } = session;
     if (!code) {
@@ -208,8 +174,8 @@ export class GitHubAccountIssuer
     return this.proofService.jwsSing(vc);
   }
 
-  getProvidedVC(): VCType {
-    return VCType.GitHubAccount;
+  get providedCredential(): CredentialType {
+    return "GitHubAccount";
   }
 
   dispose(): void {

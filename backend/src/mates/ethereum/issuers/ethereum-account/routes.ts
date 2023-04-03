@@ -1,15 +1,13 @@
-import { VCRoutes } from "../../../../base/model/route/route.js";
-import { VCType } from "../../../../base/model/const/vc-type.js";
-import { ProofType } from "@sybil-center/sdk";
-import { challengeEP, issueEP, ownerProofEP } from "../../../../util/vc-route-util.js";
+import { CredentialRoutes } from "../../../../base/model/route/route.js";
+import { challengeEP, issueEP, ownerProofEP } from "@sybil-center/sdk/util";
 
 const tags = ["Ethereum account ownership verifiable credential"];
-export const ethereumAccountRoutes: VCRoutes = {
-  vcType: VCType.EthereumAccount,
+export const ethereumAccountRoutes: CredentialRoutes = {
+  credentialType: "EthereumAccount",
 
   issue: {
     method: ["POST"],
-    url: issueEP(VCType.EthereumAccount),
+    url: issueEP("EthereumAccount"),
     schema: {
       tags: tags,
       body: {
@@ -25,9 +23,9 @@ export const ethereumAccountRoutes: VCRoutes = {
     }
   },
 
-  payload: {
+  challenge: {
     method: ["POST"],
-    url: challengeEP(VCType.EthereumAccount),
+    url: challengeEP("EthereumAccount"),
     schema: {
       tags: tags,
       body: {
@@ -47,7 +45,7 @@ export const ethereumAccountRoutes: VCRoutes = {
 
   ownerProof: {
     method: "POST",
-    url: ownerProofEP(VCType.EthereumAccount),
+    url: ownerProofEP("EthereumAccount"),
     schema: {
       tags: tags,
       body: {

@@ -1,4 +1,4 @@
-import { CredentialType } from "../types/index.js";
+import { CredentialType, credentialTypes } from "../types/index.js";
 
 export function urlCredentialType(credentialType: CredentialType): string {
   return credentialType
@@ -8,15 +8,17 @@ export function urlCredentialType(credentialType: CredentialType): string {
 }
 
 export function toCredentialType(credentialTypeUrl: string): CredentialType {
-  const vcTypeStr = credentialTypeUrl.replace(/(^\w|-\w)/g, clearAndUpper);
-  // @ts-ignore
-  const vcTypeEnum = CredentialType[vcTypeStr];
-  if (vcTypeEnum) {
-    return vcTypeEnum;
+  const type =  credentialTypeUrl.replace(/(^\w|-\w)/g, clearAndUpper) as CredentialType;
+  if (isCredentialType(type)) {
+    return type as CredentialType;
   }
-  throw new Error(`can not convert ${credentialTypeUrl} to VCType enum`);
+  throw new Error(`can not convert ${credentialTypeUrl} to CredentialType enum`);
 }
 
 function clearAndUpper(text: string) {
   return text.replace(/-/, "").toUpperCase();
+}
+
+function isCredentialType(type: CredentialType): type is CredentialType {
+  return credentialTypes.includes(type);
 }

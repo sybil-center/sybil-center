@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { ClientError, ServerError } from "../backbone/errors.js";
-import { VCType } from "../base/model/const/vc-type.js";
 import { AnyObject } from "./model.util.js";
+import { CredentialType } from "@sybil-center/sdk/types";
 
 export interface FromChallenge {
   id: string;
@@ -11,7 +11,7 @@ export interface FromChallenge {
 }
 
 export interface IssueChallengeOpt {
-  type: VCType;
+  type: CredentialType;
   custom?: AnyObject;
   expirationDate?: Date;
 }
