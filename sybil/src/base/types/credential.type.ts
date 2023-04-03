@@ -1,7 +1,7 @@
 import { ProofType } from "./proof-type.type.js";
 import { CredentialType } from "./credential-type.type.js";
 import { AnyObj } from "../../util/types.util.js";
-import { SignAlgAlias } from "./chain-alias.type.js";
+import { SignAlgAlias } from "./sign-alias.type.js";
 
 /** Base type of VC and its components */
 export type Credential = {
@@ -29,9 +29,7 @@ export type Credential = {
 
   credentialStatus?: CredentialStatus;
 
-  /**
-   * Proof. This field add
-   */
+  /** Proof. This field add */
   proof?: Proof;
 }
 
@@ -67,19 +65,19 @@ export type IssueReq = {
   signature: string;
   signAlg?: SignAlgAlias;
 
-  /** Entity with executing request defined id of vc*/
+  /** Entity with executing request defined id of vc */
   credentialId?: string;
 }
 
 /** For check is credential ready for issue */
-export type CanIssueVCEntry = {
+export type CanIssueReq = {
 
   /** Session id */
   sessionId: string;
 }
 
 /** Response on "can issue" request */
-export type CanIssueVCResponse = {
+export type CanIssuerResp = {
   /** If true - VC can be issued, else - otherwise */
   canIssue: boolean;
 }

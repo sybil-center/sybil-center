@@ -1,4 +1,4 @@
-import { SignAlgAlias } from "./chain-alias.type.js";
+import { SignAlgAlias } from "./sign-alias.type.js";
 
 export type SignResult = {
   /**
