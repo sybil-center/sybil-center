@@ -52,13 +52,6 @@ export type CredentialStatus = {
   id: string;
 }
 
-/** Request entity for getting challenge */
-export type ChallengeReq = {
-
-  /** Custom property that will be represented in Verifiable Credential */
-  custom?: AnyObj;
-}
-
 /** Base type for VC requests */
 export type IssueReq = {
   sessionId: string;
@@ -85,9 +78,17 @@ export type CanIssuerResp = {
 export type Challenge = {
   sessionId: string;
   issueChallenge: string;
+}
 
+/** Request entity for getting challenge */
+export type ChallengeReq = {
+  /** Custom property that will be represented in Verifiable Credential */
+  custom?: AnyObj;
+  /** Credential expiration date */
+  expirationDate?: Date;
 }
 
 export type Options = {
   custom?: AnyObj;
+  expirationDate?: Date;
 }

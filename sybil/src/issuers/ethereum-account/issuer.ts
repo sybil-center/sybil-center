@@ -18,7 +18,8 @@ export class EthAccountIssuer
     opt?: EthAccountOptions
   ): Promise<EthAccountVC> {
     const challenge = await this.provider.getPayload({
-      custom: opt?.custom
+      custom: opt?.custom,
+      expirationDate: opt?.expirationDate
     });
     if (opt?.ownerProofFn) {
       await this.provider.ownerProof(opt.ownerProofFn, challenge);

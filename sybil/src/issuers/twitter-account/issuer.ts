@@ -22,7 +22,8 @@ export class TwitterAccountIssuer
   ): Promise<TwitterAccountVC> {
     const payload = await this.provider.getPayload({
       redirectUrl: opt?.redirectUrl,
-      custom: opt?.custom
+      custom: opt?.custom,
+      expirationDate: opt?.expirationDate
     });
     const popup = window.open(
       payload.authUrl,
