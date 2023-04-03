@@ -42,18 +42,18 @@ export type CredentialKinds = {
   };
 };
 
-export type Clients = {
+export type Issuers = {
   [K in keyof CredentialKinds]: Issuer<CredentialKinds[K]["kind"], CredentialKinds[K]["options"]>;
 };
 
 const DEFAULT_ENDPOINT = new URL("https://api.sybil.center");
 
 export class Sybil {
-  readonly clients: Clients;
+  readonly issuers: Issuers;
 
   constructor(readonly issuerDomain: URL = DEFAULT_ENDPOINT) {
     const httpClient = new HttpClient(issuerDomain);
-    this.clients = {
+    this.issuers = {
       "twitter-account": new TwitterAccountIssuer(httpClient),
       "discord-account": new DiscordAccountIssuer(httpClient),
       "ethereum-account": new EthAccountIssuer(httpClient),
@@ -66,7 +66,7 @@ export class Sybil {
     signFn: SignFn,
     options?: CredentialKinds[TName]["options"]
   ): Promise<CredentialKinds[TName]["kind"]> {
-    const client = this.clients[name];
+    const client = this.issuers[name];
     if (!client) throw new Error(`Provider ${name} not available`);
     return client.issueCredential(signFn, options);
   }

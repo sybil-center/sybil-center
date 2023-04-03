@@ -1,5 +1,6 @@
 import { canIssueEP, challengeEP, issueEP, ownerProofEP } from "../util/index.js";
-import { CredentialType } from "../types/index.js";
+import { Credential, CredentialType } from "../types/index.js";
+import { parse } from "../util/parse.util.js";
 
 export class HttpClient {
 
@@ -46,7 +47,7 @@ export class HttpClient {
     throw new Error(body.message);
   }
 
-  async issue<TResponse, TParams = any>(credentialType: CredentialType, params: TParams): Promise<TResponse> {
+  async issue<TResponse = Credential, TParams = any>(credentialType: CredentialType, params: TParams): Promise<TResponse> {
     const endpoint = new URL(issueEP(credentialType), this.issuerDomain);
     const resp = await fetch(endpoint, {
       method: "POST",
@@ -57,7 +58,7 @@ export class HttpClient {
     });
     const body = await resp.json();
     if (resp.status === 200) {
-      return body;
+      return parse(body, "credential") as TResponse;
     }
     throw new Error(body.message);
   }
