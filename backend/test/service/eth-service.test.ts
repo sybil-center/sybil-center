@@ -1,5 +1,5 @@
 import { suite } from "uvu";
-import * as assert from "uvu/assert";
+import * as a from "uvu/assert";
 import sinon from "sinon";
 import { ethers } from "ethers";
 import { EthService } from "../../src/base/service/eth-service.js";
@@ -16,7 +16,7 @@ test("should find ethereum account", async () => {
 
   const ethService = new EthService({ ethNodeUrl: "" }, provider);
   const isExist = await ethService.isAddressExist("test");
-  assert.is(isExist, true);
+  a.is(isExist, true);
 });
 
 test("should not find ethereum account", async () => {
@@ -26,7 +26,7 @@ test("should not find ethereum account", async () => {
   const ethService = new EthService({ ethNodeUrl: "" }, provider);
   const isExist = await ethService.isAddressExist("test");
 
-  assert.is(isExist, false);
+  a.is(isExist, false);
 });
 
 // EthServiceTest.run(); //TODO change

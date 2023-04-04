@@ -1,8 +1,8 @@
 import { TwitterApi } from "twitter-api-v2";
 import { ServerError } from "../../backbone/errors.js";
 import { IOAuthService, OAuthState } from "../../base/oauth.js";
-import { vcOAuthCallbackUrl } from "../../util/vc-route-util.js";
-import type { VCType } from "../../base/model/const/vc-type.js";
+import { vcOAuthCallbackUrl } from "../../util/route.util.js";
+import { CredentialType } from "@sybil-center/sdk/types";
 
 export type TwitterUser = {
   id: string;
@@ -21,7 +21,7 @@ export type TwitterOAuthAccessTokenRequest = {
 
 export type TwitterOAuthLinkProps = {
   sessionId: string;
-  vcType: VCType;
+  credentialType: CredentialType;
   scope: string[];
 };
 
@@ -67,13 +67,13 @@ export class TwitterService
   getOAuthLink({
     scope,
     sessionId,
-    vcType,
+    credentialType,
   }: TwitterOAuthLinkProps): TwitterOAuthLink {
     const link = this.twitterApi.generateOAuth2AuthLink(
       vcOAuthCallbackUrl(this.pathToExposeDomain).href,
       {
         scope: scope,
-        state: OAuthState.encode({ sessionId: sessionId, vcType: vcType }),
+        state: OAuthState.encode({ sessionId: sessionId, credentialType: credentialType }),
       }
     );
     return {

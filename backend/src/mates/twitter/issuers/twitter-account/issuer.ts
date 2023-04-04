@@ -1,80 +1,27 @@
-import type {
-  CanIssueReq,
-  CanIssueRes,
-  ICredentialIssuer,
-  IOAuthCallback,
-  VC
-} from "../../../../base/credentials.js";
-import {
-  DEFAULT_CREDENTIAL_CONTEXT,
-  DEFAULT_CREDENTIAL_TYPE
-} from "../../../../base/credentials.js";
+import type { ICredentialIssuer, IOAuthCallback, } from "../../../../base/credentials.js";
+import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../../base/credentials.js";
 import { Disposable, tokens } from "typed-inject";
 import { IProofService } from "../../../../base/service/proof-service.js";
 import { TwitterService, type TwitterUser } from "../../twitter.service.js";
 import { DIDService } from "../../../../base/service/did-service.js";
 import { absoluteId } from "../../../../util/id-util.js";
-import { VCType } from "../../../../base/model/const/vc-type.js";
 import { ClientError } from "../../../../backbone/errors.js";
-import type {
-  IMultiSignService,
-  SignAlgAlias
-} from "../../../../base/service/multi-sign.service.js";
+import type { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
 import { fromIssueChallenge, toIssueChallenge } from "../../../../util/challenge.util.js";
 import { TimedCache } from "../../../../base/timed-cache.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/oauth.js";
 import { AnyObject } from "../../../../util/model.util.js";
-
-export interface TwitterAccountVC extends VC {
-  credentialSubject: {
-    id: string;
-    twitter: {
-      id: string;
-      username: string;
-    };
-    custom?: { [key: string]: any };
-  };
-}
-
-interface TwitterAccountChallengeReq {
-  body: {
-    redirectUrl?: string;
-    custom?: object;
-    expirationDate?: Date;
-  };
-}
-
-/**
- * Request entity for generating twitter account ownership VC
- */
-interface TwitterAccountIssueReq {
-  sessionId: string;
-  signAlg?: SignAlgAlias;
-  publicId: string;
-  /**
-   * Signature from sign message from payload sign by wallet / private key
-   */
-  signature: string;
-}
-
-/**
- * Payload for issue VC of Twitter account ownership {@link TwitterAccountOwnershipCredential}
- *
- * {@see https://www.rfc-editor.org/rfc/rfc6749}
- * {@see https://developer.twitter.com/en/docs/authentication/oauth-2-0/authorization-code}
- */
-export interface TwitterAccountChallenge {
-  /** Ref to authenticate user in Twitter */
-  authUrl: string;
-
-  /** Property responsible for save user session for
-   * safe get "code" needed to authenticate user */
-  sessionId: string;
-
-  /** Message for sign by wallet / private key */
-  issueChallenge: string;
-}
+import {
+  CanIssueReq,
+  CanIssueResp,
+  Credential,
+  TwitterAccountChallenge,
+  TwitterAccountChallengeReq,
+  TwitterAccountIssueReq,
+  TwitterAccountVC,
+  CredentialType
+} from "@sybil-center/sdk/types";
 
 type GetTwitterAccountArgs = {
   issuer: string;
@@ -84,6 +31,13 @@ type GetTwitterAccountArgs = {
   expirationDate?: Date;
 }
 
+type TwitterOAuthSession = {
+  redirectUrl?: URL;
+  issueChallenge: string;
+  code?: string;
+  codeVerifier: string;
+};
+
 /** Return Twitter account ownership VC */
 async function getTwitterAccountVC(
   args: GetTwitterAccountArgs
@@ -92,7 +46,7 @@ async function getTwitterAccountVC(
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
-      type: [DEFAULT_CREDENTIAL_TYPE, VCType.TwitterAccount],
+      type: [DEFAULT_CREDENTIAL_TYPE, "TwitterAccount"],
       issuer: { id: args.issuer },
       credentialSubject: {
         id: args.subjectDID,
@@ -109,22 +63,13 @@ async function getTwitterAccountVC(
   );
 }
 
-type TwitterOAuthSession = {
-  redirectUrl?: URL;
-  issueChallenge: string;
-  code?: string;
-  codeVerifier: string;
-};
-
 /** Issue Twitter account ownership VC */
 export class TwitterAccountIssuer
   implements ICredentialIssuer<
     TwitterAccountIssueReq,
-    VC,
+    Credential,
     TwitterAccountChallengeReq,
-    TwitterAccountChallenge,
-    CanIssueReq,
-    CanIssueRes
+    TwitterAccountChallenge
   >,
     IOAuthCallback,
     Disposable {
@@ -153,23 +98,21 @@ export class TwitterAccountIssuer
     this.twitterService = new TwitterService(config);
   }
 
-  async getChallenge({
-    body
-  }: TwitterAccountChallengeReq): Promise<TwitterAccountChallenge> {
+  async getChallenge(req: TwitterAccountChallengeReq): Promise<TwitterAccountChallenge> {
     const sessionId = absoluteId();
-    const userRedirectUrl = body?.redirectUrl
-      ? new URL(body?.redirectUrl)
+    const userRedirectUrl = req?.redirectUrl
+      ? new URL(req?.redirectUrl)
       : undefined;
-    const custom = body?.custom;
-    const expirationDate = body?.expirationDate;
+    const custom = req?.custom;
+    const expirationDate = req?.expirationDate;
     const issueChallenge = toIssueChallenge({
-      type: this.getProvidedVC(),
+      type: this.providedCredential,
       custom: custom,
       expirationDate: expirationDate
     });
     const { authUrl, codeVerifier } = this.twitterService.getOAuthLink({
       sessionId: sessionId,
-      vcType: this.getProvidedVC(),
+      credentialType: this.providedCredential,
       scope: ["offline.access", "tweet.read", "users.read"]
     });
     this.sessionCache.set(sessionId, {
@@ -192,7 +135,7 @@ export class TwitterAccountIssuer
     return session.redirectUrl;
   }
 
-  async canIssue({ sessionId }: CanIssueReq): Promise<CanIssueRes> {
+  async canIssue({ sessionId }: CanIssueReq): Promise<CanIssueResp> {
     const session = this.sessionCache.get(sessionId);
     return { canIssue: Boolean(session?.code) };
   }
@@ -202,7 +145,7 @@ export class TwitterAccountIssuer
     signAlg,
     publicId,
     signature
-  }: TwitterAccountIssueReq): Promise<VC> {
+  }: TwitterAccountIssueReq): Promise<Credential> {
     const session = this.sessionCache.get(sessionId);
     const { code, codeVerifier, issueChallenge } = session;
     if (!code) {
@@ -228,8 +171,8 @@ export class TwitterAccountIssuer
     return this.proofService.jwsSing(vc);
   }
 
-  getProvidedVC(): VCType {
-    return VCType.TwitterAccount;
+  get providedCredential(): CredentialType {
+    return "TwitterAccount";
   }
 
   dispose() {

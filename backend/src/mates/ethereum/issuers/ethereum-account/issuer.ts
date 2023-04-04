@@ -1,17 +1,14 @@
 import {
-  CanIssueRes,
   ChainOwnerProof,
   DEFAULT_CREDENTIAL_CONTEXT,
   DEFAULT_CREDENTIAL_TYPE,
   ICredentialIssuer,
   IOwnerProofHandler,
-  VC
 } from "../../../../base/credentials.js";
 import { type Disposable, tokens } from "typed-inject";
 import { IProofService } from "../../../../base/service/proof-service.js";
 import { DIDService } from "../../../../base/service/did-service.js";
-import { VCType } from "../../../../base/model/const/vc-type.js";
-import { MultiSignService, SignAlgAlias } from "../../../../base/service/multi-sign.service.js";
+import { MultiSignService } from "../../../../base/service/multi-sign.service.js";
 import { fromIssueChallenge, toIssueChallenge } from "../../../../util/challenge.util.js";
 import { absoluteId } from "../../../../util/id-util.js";
 import { TimedCache } from "../../../../base/timed-cache.js";
@@ -19,45 +16,17 @@ import sortKeys from "sort-keys";
 import { ClientError } from "../../../../backbone/errors.js";
 import { randomUUID } from "crypto";
 import { AnyObject } from "../../../../util/model.util.js";
-
-export interface EthAccountChallengeReq {
-  body: {
-    custom?: object;
-    expirationDate?: Date;
-  };
-}
-
-export interface EthAccountVC extends VC {
-  credentialSubject: {
-    id: string;
-    ethereum: {
-      address: string;
-      chainId: string;
-    }
-    custom?: AnyObject;
-  };
-}
-
-export interface EthAccountChallenge {
-  sessionId: string;
-  issueChallenge: string;
-  ownerChallenge: string;
-}
-
-/** Request interface for generate ethereum account ownership VC */
-export interface EthAccountReq {
-  /** Sign message id */
-  sessionId: string;
-
-  /** Signed message by private key */
-  signature: string;
-
-  /** Public key or chain address */
-  publicId: string;
-
-  /** Algorithm of signing */
-  signAlg?: SignAlgAlias;
-}
+import {
+  EthAccountChallenge,
+  EthAccountChallengeReq,
+  EthAccountIssueReq,
+  EthAccountVC,
+  Credential,
+  EthAccountProofResp,
+  CredentialType,
+  CanIssueReq,
+  CanIssueResp
+} from "@sybil-center/sdk/types"
 
 export interface EthAccountSession {
   issueChallenge: string;
@@ -82,7 +51,7 @@ function getEthAccountVC(args: GetEthAccountVC): EthAccountVC {
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
-      type: [DEFAULT_CREDENTIAL_TYPE, VCType.EthereumAccount],
+      type: [DEFAULT_CREDENTIAL_TYPE, "EthereumAccount"],
       issuer: { id: args.issuerDID },
       issuanceDate: new Date(),
       credentialSubject: {
@@ -109,12 +78,10 @@ function ethOwnerChallenge(): string {
 /** ETH Account Issuer */
 export class EthereumAccountIssuer
   implements ICredentialIssuer<
-    EthAccountReq,
-    VC,
+    EthAccountIssueReq,
+    Credential,
     EthAccountChallengeReq,
-    EthAccountChallenge,
-    void,
-    CanIssueRes
+    EthAccountChallenge
   >,
     IOwnerProofHandler<ChainOwnerProof, EthProofResult>,
     Disposable {
@@ -135,15 +102,13 @@ export class EthereumAccountIssuer
     )
   ) {}
 
-  async getChallenge({
-    body
-  }: EthAccountChallengeReq): Promise<EthAccountChallenge> {
-    const custom = body?.custom;
-    const expirationDate = body?.expirationDate;
+  async getChallenge(req: EthAccountChallengeReq): Promise<EthAccountChallenge> {
+    const custom = req?.custom;
+    const expirationDate = req?.expirationDate;
     const sessionId = absoluteId();
     const ownerChallenge = ethOwnerChallenge();
     const issueChallenge = toIssueChallenge({
-      type: this.getProvidedVC(),
+      type: this.providedCredential,
       custom: custom,
       expirationDate: expirationDate
     });
@@ -169,11 +134,11 @@ export class EthereumAccountIssuer
     return { address: ethAddress, chainId: "eip155:1" };
   }
 
-  async canIssue(): Promise<CanIssueRes> {
+  async canIssue(): Promise<CanIssueResp> {
     return { canIssue: true };
   }
 
-  async issue(issueReq: EthAccountReq): Promise<VC> {
+  async issue(issueReq: EthAccountIssueReq): Promise<Credential> {
     const { subjectDID, address, issueChallenge } = await this.#resolve(issueReq);
     const { custom, expirationDate } = fromIssueChallenge(issueChallenge);
     this.sessionCache.delete(issueReq.sessionId);
@@ -195,7 +160,7 @@ export class EthereumAccountIssuer
    * @private
    */
   async #resolve(
-    issueReq: EthAccountReq
+    issueReq: EthAccountIssueReq
   ): Promise<{ address: string, subjectDID: string, issueChallenge: string }> {
     const { sessionId, signAlg, signature, publicId } = issueReq;
 
@@ -217,8 +182,8 @@ export class EthereumAccountIssuer
     };
   }
 
-  getProvidedVC(): VCType {
-    return VCType.EthereumAccount;
+  get providedCredential(): CredentialType {
+    return "EthereumAccount";
   }
 
   dispose(): void {

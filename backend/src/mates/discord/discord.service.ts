@@ -1,15 +1,15 @@
 import * as t from "io-ts";
 import { ServerError } from "../../backbone/errors.js";
-import type { VCType } from "../../base/model/const/vc-type.js";
 import type { IOAuthService } from "../../base/oauth.js";
-import { vcOAuthCallbackUrl } from "../../util/vc-route-util.js";
+import { vcOAuthCallbackUrl } from "../../util/route.util.js";
 import { AccessTokenResponse, OAuthState } from "../../base/oauth.js";
 import { fetchDecode } from "../../base/fetch.util.js";
 import { makeURL } from "../../base/make-url.util.js";
+import { CredentialType } from "@sybil-center/sdk/types"
 
 type LinkReq = {
   sessionId: string;
-  vcType: VCType;
+  credentialType: CredentialType;
   scope: string[];
 };
 
@@ -65,12 +65,15 @@ export class DiscordService implements IOAuthService<LinkReq, URL, string> {
     }
   }
 
-  getOAuthLink({ sessionId, vcType, scope }: LinkReq): URL {
+  getOAuthLink({ sessionId, credentialType, scope }: LinkReq): URL {
     return makeURL("https://discord.com/api/oauth2/authorize", {
       client_id: this.discordClientId,
       redirect_uri: vcOAuthCallbackUrl(this.pathToExposeDomain).href,
       response_type: "code",
-      state: OAuthState.encode({ sessionId: sessionId, vcType: vcType }),
+      state: OAuthState.encode({
+        sessionId: sessionId,
+        credentialType: credentialType
+      }),
       prompt: "consent",
       scope: scope.join("%20"),
     });

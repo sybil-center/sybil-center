@@ -1,5 +1,5 @@
 import { test } from "uvu";
-import * as assert from "uvu/assert";
+import * as a from "uvu/assert";
 import { TwitterApi } from "twitter-api-v2";
 import * as url from "url";
 
@@ -16,13 +16,13 @@ test("should build correct url and state", async () => {
   const query = url.parse(authUrl, true).query;
   const stateFromUrl = query["state"];
 
-  assert.is(
+  a.is(
     stateFromUrl,
     "hello state",
     "state from url and actual state is not matched"
   );
-  assert.is(state, "hello state", "state is not matched");
-  assert.ok(codeVerifier, "verification code have to present");
+  a.is(state, "hello state", "state is not matched");
+  a.ok(codeVerifier, "verification code have to present");
 });
 
 test.run();

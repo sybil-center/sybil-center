@@ -1,14 +1,13 @@
-import { VCRoutes } from "../../../../base/model/route/route.js";
-import { VCType } from "../../../../base/model/const/vc-type.js";
-import { canIssueEP, challengeEP, issueEP } from "../../../../util/vc-route-util.js";
+import { CredentialRoutes } from "../../../../base/model/route/route.js";
+import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
 
 const tags = ["Twitter account ownership verifiable credential"];
-export const twitterAccountRoutes: VCRoutes = {
-  vcType: VCType.TwitterAccount,
+export const twitterAccountRoutes: CredentialRoutes = {
+  credentialType: "TwitterAccount",
 
   issue: {
     method: ["POST"],
-    url: issueEP(VCType.TwitterAccount),
+    url: issueEP("TwitterAccount"),
     schema: {
       tags: tags,
       body: {
@@ -26,7 +25,7 @@ export const twitterAccountRoutes: VCRoutes = {
 
   canIssue: {
     method: ["GET"],
-    url: canIssueEP(VCType.TwitterAccount),
+    url: canIssueEP("TwitterAccount"),
     schema: {
       tags: tags,
       querystring: {
@@ -47,9 +46,9 @@ export const twitterAccountRoutes: VCRoutes = {
     }
   },
 
-  payload: {
+  challenge: {
     method: ["POST"],
-    url: challengeEP(VCType.TwitterAccount),
+    url: challengeEP("TwitterAccount"),
     schema: {
       tags: tags,
       body: {

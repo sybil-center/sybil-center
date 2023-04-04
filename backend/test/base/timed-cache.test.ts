@@ -1,6 +1,6 @@
 import { test } from "uvu";
 import { randomUUID } from "crypto";
-import * as assert from "uvu/assert";
+import * as a from "uvu/assert";
 import { TimedCache } from "../../src/base/timed-cache.js";
 import { delay } from "../../src/util/delay.js";
 
@@ -12,7 +12,7 @@ test("get same message which was set", async () => {
   cacheService.set(id, msg);
 
   const received = cacheService.get(id);
-  assert.is(msg, received, "messages are not equals");
+  a.is(msg, received, "messages are not equals");
   cacheService.dispose();
 });
 
@@ -24,7 +24,7 @@ test("delete message after ttl", async () => {
   const msg = randomUUID();
   cacheService.set(msgId, msg);
   await delay(TTL * 2);
-  assert.throws(() => {
+  a.throws(() => {
     cacheService.get(msgId);
   });
   cacheService.dispose();

@@ -1,38 +1,24 @@
-import type {
-  ICredentialIssuer,
-  CanIssueRes,
-  VC,
-} from "../../../../base/credentials.js";
 import {
   DEFAULT_CREDENTIAL_CONTEXT,
   DEFAULT_CREDENTIAL_TYPE,
+  ICredentialIssuer,
 } from "../../../../base/credentials.js";
 import { IProofService } from "../../../../base/service/proof-service.js";
-import { VCType } from "../../../../base/model/const/vc-type.js";
 import { DIDService } from "../../../../base/service/did-service.js";
 import { tokens } from "typed-inject";
 import sortKeys from "sort-keys";
+import { Challenge, ChallengeReq, Credential, IssueReq, CanIssueResp, CredentialType} from "@sybil-center/sdk/types";
+import { absoluteId } from "../../../../util/id-util.js";
 
-export interface EmptyVC extends VC {}
+export type EmptyVC = Credential
 
-/**
- * Request interface for generate empty VC
- */
-export interface EmptyVCRequest {
-  /**
-   * Entity with executing request defined id of vc
-   */
-  vcId: string;
-}
-
-export function getEmptyVC(issuer: string, vcRequest: EmptyVCRequest): EmptyVC {
+export function getEmptyVC(issuer: string, vcRequest: IssueReq): EmptyVC {
   // @ts-ignore
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
-      type: [DEFAULT_CREDENTIAL_TYPE, VCType.Empty],
+      type: [DEFAULT_CREDENTIAL_TYPE, "Empty"],
       issuer: issuer,
-      id: vcRequest.vcId,
       issuanceDate: new Date(),
     },
     { deep: true }
@@ -43,8 +29,7 @@ export function getEmptyVC(issuer: string, vcRequest: EmptyVCRequest): EmptyVC {
  * Return empty VC
  */
 export class EmptyIssuer
-  implements ICredentialIssuer<EmptyVCRequest, VC, void, {}, void, CanIssueRes>
-{
+  implements ICredentialIssuer<IssueReq, Credential, ChallengeReq, Challenge> {
   static inject = tokens("proofService", "didService");
 
   constructor(
@@ -52,20 +37,23 @@ export class EmptyIssuer
     private readonly didService: DIDService
   ) {}
 
-  async getChallenge(): Promise<{}> {
-    return {};
+  async getChallenge(): Promise<Challenge> {
+    return {
+      sessionId: absoluteId(),
+      issueChallenge: `Sign to issue ${this.providedCredential} credential`
+    };
   }
 
-  async canIssue(): Promise<CanIssueRes> {
+  async canIssue(): Promise<CanIssueResp> {
     return { canIssue: true };
   }
 
-  async issue(vcRequest: EmptyVCRequest): Promise<VC> {
+  async issue(vcRequest: IssueReq): Promise<Credential> {
     const emptyVC = getEmptyVC(this.didService.id, vcRequest);
     return await this.proofService.jwsSing(emptyVC);
   }
 
-  getProvidedVC(): VCType {
-    return VCType.Empty;
+  get providedCredential(): CredentialType {
+    return "Empty";
   }
 }

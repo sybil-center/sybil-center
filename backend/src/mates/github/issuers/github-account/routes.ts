@@ -1,14 +1,13 @@
-import { VCRoutes } from "../../../../base/model/route/route.js";
-import { VCType } from "../../../../base/model/const/vc-type.js";
-import { canIssueEP, challengeEP, issueEP } from "../../../../util/vc-route-util.js";
+import { CredentialRoutes } from "../../../../base/model/route/route.js";
+import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
 
 const tags = ["GitHub account ownership verifiable credential"];
-export const githubAccountRoutes: VCRoutes = {
-  vcType: VCType.GitHubAccount,
+export const githubAccountRoutes: CredentialRoutes = {
+  credentialType: "GitHubAccount",
 
   issue: {
     method: ["POST"],
-    url: issueEP(VCType.GitHubAccount),
+    url: issueEP("GitHubAccount"),
     schema: {
       tags: tags,
       body: {
@@ -26,7 +25,7 @@ export const githubAccountRoutes: VCRoutes = {
 
   canIssue: {
     method: ["GET"],
-    url: canIssueEP(VCType.GitHubAccount),
+    url: canIssueEP("GitHubAccount"),
     schema: {
       querystring: {
         type: "object",
@@ -46,9 +45,9 @@ export const githubAccountRoutes: VCRoutes = {
     }
   },
 
-  payload: {
+  challenge: {
     method: ["POST"],
-    url: challengeEP(VCType.GitHubAccount),
+    url: challengeEP("GitHubAccount"),
     schema: {
       tags: tags,
       body: {

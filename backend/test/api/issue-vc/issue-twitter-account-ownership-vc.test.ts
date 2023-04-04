@@ -3,24 +3,26 @@ import * as a from "uvu/assert";
 import { App } from "../../../src/app/app.js";
 import sinon, { stub } from "sinon";
 import {
+
+  oauthCallbackEP
+} from "../../../src/util/route.util.js";
+import {
   canIssueEP,
   challengeEP,
-  issueEP,
-  oauthCallbackEP
-} from "../../../src/util/vc-route-util.js";
+  issueEP
+} from "@sybil-center/sdk/util";
 import * as url from "url";
-import { isValidVC } from "../../../src/util/vc-utils.js";
-import { VCType } from "../../../src/base/model/const/vc-type.js";
+import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.js";
-import { CanIssueRes } from "../../../src/base/credentials.js";
 import { ethereumSupport } from "../../support/ethereum.js";
 import { LightMyRequestResponse } from "fastify";
 import { solanaSupport } from "../../support/solana.js";
 import { bitcoinSupport } from "../../support/bitcoin.js";
-import type {
-  TwitterAccountChallenge,
-  TwitterAccountVC
-} from "../../../src/mates/twitter/issuers/twitter-account/index.js";
+import {
+  CanIssueResp,
+  TwitterAccountVC,
+  TwitterAccountChallenge
+} from "@sybil-center/sdk/types"
 import { AnyObject } from "../../../src/util/model.util.js";
 
 const test = suite("Integration: Issue Twitter account ownership vc");
@@ -75,7 +77,7 @@ const preIssue = async (
   await fastify.ready();
   const payloadResp = await fastify.inject({
     method: "POST",
-    url: challengeEP(VCType.TwitterAccount),
+    url: challengeEP("TwitterAccount"),
     payload: {
       redirectUrl: redirectUrl,
       custom: custom,
@@ -97,7 +99,7 @@ const preIssue = async (
 
   const canIssueBeforeResp = await fastify.inject({
     method: "GET",
-    url: canIssueEP(VCType.TwitterAccount),
+    url: canIssueEP("TwitterAccount"),
     query: {
       sessionId: sessionId
     }
@@ -107,7 +109,7 @@ const preIssue = async (
     "can issue before callback resp status code is not 200"
   );
   const { canIssue: canIssueBefore } =
-    JSON.parse(canIssueBeforeResp.body) as CanIssueRes;
+    JSON.parse(canIssueBeforeResp.body) as CanIssueResp;
   a.is(
     canIssueBefore, false,
     "can issue before callback is not false"
@@ -129,7 +131,7 @@ const preIssue = async (
 
   const canIssueAfterResp = await fastify.inject({
     method: "GET",
-    url: canIssueEP(VCType.TwitterAccount),
+    url: canIssueEP("TwitterAccount"),
     query: {
       sessionId: sessionId
     }
@@ -139,7 +141,7 @@ const preIssue = async (
     "can issue after callback resp status code is not 200"
   );
   const { canIssue: canIssueAfter } =
-    JSON.parse(canIssueAfterResp.body) as CanIssueRes;
+    JSON.parse(canIssueAfterResp.body) as CanIssueResp;
   a.is(
     canIssueAfter, true,
     "can issue after callback is not true"
@@ -169,11 +171,11 @@ const assertIssueResp = async (args: AssertIssueRespArgs) => {
     "issuer id is not matched"
   );
   a.is(
-    credential.type[0], VCType.VerifiableCredential,
+    credential.type[0], "VerifiableCredential",
     "first item credential type is not matched"
   );
   a.is(
-    credential.type[1], VCType.TwitterAccount,
+    credential.type[1], "TwitterAccount",
     "second item credential type is not matched"
   );
   a.is(subjectDID, id, "credential subject id no matched");
@@ -202,7 +204,7 @@ test("should issue Twitter ownership credential with eth did-pkh", async () => {
 
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.TwitterAccount),
+    url: issueEP("TwitterAccount"),
     payload: {
       sessionId: sessionId,
       publicId: ethAddress,
@@ -227,7 +229,7 @@ test("should issue Twitter ownership credential with bitcoin did-pkh", async () 
 
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.TwitterAccount),
+    url: issueEP("TwitterAccount"),
     payload: {
       sessionId: sessionId,
       publicId: bitcoinAddress,
@@ -251,7 +253,7 @@ test("should issue Twitter ownership credential with solana did-pkh", async () =
   const signature = await solanaSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.TwitterAccount),
+    url: issueEP("TwitterAccount"),
     payload: {
       sessionId: sessionId,
       publicId: solanaAddress,
@@ -268,7 +270,7 @@ test("should redirect to default page after authorization", async () => {
   const config = app.context.resolve("config");
   const payloadResp = await fastify.inject({
     method: "POST",
-    path: challengeEP(VCType.TwitterAccount)
+    path: challengeEP("TwitterAccount")
   });
   a.is(
     payloadResp.statusCode, 200,
@@ -311,7 +313,7 @@ test("should issue twitter account credential with custom property", async () =>
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.TwitterAccount),
+    url: issueEP("TwitterAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -342,7 +344,7 @@ test("should not find Twitter code", async () => {
   await fastify.ready();
   const payloadResp = await fastify.inject({
     method: "POST",
-    url: challengeEP(VCType.TwitterAccount),
+    url: challengeEP("TwitterAccount"),
     payload: {
       redirectUrl: redirectUrl
     }
@@ -354,7 +356,7 @@ test("should not find Twitter code", async () => {
   const signature = await ethereumSupport.sign(issueChallenge);
   const { statusCode, body } = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.TwitterAccount),
+    url: issueEP("TwitterAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -382,7 +384,7 @@ test("issue twitter account credential with expiration date", async () => {
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.TwitterAccount),
+    url: issueEP("TwitterAccount"),
     payload: {
       signature: signature,
       sessionId: sessionId,

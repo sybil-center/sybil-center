@@ -2,25 +2,16 @@ import { suite } from "uvu";
 import * as a from "uvu/assert";
 import { App } from "../../../src/app/app.js";
 import sinon, { stub } from "sinon";
-import {
-  canIssueEP,
-  challengeEP,
-  issueEP,
-  oauthCallbackEP
-} from "../../../src/util/vc-route-util.js";
+import { oauthCallbackEP } from "../../../src/util/route.util.js";
+import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
 import * as url from "url";
-import { isValidVC } from "../../../src/util/vc-utils.js";
-import { VCType } from "../../../src/base/model/const/vc-type.js";
+import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.js";
-import type { CanIssueRes } from "../../../src/base/credentials.js";
 import { ethereumSupport } from "../../support/ethereum.js";
 import { LightMyRequestResponse } from "fastify";
 import { solanaSupport } from "../../support/solana.js";
 import { bitcoinSupport } from "../../support/bitcoin.js";
-import type {
-  GitHubAccountChallenge,
-  GitHubAccountVC
-} from "../../../src/mates/github/issuers/github-account/index.js";
+import { CanIssueResp, GitHubAccountChallenge, GitHubAccountVC } from "@sybil-center/sdk/types";
 import { AnyObject } from "../../../src/util/model.util.js";
 
 const test = suite("Integration: Issue GitHub account ownership vc");
@@ -69,7 +60,7 @@ const preIssue = async (
 
   const payloadResp = await fastify.inject({
     method: "POST",
-    path: challengeEP(VCType.GitHubAccount),
+    path: challengeEP("GitHubAccount"),
     payload: {
       redirectUrl: redirectUrl,
       custom: args?.custom,
@@ -92,7 +83,7 @@ const preIssue = async (
 
   const canIssueBeforeResp = await fastify.inject({
     method: "GET",
-    url: canIssueEP(VCType.GitHubAccount),
+    url: canIssueEP("GitHubAccount"),
     query: {
       sessionId: sessionId
     }
@@ -103,9 +94,8 @@ const preIssue = async (
     "can issue before callback resp status is not 200"
   );
 
-  const { canIssue: canIssueBefore } = JSON.parse(
-    canIssueBeforeResp.body
-  ) as CanIssueRes;
+  const { canIssue: canIssueBefore } =
+    JSON.parse(canIssueBeforeResp.body) as CanIssueResp;
   a.is(canIssueBefore, false, "can issue before callback is not false");
 
   const callbackResp = await fastify.inject({
@@ -126,7 +116,7 @@ const preIssue = async (
 
   const canIssueAfterResp = await fastify.inject({
     method: "GET",
-    url: canIssueEP(VCType.GitHubAccount),
+    url: canIssueEP("GitHubAccount"),
     query: {
       sessionId: sessionId
     }
@@ -136,9 +126,8 @@ const preIssue = async (
     200,
     "can issue after callback resp status code is not 200"
   );
-  const { canIssue: canIssueAfter } = JSON.parse(
-    canIssueAfterResp.body
-  ) as CanIssueRes;
+  const { canIssue: canIssueAfter } =
+    JSON.parse(canIssueAfterResp.body) as CanIssueResp;
   a.is(canIssueAfter, true, "can issue after callback is not true");
 
   return {
@@ -160,11 +149,11 @@ const assertIssueResp = async (args: AssertIssueRespArgs) => {
   const { id, github } = vc.credentialSubject;
   a.is(vc.issuer.id, issuerDID, "issuer id is not matched");
   a.is(
-    vc.type[0], VCType.VerifiableCredential,
+    vc.type[0], "VerifiableCredential",
     "first credential type is not matched"
   );
   a.is(
-    vc.type[1], VCType.GitHubAccount,
+    vc.type[1], "GitHubAccount",
     "second credential type is not matched"
   );
   a.is(id, subjectDID, "credential subject id not matched");
@@ -194,7 +183,7 @@ test("should issue GitHub ownership credential with eth did-pkh", async () => {
 
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.GitHubAccount),
+    url: issueEP("GitHubAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -220,7 +209,7 @@ test("should issue GitHub ownership credential with solana did-pkh", async () =>
 
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.GitHubAccount),
+    url: issueEP("GitHubAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -246,7 +235,7 @@ test("should issue GitHub ownership credential with bitcoin did-pkh", async () =
 
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.GitHubAccount),
+    url: issueEP("GitHubAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -264,7 +253,7 @@ test("should redirect to default page after authorization", async () => {
 
   const payloadResp = await fastify.inject({
     method: "POST",
-    path: challengeEP(VCType.GitHubAccount)
+    path: challengeEP("GitHubAccount")
   });
   a.is(payloadResp.statusCode, 200, "payload resp status code is not 200");
   const { authUrl } = JSON.parse(payloadResp.body) as GitHubAccountChallenge;
@@ -300,7 +289,7 @@ test("should issue credential with custom property", async () => {
   const signature = await ethereumSupport.sign(issueChallenge);
   const vcResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.GitHubAccount),
+    url: issueEP("GitHubAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -327,7 +316,7 @@ test("should not find GitHub code", async () => {
   const fastify = app.context.resolve("httpServer").fastify;
   const payloadResp = await fastify.inject({
     method: "POST",
-    url: challengeEP(VCType.GitHubAccount),
+    url: challengeEP("GitHubAccount"),
     payload: {
       redirectUrl: redirectUrl
     }
@@ -343,7 +332,7 @@ test("should not find GitHub code", async () => {
   const signature = await ethereumSupport.sign(issueChallenge);
   const errResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.GitHubAccount),
+    url: issueEP("GitHubAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -373,7 +362,7 @@ test("issue github account credential with expiration date", async () => {
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
-    url: issueEP(VCType.GitHubAccount),
+    url: issueEP("GitHubAccount"),
     payload: {
       sessionId: sessionId,
       signAlg: signAlg,

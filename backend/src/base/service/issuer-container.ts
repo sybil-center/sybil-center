@@ -1,23 +1,26 @@
-import type {
-  ChainOwnerProof,
-  ICredentialIssuer,
-  IOAuthCallback,
-  IOwnerProofHandler
-} from "../credentials.js";
+import type { ICredentialIssuer, IOAuthCallback, IOwnerProofHandler } from "../credentials.js";
 import type { ILogger } from "../../backbone/logger.js";
 import type { OAuthState } from "../oauth.js";
-import type { VCType } from "../model/const/vc-type.js";
 import { type Disposable, type Injector, INJECTOR_TOKEN, tokens } from "typed-inject";
 import { ClientError } from "../../backbone/errors.js";
 import { AnyObject } from "../../util/model.util.js";
+import {
+  CanIssueReq,
+  CanIssueResp,
+  Challenge,
+  ChallengeReq,
+  Credential,
+  CredentialType,
+  IssueReq
+} from "@sybil-center/sdk/types";
 
 type UnknownCredentialIssuer = ICredentialIssuer<
-  unknown,
-  unknown,
-  unknown,
-  unknown,
-  unknown,
-  unknown
+  IssueReq,
+  Credential,
+  ChallengeReq,
+  Challenge,
+  CanIssueReq,
+  CanIssueResp
 >;
 
 // Mapping between types and runtime
@@ -35,7 +38,7 @@ type Dependencies = Record<keyof typeof ISSUERS, UnknownCredentialIssuer>;
  * Issued VC
  */
 export class IssuerContainer implements Disposable {
-  private readonly issuers: Map<VCType, UnknownCredentialIssuer>;
+  private readonly issuers: Map<CredentialType, UnknownCredentialIssuer>;
 
   static inject = tokens(INJECTOR_TOKEN, "logger");
 
@@ -44,25 +47,25 @@ export class IssuerContainer implements Disposable {
     const issuerIds = Object.keys(ISSUERS) as Array<keyof typeof ISSUERS>;
     for (const id of issuerIds) {
       const issuer = injector.resolve(id);
-      const name = issuer.getProvidedVC();
+      const name = issuer.providedCredential;
       this.issuers.set(name, issuer);
       logger.info(`Added ${name} issuer`);
     }
   }
 
-  canIssue(vcType: VCType, entry: unknown): Promise<unknown> {
-    const issuer = this.getIssuer(vcType);
+  canIssue(type: CredentialType, entry: CanIssueReq): Promise<CanIssueResp> {
+    const issuer = this.getIssuer(type);
     return issuer.canIssue(entry);
   }
 
   /**
    * Issue VC by vc type and vc request payload
-   * @param vcType
-   * @param vcRequest payload for create VC
+   * @param type
+   * @param issueReq payload for create VC
    */
-  issue(vcType: VCType, vcRequest: unknown): Promise<unknown> {
-    const issuer = this.getIssuer(vcType);
-    return issuer.issue(vcRequest);
+  issue(type: CredentialType, issueReq: IssueReq): Promise<Credential> {
+    const issuer = this.getIssuer(type);
+    return issuer.issue(issueReq);
   }
 
   /**
@@ -74,47 +77,45 @@ export class IssuerContainer implements Disposable {
     code: string,
     oauthState: OAuthState
   ): Promise<URL | undefined> {
-    const issuer = this.getIssuer(oauthState.vcType as VCType);
+    const issuer = this.getIssuer(oauthState.credentialType as CredentialType);
     return issuer.handleOAuthCallback?.(code, oauthState);
   }
 
   async handleOwnerProof(
-    credentialType: VCType,
+    type: CredentialType,
     proof: AnyObject
   ): Promise<AnyObject> {
-    const issuer = this.getIssuer(credentialType);
+    const issuer = this.getIssuer(type);
     return await issuer.handleOwnerProof!(proof);
   }
 
   /**
    * Get payload for providing VC issue process
-   * @param vcType type of VC that need to be issued
+   * @param type type of VC that need to be issued
    * @param payloadRequest
    */
-  getIssueVCPayload(
-    vcType: VCType,
-    payloadRequest?: unknown
-  ): Promise<unknown> {
-    const issuer = this.getIssuer(vcType);
+  getChallenge(
+    type: CredentialType,
+    payloadRequest?: ChallengeReq
+  ): Promise<Challenge> {
+    const issuer = this.getIssuer(type);
     return issuer.getChallenge(payloadRequest);
   }
 
   /**
    * Get issuer by type of VC
-   * @param vcType type of VC
    * @throws Error if issuer not found
    * @private
+   * @param type
    */
   private getIssuer(
-    vcType: VCType
+    type: CredentialType
   ): UnknownCredentialIssuer
     & Partial<IOAuthCallback>
     & Partial<IOwnerProofHandler<AnyObject, AnyObject>> {
-    const issuer = this.issuers.get(vcType);
-    if (issuer) {
-      return issuer;
-    }
-    throw new ClientError(`Issuer ${vcType} not found`);
+    const issuer = this.issuers.get(type);
+    if (issuer) return issuer;
+    throw new ClientError(`Issuer ${type} not found`);
   }
 
   async dispose() {

@@ -1,15 +1,13 @@
 import { RouteOptions } from "fastify/types/route.js";
-import { VCType } from "../const/vc-type.js";
+import { CredentialType } from "@sybil-center/sdk/types";
 
-/**
- * Base route interface each route has to implement it
- */
+/** Base route interface each route has to implement it */
 export type Route = Omit<RouteOptions, 'handler'>
 
-export interface VCRoutes {
-  vcType: VCType,
+export interface CredentialRoutes {
+  credentialType: CredentialType,
   issue: Route,
-  payload?: Route,
+  challenge?: Route,
   canIssue?: Route,
   ownerProof?: Route
 }
