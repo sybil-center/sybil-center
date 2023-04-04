@@ -6,7 +6,7 @@ import { oauthCallbackEP } from "../../../src/util/route.util.js";
 import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
 import * as url from "url";
 import { isValidVC } from "../../../src/util/credential.utils.js";
-import { configDotEnv } from "../../../src/util/dotenv.js";
+import { configDotEnv } from "../../../src/util/dotenv.util.js";
 import { ethereumSupport } from "../../support/ethereum.js";
 import { LightMyRequestResponse } from "fastify";
 import { solanaSupport } from "../../support/solana.js";

@@ -1,4 +1,4 @@
-import { ClientError } from "../../../backbone/errors.js";
+import { ClientError } from "../../backbone/errors.js";
 import { ethers } from "ethers";
 
 export type VerifySignFun = (

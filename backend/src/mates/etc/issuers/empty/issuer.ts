@@ -2,13 +2,13 @@ import {
   DEFAULT_CREDENTIAL_CONTEXT,
   DEFAULT_CREDENTIAL_TYPE,
   ICredentialIssuer,
-} from "../../../../base/credentials.js";
-import { IProofService } from "../../../../base/service/proof-service.js";
-import { DIDService } from "../../../../base/service/did-service.js";
+} from "../../../../base/service/credentials.js";
+import { IProofService } from "../../../../base/service/proof.service.js";
+import { DIDService } from "../../../../base/service/did.service.js";
 import { tokens } from "typed-inject";
 import sortKeys from "sort-keys";
 import { Challenge, ChallengeReq, Credential, IssueReq, CanIssueResp, CredentialType} from "@sybil-center/sdk/types";
-import { absoluteId } from "../../../../util/id-util.js";
+import { absoluteId } from "../../../../util/id.util.js";
 
 export type EmptyVC = Credential
 

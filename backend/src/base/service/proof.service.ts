@@ -1,4 +1,4 @@
-import type { DIDService } from "./did-service.js";
+import type { DIDService } from "./did.service.js";
 import { tokens } from "typed-inject";
 import { Credential } from "@sybil-center/sdk/types"
 

@@ -1,5 +1,5 @@
 import type { Decoder } from "io-ts";
-import { ThrowDecoder } from "./throw-decoder.js";
+import { ThrowDecoder } from "./throw-decoder.util.js";
 
 export type FetchOpts = {
   body: any;

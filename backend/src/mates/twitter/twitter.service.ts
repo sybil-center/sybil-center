@@ -1,6 +1,6 @@
 import { TwitterApi } from "twitter-api-v2";
 import { ServerError } from "../../backbone/errors.js";
-import { IOAuthService, OAuthState } from "../../base/oauth.js";
+import { IOAuthService, OAuthState } from "../../base/types/oauth.js";
 import { vcOAuthCallbackUrl } from "../../util/route.util.js";
 import { CredentialType } from "@sybil-center/sdk/types";
 

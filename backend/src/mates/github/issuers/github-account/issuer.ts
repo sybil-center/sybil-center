@@ -1,22 +1,22 @@
 import type {
   ICredentialIssuer,
   IOAuthCallback,
-} from "../../../../base/credentials.js";
+} from "../../../../base/service/credentials.js";
 import {
   DEFAULT_CREDENTIAL_CONTEXT,
   DEFAULT_CREDENTIAL_TYPE
-} from "../../../../base/credentials.js";
+} from "../../../../base/service/credentials.js";
 import { type Disposable, tokens } from "typed-inject";
 import { GitHubService, type GitHubUser } from "../../github.service.js";
-import { IProofService } from "../../../../base/service/proof-service.js";
-import { DIDService } from "../../../../base/service/did-service.js";
+import { IProofService } from "../../../../base/service/proof.service.js";
+import { DIDService } from "../../../../base/service/did.service.js";
 import { ClientError } from "../../../../backbone/errors.js";
 import type { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
 import { fromIssueChallenge, toIssueChallenge } from "../../../../util/challenge.util.js";
-import { TimedCache } from "../../../../base/timed-cache.js";
-import { absoluteId } from "../../../../util/id-util.js";
+import { TimedCache } from "../../../../base/service/timed-cache.js";
+import { absoluteId } from "../../../../util/id.util.js";
 import sortKeys from "sort-keys";
-import { OAuthState } from "../../../../base/oauth.js";
+import { OAuthState } from "../../../../base/types/oauth.js";
 import { AnyObject } from "../../../../util/model.util.js";
 import {
   CanIssueResp,

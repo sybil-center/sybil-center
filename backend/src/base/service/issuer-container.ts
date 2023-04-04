@@ -1,6 +1,6 @@
-import type { ICredentialIssuer, IOAuthCallback, IOwnerProofHandler } from "../credentials.js";
+import type { ICredentialIssuer, IOAuthCallback, IOwnerProofHandler } from "./credentials.js";
 import type { ILogger } from "../../backbone/logger.js";
-import type { OAuthState } from "../oauth.js";
+import type { OAuthState } from "../types/oauth.js";
 import { type Disposable, type Injector, INJECTOR_TOKEN, tokens } from "typed-inject";
 import { ClientError } from "../../backbone/errors.js";
 import { AnyObject } from "../../util/model.util.js";

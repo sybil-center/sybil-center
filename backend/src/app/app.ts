@@ -1,18 +1,18 @@
-import { ProofService } from "../base/service/proof-service.js";
+import { ProofService } from "../base/service/proof.service.js";
 import { EmptyIssuer } from "../mates/etc/issuers/empty/index.js";
 import { createInjector, Injector } from "typed-inject";
 import { IssuerContainer } from "../base/service/issuer-container.js";
 import { Logger, type ILogger } from "../backbone/logger.js";
 import { HttpServer } from "../backbone/http-server.js";
-import { vcController } from "../base/controller/vc-controller.js";
+import { credentialController } from "../base/controller/credential.controller.js";
 import { Config } from "../backbone/config.js";
-import { DIDService } from "../base/service/did-service.js";
+import { DIDService } from "../base/service/did.service.js";
 import { MultiSignService } from "../base/service/multi-sign.service.js";
 import { EthereumAccountIssuer } from "../mates/ethereum/issuers/ethereum-account/index.js";
 import { TwitterAccountIssuer } from "../mates/twitter/issuers/twitter-account/index.js";
 import { GitHubAccountIssuer } from "../mates/github/issuers/github-account/index.js";
 import { DiscordAccountIssuer } from "../mates/discord/issuers/discord-account/index.js";
-import { oauthPageController } from "../base/controller/oauth-page-controller.js";
+import { oauthPageController } from "../base/controller/oauth-page.controller.js";
 
 type DI = {
   logger: ILogger;
@@ -53,7 +53,7 @@ export class App {
     const issuerContainer = this.context.resolve("issuerContainer");
     const config = this.context.resolve("config");
 
-    vcController(fastify, issuerContainer, config);
+    credentialController(fastify, issuerContainer, config);
     oauthPageController(fastify);
   }
 

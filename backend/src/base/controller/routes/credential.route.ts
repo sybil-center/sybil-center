@@ -1,4 +1,4 @@
-import { CredentialRoutes } from "../../model/route/route.js";
+import { CredentialRoutes } from "../../types/route.js";
 import { ethereumAccountRoutes } from "../../../mates/ethereum/issuers/ethereum-account/index.js";
 import { emptyRoutes } from "../../../mates/etc/issuers/empty/index.js";
 import { twitterAccountRoutes } from "../../../mates/twitter/issuers/twitter-account/index.js";

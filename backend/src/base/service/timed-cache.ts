@@ -1,6 +1,6 @@
 import type { Disposable } from "typed-inject";
 import { CacheClock } from "cache-clock";
-import { ClientError } from "../backbone/errors.js";
+import { ClientError } from "../../backbone/errors.js";
 
 export class TimedCache<TKey, TValue> implements Disposable {
   private readonly cacheClock;

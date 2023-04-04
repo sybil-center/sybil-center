@@ -1,4 +1,4 @@
-import { SignService } from "../abstraction/sign.service.js";
+import { SignService } from "../sign.service.js";
 import { verify } from "bitcoinjs-message";
 
 export async function verifyBitcoinSign(

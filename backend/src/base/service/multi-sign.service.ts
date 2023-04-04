@@ -1,4 +1,4 @@
-import { SignService } from "./abstraction/sign.service.js";
+import { SignService } from "./sign.service.js";
 import { CeloSignService } from "./sign/celo-sign.service.js";
 import { BitcoinSignService } from "./sign/bitcoin-sign.service.js";
 import { EthereumSignService } from "./sign/ethereum-sign.service.js";

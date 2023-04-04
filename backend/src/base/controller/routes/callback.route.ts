@@ -1,4 +1,4 @@
-import { Route } from "../../model/route/route.js";
+import { Route } from "../../types/route.js";
 import { oauthCallbackEP } from "../../../util/route.util.js";
 
 const tags = ["VC OAuth2 callback"];

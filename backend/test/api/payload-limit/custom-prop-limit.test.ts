@@ -1,7 +1,7 @@
 import { suite } from "uvu";
 import * as a from "uvu/assert";
 import { App } from "../../../src/app/app.js";
-import { configDotEnv } from "../../../src/util/dotenv.js";
+import { configDotEnv } from "../../../src/util/dotenv.util.js";
 import { challengeEP } from "@sybil-center/sdk/util";
 
 const test = suite("Custom property size limit test");

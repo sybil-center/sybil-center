@@ -1,4 +1,4 @@
-import { SignService } from "../abstraction/sign.service.js";
+import { SignService } from "../sign.service.js";
 import base58 from "bs58";
 import * as ed25519 from "@noble/ed25519";
 

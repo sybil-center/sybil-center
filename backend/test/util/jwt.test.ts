@@ -7,7 +7,7 @@ import {
   toFullDagJWT,
   toFullJWT,
   toJWS,
-} from "../../src/util/jwt.js";
+} from "../../src/util/jwt.util.js";
 import { DagJWS } from "dids/dist/types";
 
 const test = suite("JWT lib util test");

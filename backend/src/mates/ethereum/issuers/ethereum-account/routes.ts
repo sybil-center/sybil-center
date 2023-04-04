@@ -1,4 +1,4 @@
-import { CredentialRoutes } from "../../../../base/model/route/route.js";
+import { CredentialRoutes } from "../../../../base/types/route.js";
 import { challengeEP, issueEP, ownerProofEP } from "@sybil-center/sdk/util";
 
 const tags = ["Ethereum account ownership verifiable credential"];

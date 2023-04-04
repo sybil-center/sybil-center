@@ -1,12 +1,12 @@
 import { suite } from "uvu";
 import * as a from "uvu/assert";
-import { ProofService } from "../../src/base/service/proof-service.js";
+import { ProofService } from "../../src/base/service/proof.service.js";
 import { Credential } from "@sybil-center/sdk/types";
-import { toJWTPayload } from "../../src/util/jwt.js";
+import { toJWTPayload } from "../../src/util/jwt.util.js";
 import sortKeys from "sort-keys";
 import { createInjector, Injector } from "typed-inject";
 import { Config } from "../../src/backbone/config.js";
-import { DIDService } from "../../src/base/service/did-service.js";
+import { DIDService } from "../../src/base/service/did.service.js";
 
 const test = suite("ProofService test");
 

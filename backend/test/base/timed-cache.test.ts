@@ -1,8 +1,8 @@
 import { test } from "uvu";
 import { randomUUID } from "crypto";
 import * as a from "uvu/assert";
-import { TimedCache } from "../../src/base/timed-cache.js";
-import { delay } from "../../src/util/delay.js";
+import { TimedCache } from "../../src/base/service/timed-cache.js";
+import { delay } from "../../src/util/delay.util.js";
 
 test("get same message which was set", async () => {
   const cacheService = new TimedCache(100);

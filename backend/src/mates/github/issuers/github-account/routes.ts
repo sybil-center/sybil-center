@@ -1,4 +1,4 @@
-import { CredentialRoutes } from "../../../../base/model/route/route.js";
+import { CredentialRoutes } from "../../../../base/types/route.js";
 import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
 
 const tags = ["GitHub account ownership verifiable credential"];

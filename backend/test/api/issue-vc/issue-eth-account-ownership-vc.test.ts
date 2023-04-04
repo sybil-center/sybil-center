@@ -4,7 +4,7 @@ import { App } from "../../../src/app/app.js";
 import sinon from "sinon";
 import { challengeEP, issueEP, ownerProofEP } from "@sybil-center/sdk/util";
 import { isValidVC } from "../../../src/util/credential.utils.js";
-import { configDotEnv } from "../../../src/util/dotenv.js";
+import { configDotEnv } from "../../../src/util/dotenv.util.js";
 //@ts-ignore
 import { ethereumSupport } from "../../support/ethereum.js";
 import { EthAccountChallenge, EthAccountVC } from "@sybil-center/sdk/types";

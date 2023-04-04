@@ -1,8 +1,8 @@
 import { test } from "uvu";
 import * as a from "uvu/assert";
-import { getPayload, toJWS } from "../../src/util/jwt.js";
+import { getPayload, toJWS } from "../../src/util/jwt.util.js";
 import sortKeys from "sort-keys";
-import { DIDService } from "../../src/base/service/did-service.js";
+import { DIDService } from "../../src/base/service/did.service.js";
 import { createInjector } from "typed-inject";
 import { Config } from "../../src/backbone/config.js";
 import { Logger } from "../../src/backbone/logger.js";

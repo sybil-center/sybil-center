@@ -1,10 +1,10 @@
 import * as t from "io-ts";
 import { ServerError } from "../../backbone/errors.js";
-import type { IOAuthService } from "../../base/oauth.js";
+import type { IOAuthService } from "../../base/types/oauth.js";
 import { vcOAuthCallbackUrl } from "../../util/route.util.js";
-import { AccessTokenResponse, OAuthState } from "../../base/oauth.js";
-import { fetchDecode } from "../../base/fetch.util.js";
-import { makeURL } from "../../base/make-url.util.js";
+import { AccessTokenResponse, OAuthState } from "../../base/types/oauth.js";
+import { fetchDecode } from "../../util/fetch.util.js";
+import { makeURL } from "../../util/make-url.util.js";
 import { CredentialType } from "@sybil-center/sdk/types"
 
 type LinkReq = {

@@ -1,6 +1,6 @@
 import { test } from "uvu";
 import * as a from "uvu/assert";
-import { makeURL } from "../../src/base/make-url.util.js";
+import { makeURL } from "../../src/util/make-url.util.js";
 
 test("makeURL", async () => {
   const expectUrl = "http://hello/world?id=123#test";

@@ -1,4 +1,4 @@
-import type { OAuthState } from "./oauth.js";
+import type { OAuthState } from "../types/oauth.js";
 import {
   CanIssueReq,
   CanIssueResp,

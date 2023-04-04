@@ -1,11 +1,11 @@
 import type { IssuerContainer } from "../service/issuer-container.js";
 import type { FastifyInstance } from "fastify";
-import type { OAuthQueryCallBack } from "../credentials.js";
-import { genVCRotes } from "./routes/gen-vc-routes.js";
-import { vcOAuthCallback } from "./routes/callback-routes.js";
+import type { OAuthQueryCallBack } from "../service/credentials.js";
+import { genVCRotes } from "./routes/credential.route.js";
+import { vcOAuthCallback } from "./routes/callback.route.js";
 import { ClientError } from "../../backbone/errors.js";
-import { OAuthState } from "../oauth.js";
-import { ThrowDecoder } from "../throw-decoder.js";
+import { OAuthState } from "../types/oauth.js";
+import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 import { AnyObject } from "../../util/model.util.js";
 import { CanIssueReq, ChallengeReq, IssueReq } from "@sybil-center/sdk/types";
 
@@ -24,7 +24,7 @@ function validateCustomSize(custom: object, sizeLimit: number): void {
   }
 }
 
-export function vcController(
+export function credentialController(
   fastifyServ: FastifyInstance,
   issuerContainer: IssuerContainer,
   config: ConfigFields
