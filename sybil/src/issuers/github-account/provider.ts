@@ -26,14 +26,14 @@ export class GithubAccountProvider
 
   async issueVC(signFn: SignFn, { sessionId, issueChallenge }: GitHubAccountReq): Promise<GitHubAccountVC> {
     const {
-      signAlg,
+      signType,
       publicId,
       signature
     } = await signFn({ message: issueChallenge });
     return this.httpClient.issue<GitHubAccountVC, GitHubAccountIssueReq>(this.kind, {
       sessionId: sessionId,
       signature: signature,
-      signAlg: signAlg,
+      signType: signType,
       publicId: publicId
     });
   }

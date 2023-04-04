@@ -15,7 +15,7 @@ export const githubAccountRoutes: CredentialRoutes = {
         properties: {
           sessionId: { type: "string" },
           publicId: { type: "string" },
-          signAlg: { type: "string" },
+          signType: { type: "string" },
           signature: { type: "string" }
         },
         required: ["sessionId", "signature", "publicId"]

@@ -10,8 +10,12 @@ import { LightMyRequestResponse } from "fastify";
 import { ethereumSupport } from "../../support/ethereum.js";
 import { bitcoinSupport } from "../../support/bitcoin.js";
 import { solanaSupport } from "../../support/solana.js";
-import { SignAlgAlias } from "../../../src/base/service/multi-sign.service.js";
-import { CanIssueResp, DiscordAccountChallenge, DiscordAccountVC } from "@sybil-center/sdk/types";
+import {
+  CanIssueResp,
+  DiscordAccountChallenge,
+  DiscordAccountVC,
+  SignType
+} from "@sybil-center/sdk/types";
 import { AnyObject } from "../../../src/util/model.util.js";
 import { oauthCallbackEP } from "../../../src/util/route.util.js";
 
@@ -186,7 +190,7 @@ test("should issue discord ownership credential with ethereum did-pkh", async ()
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signAlg: ethDidPkhPrefix,
+      signType: ethDidPkhPrefix,
       publicId: ethAddress
     }
   });
@@ -212,7 +216,7 @@ test("should issue discord ownership credential with solana did-pkh", async () =
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signAlg: solanaDidPkhPrefix,
+      signType: solanaDidPkhPrefix,
       publicId: solanaAddress
     }
   });
@@ -238,7 +242,7 @@ test("should issue discord ownership credential with bitcoin did-pkh", async () 
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signAlg: bitcoinDidPkhPrefix,
+      signType: bitcoinDidPkhPrefix,
       publicId: bitcoinAddress
     }
   });
@@ -297,7 +301,7 @@ test("should issue vc with custom properties", async () => {
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signAlg: didPkhPrefix as SignAlgAlias,
+      signType: didPkhPrefix as SignType,
       publicId: address
     }
   });
@@ -340,7 +344,7 @@ test("should not find Discord code", async () => {
       sessionId: sessionId,
       signature: signature,
       publicId: "test",
-      signAlg: "test"
+      signType: "test"
     }
   });
   a.is(errResp.statusCode, 400, "error response status code is not 400");
@@ -363,7 +367,7 @@ test("issue discord account credential with expiration date", async () => {
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signAlg: didPkhPrefix,
+      signType: didPkhPrefix,
       publicId: address
     }
   });

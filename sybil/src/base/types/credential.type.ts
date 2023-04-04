@@ -1,7 +1,7 @@
 import { ProofType } from "./proof-type.type.js";
 import { CredentialType } from "./credential-type.type.js";
 import { AnyObj } from "../../util/types.util.js";
-import { SignAlgAlias } from "./sign-alias.type.js";
+import { SignType } from "./sign-type.type.js";
 
 /** Base type of VC and its components */
 export type Credential = {
@@ -57,7 +57,7 @@ export type CredentialStatus = {
 export type IssueReq = {
   sessionId: string;
   signature: string;
-  signAlg?: SignAlgAlias;
+  signType?: SignType;
 
   /** Entity with executing request defined id of vc */
   credentialId?: string;

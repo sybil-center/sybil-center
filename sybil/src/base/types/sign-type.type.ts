@@ -1,4 +1,4 @@
-export type SignAlgAlias =
+export type SignType =
   | "bitcoin"
   | "bip122:000000000019d6689c085ae165831e93"
   | "did:pkh:bip122:000000000019d6689c085ae165831e93"

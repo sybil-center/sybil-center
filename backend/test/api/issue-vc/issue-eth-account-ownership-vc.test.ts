@@ -7,11 +7,10 @@ import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
 //@ts-ignore
 import { ethereumSupport } from "../../support/ethereum.js";
-import { EthAccountChallenge, EthAccountVC } from "@sybil-center/sdk/types";
+import { EthAccountChallenge, EthAccountVC, SignType } from "@sybil-center/sdk/types";
 import { EthProofResult } from "../../../src/mates/ethereum/issuers/ethereum-account/index.js";
 //@ts-ignore
 import { solanaSupport } from "../../support/solana.js";
-import { SignAlgAlias } from "../../../src/base/service/multi-sign.service.js";
 import { AnyObject } from "../../../src/util/model.util.js";
 import { LightMyRequestResponse } from "fastify";
 
@@ -214,13 +213,13 @@ test("issue ethereum account credential with different subject and address", asy
   const { fastify } = app.context.resolve("httpServer");
   const { issueChallenge, sessionId, ownerChallenge } = await preIssue();
   const ethSignature = await ethereumSupport.sign(ownerChallenge);
-  const ethSignAlg: SignAlgAlias = "ethereum";
+  const ethSignType: SignType = "ethereum";
   const ownerProofResp = await fastify.inject({
     method: "POST",
     url: ownerProofEP("EthereumAccount"),
     payload: {
       signature: ethSignature,
-      signAlg: ethSignAlg,
+      signType: ethSignType,
       sessionId: sessionId,
       publicId: ethereumAddress
     }
@@ -238,7 +237,7 @@ test("issue ethereum account credential with different subject and address", asy
   );
 
   const solanaSignature = await solanaSupport.sign(issueChallenge);
-  const solanaSignAlg: SignAlgAlias = "solana";
+  const solanaSignType: SignType = "solana";
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("EthereumAccount"),
@@ -246,7 +245,7 @@ test("issue ethereum account credential with different subject and address", asy
       signature: solanaSignature,
       publicId: solanaAddress,
       sessionId: sessionId,
-      signAlg: solanaSignAlg
+      signType: solanaSignType
     }
   });
   await assertIssueResp({ issueResp, subjectDID, ethereumAddress });
@@ -268,7 +267,7 @@ test("issue eth account credential with expiration date", async () => {
     url: issueEP("EthereumAccount"),
     payload: {
       sessionId: sessionId,
-      signAlg: didPkhPrefix,
+      signType: didPkhPrefix,
       publicId: ethereumAddress,
       signature: signature
     }

@@ -208,7 +208,7 @@ test("should issue Twitter ownership credential with eth did-pkh", async () => {
     payload: {
       sessionId: sessionId,
       publicId: ethAddress,
-      signAlg: ethDidPkhPrefix,
+      signType: ethDidPkhPrefix,
       signature: signature
     }
   });
@@ -233,7 +233,7 @@ test("should issue Twitter ownership credential with bitcoin did-pkh", async () 
     payload: {
       sessionId: sessionId,
       publicId: bitcoinAddress,
-      signAlg: bitcoinDidPkhPrefix,
+      signType: bitcoinDidPkhPrefix,
       signature: signature
     }
   });
@@ -257,7 +257,7 @@ test("should issue Twitter ownership credential with solana did-pkh", async () =
     payload: {
       sessionId: sessionId,
       publicId: solanaAddress,
-      signAlg: solanaDidPkhPrefix,
+      signType: solanaDidPkhPrefix,
       signature: signature
     }
   });
@@ -318,7 +318,7 @@ test("should issue twitter account credential with custom property", async () =>
       sessionId: sessionId,
       signature: signature,
       publicId: address,
-      signAlg: didPkhPrefix
+      signType: didPkhPrefix
     }
   });
   a.is(
@@ -360,7 +360,7 @@ test("should not find Twitter code", async () => {
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signAlg: ethDidPkhPrefix,
+      signType: ethDidPkhPrefix,
       publicId: ethAddress
     }
   });
@@ -376,7 +376,7 @@ test("issue twitter account credential with expiration date", async () => {
   const {
     address,
     didPkh: subjectDID,
-    didPkhPrefix: signAlg
+    didPkhPrefix: signType
   } = ethereumSupport.info.ethereum;
   const expirationDate = new Date();
   const fastify = app.context.resolve("httpServer").fastify;
@@ -388,7 +388,7 @@ test("issue twitter account credential with expiration date", async () => {
     payload: {
       signature: signature,
       sessionId: sessionId,
-      signAlg: signAlg,
+      signType: signType,
       publicId: address
     }
   });

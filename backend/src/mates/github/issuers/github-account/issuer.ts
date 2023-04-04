@@ -148,7 +148,7 @@ export class GitHubAccountIssuer
 
   async issue({
     sessionId,
-    signAlg,
+    signType,
     publicId,
     signature
   }: GitHubAccountIssueReq): Promise<Credential> {
@@ -158,7 +158,7 @@ export class GitHubAccountIssuer
       throw new ClientError("GitHub processing your authorization. Wait!");
     }
     const subjectDID = await this.multiSignService
-      .signAlg(signAlg)
+      .signAlg(signType)
       .did(signature, issueChallenge, publicId);
     const { custom, expirationDate } = fromIssueChallenge(issueChallenge);
     const accessToken = await this.gitHubService.getAccessToken(code);

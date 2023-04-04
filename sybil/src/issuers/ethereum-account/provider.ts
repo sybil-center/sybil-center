@@ -73,13 +73,13 @@ export class EthAccountProvider
     const {
       signature,
       publicId,
-      signAlg
+      signType
     } = await signMessageAlg({ message: params.issueChallenge });
     return this.httpClient.issue<EthAccountVC, EthAccountIssueReq>(this.kind, {
       sessionId: params.sessionId,
       signature: signature,
       publicId: publicId,
-      signAlg: signAlg
+      signType: signType
     });
   }
 }

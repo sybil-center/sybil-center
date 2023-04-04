@@ -1,4 +1,4 @@
-import { SignAlgAlias } from "./sign-alias.type.js";
+import { SignType } from "./sign-type.type.js";
 
 export type SignResult = {
   /**
@@ -16,6 +16,6 @@ export type SignResult = {
    * {@see https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md}
    * it also can be used with "did:pkh:" prefix
    */
-  signAlg?: SignAlgAlias;
+  signType?: SignType;
 }
 export type SignFn = (args: { message: string }) => Promise<SignResult>;

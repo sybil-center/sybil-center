@@ -6,32 +6,16 @@ import { PolygonSignService } from "./sign/polygon-sign.service.js";
 import { SolanaSignService } from "./sign/solana-sign.service.js";
 import { tokens } from "typed-inject";
 import { ClientError } from "../../backbone/errors.js";
-
-export type SignAlgAlias =
-  | "bitcoin"
-  | "bip122:000000000019d6689c085ae165831e93"
-  | "did:pkh:bip122:000000000019d6689c085ae165831e93"
-  | "celo"
-  | "eip155:42220"
-  | "did:pkh:eip155:42220"
-  | "ethereum"
-  | "eip155:1"
-  | "did:pkh:eip155:1"
-  | "polygon"
-  | "eip155:137"
-  | "did:pkh:eip155:137"
-  | "solana"
-  | "solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ"
-  | "did:pkh:solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ";
+import { SignType } from "@sybil-center/sdk/types";
 
 export interface IMultiSignService {
-  signAlg(alias?: SignAlgAlias): SignService;
+  signAlg(alias?: SignType): SignService;
 }
 
 export class MultiSignService implements IMultiSignService {
   static inject = tokens();
 
-  private readonly signServices: Map<SignAlgAlias, SignService>;
+  private readonly signServices: Map<SignType, SignService>;
   readonly ethereum: EthereumSignService;
 
   constructor() {
@@ -41,7 +25,7 @@ export class MultiSignService implements IMultiSignService {
     const ethereum = new EthereumSignService();
     this.ethereum = ethereum;
     const polygon = new PolygonSignService();
-    this.signServices = new Map<SignAlgAlias, SignService>([
+    this.signServices = new Map<SignType, SignService>([
       ["bitcoin", bitcoin],
       ["bip122:000000000019d6689c085ae165831e93", bitcoin],
       ["did:pkh:bip122:000000000019d6689c085ae165831e93", bitcoin],
@@ -65,10 +49,9 @@ export class MultiSignService implements IMultiSignService {
   }
 
   /**
-   * Get sign from alias/name {@link SignAlgAlias}
    * @param alias - alias/name of sign
    */
-  signAlg(alias?: SignAlgAlias): SignService {
+  signAlg(alias?: SignType): SignService {
     if (!alias) return this.ethereum;
     const signService = this.signServices.get(alias);
     if (signService) {

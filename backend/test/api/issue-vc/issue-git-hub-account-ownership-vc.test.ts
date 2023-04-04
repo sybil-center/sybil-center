@@ -188,7 +188,7 @@ test("should issue GitHub ownership credential with eth did-pkh", async () => {
       sessionId: sessionId,
       signature: signature,
       publicId: ethAddress,
-      signAlg: ethDidPkhPrefix
+      signType: ethDidPkhPrefix
     }
   });
   await assertIssueResp({ issueResp, subjectDID });
@@ -214,7 +214,7 @@ test("should issue GitHub ownership credential with solana did-pkh", async () =>
       sessionId: sessionId,
       signature: signature,
       publicId: solanaAddress,
-      signAlg: solanaDidPkhPrefix
+      signType: solanaDidPkhPrefix
     }
   });
   await assertIssueResp({ subjectDID, issueResp });
@@ -240,7 +240,7 @@ test("should issue GitHub ownership credential with bitcoin did-pkh", async () =
       sessionId: sessionId,
       signature: signature,
       publicId: bitcoinAddress,
-      signAlg: bitcoinDidPkhPrefix
+      signType: bitcoinDidPkhPrefix
     }
   });
   await assertIssueResp({ issueResp, subjectDID });
@@ -294,7 +294,7 @@ test("should issue credential with custom property", async () => {
       sessionId: sessionId,
       signature: signature,
       publicId: address,
-      signAlg: didPkhPrefix
+      signType: didPkhPrefix
     }
   });
   a.is(vcResp.statusCode, 200, "vc resp status code is not 200");
@@ -354,7 +354,7 @@ test("issue github account credential with expiration date", async () => {
   const fastify = app.context.resolve("httpServer").fastify;
   const {
     didPkh: subjectDID,
-    didPkhPrefix: signAlg,
+    didPkhPrefix: signType,
     address: ethAddress
   } = ethereumSupport.info.celo;
   const expirationDate = new Date();
@@ -365,7 +365,7 @@ test("issue github account credential with expiration date", async () => {
     url: issueEP("GitHubAccount"),
     payload: {
       sessionId: sessionId,
-      signAlg: signAlg,
+      signType: signType,
       signature: signature,
       publicId: ethAddress
     }

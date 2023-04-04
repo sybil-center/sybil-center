@@ -16,7 +16,7 @@ export const discordAccountRoutes: CredentialRoutes = {
         type: "object",
         properties: {
           sessionId: { type: "string" },
-          signAlg: { type: "string" },
+          signType: { type: "string" },
           publicId: { type: "string" },
           signature: { type: "string" }
         },

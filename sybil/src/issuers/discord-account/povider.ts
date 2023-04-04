@@ -29,14 +29,14 @@ export class DiscordAccountProvider
     console.log("issue challenge",issueChallenge);
     const {
       publicId,
-      signAlg,
+      signType,
       signature
     } = await signFn({ message: issueChallenge });
     return this.httpClient.issue<DiscordAccountVC, DiscordAccountIssueReq>(this.kind, {
       sessionId: sessionId,
       signature: signature,
       publicId: publicId,
-      signAlg: signAlg
+      signType: signType
     });
   }
 }

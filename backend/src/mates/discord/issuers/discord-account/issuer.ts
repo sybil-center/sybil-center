@@ -144,7 +144,7 @@ export class DiscordAccountIssuer
 
   async issue({
     sessionId,
-    signAlg,
+    signType,
     publicId,
     signature
   }: DiscordAccountIssueReq): Promise<Credential> {
@@ -154,7 +154,7 @@ export class DiscordAccountIssuer
       throw new ClientError("Discord processing your authorization. Wait!");
     }
     const subjectDID = await this.multiSignService
-      .signAlg(signAlg)
+      .signAlg(signType)
       .did(signature, issueChallenge, publicId);
 
     const { custom, expirationDate } = fromIssueChallenge(issueChallenge);

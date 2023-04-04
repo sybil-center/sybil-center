@@ -142,7 +142,7 @@ export class TwitterAccountIssuer
 
   async issue({
     sessionId,
-    signAlg,
+    signType,
     publicId,
     signature
   }: TwitterAccountIssueReq): Promise<Credential> {
@@ -152,7 +152,7 @@ export class TwitterAccountIssuer
       throw new ClientError("Twitter processing your authorization. Wait!");
     }
     const subjectDID = await this.multiSignService
-      .signAlg(signAlg)
+      .signAlg(signType)
       .did(signature, issueChallenge, publicId);
     const { custom, expirationDate } = fromIssueChallenge(issueChallenge);
     const accessToken = await this.twitterService.getAccessToken({

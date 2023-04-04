@@ -16,7 +16,7 @@ export const ethereumAccountRoutes: CredentialRoutes = {
           sessionId: { type: "string" },
           signature: { type: "string" },
           publicId: { type: "string" },
-          signAlg: { type: "string" }
+          signType: { type: "string" }
         },
         required: ["sessionId", "signature", "publicId"]
       },

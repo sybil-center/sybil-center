@@ -9,6 +9,6 @@ export {
   GitHubAccountVC,
   SignFn,
   SignResult,
-  SignAlgAlias,
+  SignType,
 } from "./types/index.js"
 

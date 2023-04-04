@@ -162,12 +162,12 @@ export class EthereumAccountIssuer
   async #resolve(
     issueReq: EthAccountIssueReq
   ): Promise<{ address: string, subjectDID: string, issueChallenge: string }> {
-    const { sessionId, signAlg, signature, publicId } = issueReq;
+    const { sessionId, signType, signature, publicId } = issueReq;
 
     const { address, issueChallenge } = this.sessionCache.get(sessionId);
     if (address) {
       const subjectId = await this.multiSignService
-        .signAlg(signAlg)
+        .signAlg(signType)
         .did(signature, issueChallenge, publicId);
       return { address, subjectDID: subjectId, issueChallenge };
     }

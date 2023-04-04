@@ -38,12 +38,12 @@ export class TwitterAccountProvider
     const {
       signature,
       publicId,
-      signAlg
+      signType
     } = await signFn({ message: issueChallenge });
     return this.httpClient.issue<TwitterAccountVC, TwitterAccountIssueReq>(this.kind, {
       sessionId: sessionId,
       signature: signature,
-      signAlg: signAlg,
+      signType: signType,
       publicId: publicId
     });
   }
