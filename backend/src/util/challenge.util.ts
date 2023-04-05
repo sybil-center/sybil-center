@@ -69,7 +69,11 @@ export function toIssueChallenge(opt: IssueChallengeOpt): string {
 
 export function fromIssueChallenge(challenge: string): FromChallenge {
   try {
-    return JSON.parse(challenge) as FromChallenge;
+    const fromChallenge = JSON.parse(challenge) as FromChallenge;
+    fromChallenge.expirationDate = fromChallenge.expirationDate
+      ? new Date(fromChallenge.expirationDate)
+      : undefined
+    return fromChallenge;
   } catch (e) {
     throw new ServerError("Internal server error", {
       props: {

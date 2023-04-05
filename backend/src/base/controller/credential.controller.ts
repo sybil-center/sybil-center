@@ -51,9 +51,12 @@ export function credentialController(
         method: challengeRoute.method,
         url: challengeRoute.url,
         schema: challengeRoute.schema,
-        preHandler: async (request) => {
-          const custom = request.body?.custom;
+        preHandler: async (req) => {
+          const { custom, expirationDate } = req.body;
           if (custom) validateCustomSize(custom, config.customSizeLimit);
+          req.body.expirationDate = expirationDate
+            ? new Date(expirationDate)
+            : undefined
         },
         handler: async (req) => {
           const challengeReq = req.body;
