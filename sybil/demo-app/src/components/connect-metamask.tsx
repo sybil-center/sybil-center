@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import styles from "@/styles/connect-metamask.module.css";
-import { EthRequestSigner, IEIP1193Provider } from "@sybil-center/sdk";
+import { EthWalletProvider, IEIP1193Provider } from "@sybil-center/sdk";
 
 export function ConnectMetamask() {
   const [state, setState] = useState<{
@@ -14,8 +14,8 @@ export function ConnectMetamask() {
     setState({ loading: true, account: null });
     const injected = "ethereum" in window && (window.ethereum as IEIP1193Provider);
     if (!injected) throw new Error(`Only injected provider is supported`);
-    const provider = new EthRequestSigner(injected);
-    const account = await provider.getAccount().then(async (account) => {
+    const provider = new EthWalletProvider(injected);
+    const account = await provider.getAddress().then(async (account) => {
       if (!account) await (injected as any).enable();
       return account;
     });

@@ -1,5 +1,5 @@
-import { ISigner } from "./signer.type.js";
-import type { SignResult } from "../types/index.js";
+import { IWalletProvider } from "./wallet-provider.type.js";
+import type { SignResult, SubjectProof } from "../types/index.js";
 import * as uint8arrays from "uint8arrays";
 import { SignType } from "../types/index.js";
 
@@ -13,24 +13,30 @@ export interface IEIP1193Provider {
   request<T = unknown>(args: RequestArguments): Promise<T>;
 }
 
-export class EthRequestSigner implements ISigner {
+export class EthWalletProvider implements IWalletProvider {
   constructor(private readonly provider: IEIP1193Provider) {
     this.sign = this.sign.bind(this);
+  }
+  async proof(): Promise<SubjectProof> {
+    return {
+      publicId: await this.getAddress(),
+      signFn: this.sign
+    }
   }
 
   async sign(args: { message: string }): Promise<SignResult> {
     const message = args.message;
-    const address = await this.getAccount();
+    const address = await this.getAddress();
     const hex = uint8arrays.toString(uint8arrays.fromString(message), "hex");
     const signature = await this.#signMessage(address, hex);
     const chainId = await this.getChainId();
     return {
       signature: signature,
-      signType: `did:pkh:eip155:${chainId}` as SignType
+      signType: `eip155:${chainId}` as SignType
     };
   }
 
-  async getAccount(): Promise<string> {
+  async getAddress(): Promise<string> {
     const accounts = (await this.provider.request<string[]>({
       method: "eth_accounts",
     }));
