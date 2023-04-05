@@ -6,7 +6,7 @@ import { vcOAuthCallback } from "./routes/callback.route.js";
 import { ClientError } from "../../backbone/errors.js";
 import { OAuthState } from "../types/oauth.js";
 import { ThrowDecoder } from "../../util/throw-decoder.util.js";
-import { AnyObject } from "../../util/model.util.js";
+import { AnyObj } from "../../util/model.util.js";
 import { CanIssueReq, ChallengeReq, IssueReq } from "@sybil-center/sdk/types";
 
 type ConfigFields = {
@@ -78,7 +78,7 @@ export function credentialController(
 
     const ownerProofRoute = routes.ownerProof;
     if (ownerProofRoute) {
-      fastifyServ.route<{ Body: AnyObject }>({
+      fastifyServ.route<{ Body: AnyObj }>({
         method: ownerProofRoute.method,
         url: ownerProofRoute.url,
         schema: ownerProofRoute.schema,

@@ -11,16 +11,12 @@ import { EthAccountChallenge, EthAccountVC, SignType } from "@sybil-center/sdk/t
 import { EthProofResult } from "../../../src/mates/ethereum/issuers/ethereum-account/index.js";
 //@ts-ignore
 import { solanaSupport } from "../../support/solana.js";
-import { AnyObject } from "../../../src/util/model.util.js";
+import { AnyObj } from "../../../src/util/model.util.js";
 import { LightMyRequestResponse } from "fastify";
 
 const test = suite("Integration: Issue ETH account ownership vc");
 
 let app: App;
-
-const {
-  address: ethAddress,
-} = ethereumSupport.info.ethereum;
 
 test.before(async () => {
   const config = new URL("../../test.env", import.meta.url);
@@ -35,34 +31,35 @@ test.after(async () => {
 });
 
 type PreIssueEntry = {
-  custom?: AnyObject,
-  expirationDate?: Date
+  publicId: string;
+  ethAddress?: string;
+  custom?: AnyObj,
+  expirationDate?: Date,
 }
 const preIssue = async (
-  args?: PreIssueEntry
+  args: PreIssueEntry
 ): Promise<{
   sessionId: string;
   issueChallenge: string;
-  ownerChallenge: string
+  ownerChallenge?: string
 }> => {
-  const custom = args?.custom;
-  const expirationDate = args?.expirationDate;
   const fastify = app.context.resolve("httpServer").fastify;
-  const payloadResp = await fastify.inject({
+  const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("EthereumAccount"),
     payload: {
-      custom: custom,
-      expirationDate: expirationDate
+      publicId: args.publicId,
+      ethAddress: args.ethAddress,
+      custom: args.custom,
+      expirationDate: args.expirationDate,
     }
   });
   a.is(
-    payloadResp.statusCode,
-    200,
-    "payload response status code is not 200"
+    challengeResp.statusCode, 200,
+    "challenge response status code is not 200"
   );
   const { sessionId, issueChallenge, ownerChallenge } = JSON.parse(
-    payloadResp.body
+    challengeResp.body
   ) as EthAccountChallenge;
   return { sessionId, issueChallenge, ownerChallenge };
 };
@@ -124,11 +121,12 @@ const assertSessionDeleted = (sessionId: string) => {
 
 test("should issue ethereum account vc", async () => {
   const {
-    address: ethereumAddress,
-    didPkh: subjectDID
+    address: ethAddress,
+    didPkh: subjectDID,
+    didPkhPrefix: signType
   } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
-  const { issueChallenge, sessionId } = await preIssue();
+  const { issueChallenge, sessionId } = await preIssue({ publicId: ethAddress });
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
@@ -136,21 +134,27 @@ test("should issue ethereum account vc", async () => {
     payload: {
       sessionId: sessionId,
       signature: signature,
-      publicId: ethAddress
+      signType: signType
     }
   });
-  await assertIssueResp({ issueResp, subjectDID, ethereumAddress });
+  await assertIssueResp({ issueResp, subjectDID, ethereumAddress: ethAddress });
   assertSessionDeleted(sessionId);
 });
 
 test("should not issue vc because not valid signature", async () => {
+  const { address: publicId } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
+  const signType: SignType = "ethereum"
   const challengeResp = await fastify.inject({
     method: "POST",
-    url: challengeEP("EthereumAccount")
+    url: challengeEP("EthereumAccount"),
+    payload: {
+      publicId: publicId
+    }
   });
-  a.is(challengeResp.statusCode, 200,
-    "payload response status code is not 200"
+  a.is(
+    challengeResp.statusCode, 200,
+    `payload response status code is not 200. error: ${challengeResp.body}`
   );
   const {
     sessionId,
@@ -161,7 +165,8 @@ test("should not issue vc because not valid signature", async () => {
     url: issueEP("EthereumAccount"),
     payload: {
       sessionId: sessionId,
-      signature: issueChallenge
+      signature: issueChallenge,
+      signType: signType
     }
   });
   a.is(
@@ -173,20 +178,24 @@ test("should not issue vc because not valid signature", async () => {
 test("should issue ethereum account credential with custom property", async () => {
   const {
     address: ethereumAddress,
-    didPkh: subjectDID
+    didPkh: subjectDID,
+    didPkhPrefix: signType
   } = ethereumSupport.info.ethereum;
   const custom = { test: { hello: "world" } };
   const { fastify } = app.context.resolve("httpServer");
 
-  const { issueChallenge, sessionId } = await preIssue({ custom });
+  const { issueChallenge, sessionId } = await preIssue({
+    publicId: ethereumAddress,
+    custom: custom
+  });
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("EthereumAccount"),
     payload: {
-      publicId: ethereumAddress,
       signature: signature,
-      sessionId: sessionId
+      sessionId: sessionId,
+      signType: signType
     }
   });
   await assertIssueResp({ issueResp, subjectDID, ethereumAddress });
@@ -211,21 +220,23 @@ test("issue ethereum account credential with different subject and address", asy
     address: ethereumAddress
   } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
-  const { issueChallenge, sessionId, ownerChallenge } = await preIssue();
-  const ethSignature = await ethereumSupport.sign(ownerChallenge);
+  const { issueChallenge, sessionId, ownerChallenge } = await preIssue({
+    publicId: solanaAddress,
+    ethAddress: ethereumAddress,
+  });
+  const ethSignature = await ethereumSupport.sign(ownerChallenge!);
   const ethSignType: SignType = "ethereum";
   const ownerProofResp = await fastify.inject({
     method: "POST",
     url: ownerProofEP("EthereumAccount"),
     payload: {
+      sessionId: sessionId,
       signature: ethSignature,
       signType: ethSignType,
-      sessionId: sessionId,
-      publicId: ethereumAddress
     }
   });
   a.is(ownerProofResp.statusCode, 200,
-    `callback response status is not matched. body: ${ownerProofResp.body}`);
+    `owner proof response status is not matched. body: ${ownerProofResp.body}`);
   const proofResult = JSON.parse(ownerProofResp.body) as EthProofResult;
   a.is(
     proofResult.chainId, "eip155:1",
@@ -243,7 +254,6 @@ test("issue ethereum account credential with different subject and address", asy
     url: issueEP("EthereumAccount"),
     payload: {
       signature: solanaSignature,
-      publicId: solanaAddress,
       sessionId: sessionId,
       signType: solanaSignType
     }
@@ -260,7 +270,10 @@ test("issue eth account credential with expiration date", async () => {
     didPkhPrefix
   } = ethereumSupport.info.ethereum;
   const expirationDate = new Date();
-  const { sessionId, issueChallenge } = await preIssue({ expirationDate });
+  const { sessionId, issueChallenge } = await preIssue({
+    publicId: ethereumAddress,
+    expirationDate:expirationDate
+  });
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
@@ -268,7 +281,6 @@ test("issue eth account credential with expiration date", async () => {
     payload: {
       sessionId: sessionId,
       signType: didPkhPrefix,
-      publicId: ethereumAddress,
       signature: signature
     }
   });

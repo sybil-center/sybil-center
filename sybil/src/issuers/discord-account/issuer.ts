@@ -1,7 +1,7 @@
 import type { Issuer } from "../../base/issuer.type.js";
 import { DiscordAccountProvider } from "./povider.js";
 import { HttpClient } from "../../base/http-client.js";
-import type { SignFn } from "../../types/index.js";
+import type { SubjectProof } from "../../types/index.js";
 import { DiscordAccountOptions, DiscordAccountVC } from "./types.js";
 import { popupFeatures } from "../../util/view.util.js";
 import { repeatUntil } from "../../util/repeat.until.js";
@@ -15,13 +15,14 @@ export class DiscordAccountIssuer
   ) {}
 
   async issueCredential(
-    signFn: SignFn,
+    { publicId, signFn }: SubjectProof,
     opt?: DiscordAccountOptions
   ): Promise<DiscordAccountVC> {
-    const payload = await this.provider.getPayload({
+    const payload = await this.provider.getChallenge({
       redirectUrl: opt?.redirectUrl,
       custom: opt?.custom,
-      expirationDate: opt?.expirationDate
+      expirationDate: opt?.expirationDate,
+      publicId: publicId,
     });
     const popup = window.open(
       payload.authUrl,

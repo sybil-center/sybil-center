@@ -13,9 +13,7 @@ export type TwitterAccountReq = {
   issueChallenge: string;
 }
 
-export type TwitterAccountIssueReq = IssueReq & {
-  publicId: string;
-}
+export type TwitterAccountIssueReq = IssueReq
 
 export type TwitterAccountVC = Credential & {
   credentialSubject: {

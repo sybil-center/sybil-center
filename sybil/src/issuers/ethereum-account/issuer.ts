@@ -1,7 +1,7 @@
 import type { Issuer } from "../../base/issuer.type.js";
 import { EthAccountProvider } from "./provider.js";
 import { HttpClient } from "../../base/http-client.js";
-import type { SignFn } from "../../types/index.js";
+import type { SubjectProof } from "../../types/index.js";
 import { EthAccountOptions, EthAccountVC } from "./types.js";
 
 export class EthAccountIssuer
@@ -14,15 +14,17 @@ export class EthAccountIssuer
   }
 
   async issueCredential(
-    signFn: SignFn,
+    { publicId, signFn }: SubjectProof,
     opt?: EthAccountOptions
   ): Promise<EthAccountVC> {
-    const challenge = await this.provider.getPayload({
+    const challenge = await this.provider.getChallenge({
       custom: opt?.custom,
-      expirationDate: opt?.expirationDate
+      expirationDate: opt?.expirationDate,
+      publicId: publicId,
+      ethAddress: opt?.ethOwnerProof?.publicId
     });
-    if (opt?.ownerProofFn) {
-      await this.provider.ownerProof(opt.ownerProofFn, challenge);
+    if (opt?.ethOwnerProof) {
+      await this.provider.ownerProof(opt.ethOwnerProof.signFn, challenge);
     }
     return await this.provider.issueVC(signFn, {
       sessionId: challenge.sessionId,

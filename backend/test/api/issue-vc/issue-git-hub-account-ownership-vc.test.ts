@@ -12,7 +12,7 @@ import { LightMyRequestResponse } from "fastify";
 import { solanaSupport } from "../../support/solana.js";
 import { bitcoinSupport } from "../../support/bitcoin.js";
 import { CanIssueResp, GitHubAccountChallenge, GitHubAccountVC } from "@sybil-center/sdk/types";
-import { AnyObject } from "../../../src/util/model.util.js";
+import { AnyObj } from "../../../src/util/model.util.js";
 
 const test = suite("Integration: Issue GitHub account ownership vc");
 
@@ -49,36 +49,37 @@ test.after(async () => {
 });
 
 type PreIssueArgs = {
-  custom?: AnyObject,
+  publicId: string,
+  custom?: AnyObj,
   expirationDate?: Date,
 }
 
 const preIssue = async (
-  args?: PreIssueArgs
+  args: PreIssueArgs
 ): Promise<{ sessionId: string; issueChallenge: string }> => {
   const { fastify } = app.context.resolve("httpServer");
-
-  const payloadResp = await fastify.inject({
+  const challengeResp = await fastify.inject({
     method: "POST",
     path: challengeEP("GitHubAccount"),
     payload: {
+      publicId: args.publicId,
       redirectUrl: redirectUrl,
-      custom: args?.custom,
-      expirationDate: args?.expirationDate
+      custom: args.custom,
+      expirationDate: args.expirationDate
     }
   });
-  a.is(payloadResp.statusCode, 200, "payload status code is not 200");
-
-  const { sessionId, authUrl, issueChallenge } = JSON.parse(
-    payloadResp.body
-  ) as GitHubAccountChallenge;
+  a.is(
+    challengeResp.statusCode, 200,
+    `payload status code is not 200. error: ${challengeResp.body}`
+  );
+  const { sessionId, authUrl, issueChallenge } =
+    JSON.parse(challengeResp.body) as GitHubAccountChallenge;
   a.ok(authUrl, "payload not contains oauth url");
   a.ok(sessionId, "payload not contains sessionId");
   a.ok(issueChallenge, "payload not contains issueChallenge");
 
   const { query } = url.parse(authUrl, true);
   const state = query.state as string;
-
   a.type(state, "string");
 
   const canIssueBeforeResp = await fastify.inject({
@@ -89,9 +90,8 @@ const preIssue = async (
     }
   });
   a.is(
-    canIssueBeforeResp.statusCode,
-    200,
-    "can issue before callback resp status is not 200"
+    canIssueBeforeResp.statusCode, 200,
+    `can issue before callback resp status is not 200. error: ${canIssueBeforeResp.body}`
   );
 
   const { canIssue: canIssueBefore } =
@@ -107,9 +107,8 @@ const preIssue = async (
     }
   });
   a.is(
-    callbackResp.statusCode,
-    302,
-    "callback response status code is not 302"
+    callbackResp.statusCode, 302,
+    `callback response status code is not 302. error: ${callbackResp.body}`
   );
   const redirectTo = callbackResp.headers.location as string;
   a.is(redirectTo, redirectUrl, "redirect url is not matched");
@@ -122,9 +121,8 @@ const preIssue = async (
     }
   });
   a.is(
-    canIssueAfterResp.statusCode,
-    200,
-    "can issue after callback resp status code is not 200"
+    canIssueAfterResp.statusCode, 200,
+    `can issue after callback resp status code is not 200. error: ${canIssueAfterResp.body}`
   );
   const { canIssue: canIssueAfter } =
     JSON.parse(canIssueAfterResp.body) as CanIssueResp;
@@ -178,7 +176,7 @@ test("should issue GitHub ownership credential with eth did-pkh", async () => {
   } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
 
-  const { issueChallenge, sessionId } = await preIssue();
+  const { issueChallenge, sessionId } = await preIssue({publicId: ethAddress});
   const signature = await ethereumSupport.sign(issueChallenge);
 
   const issueResp = await fastify.inject({
@@ -187,7 +185,6 @@ test("should issue GitHub ownership credential with eth did-pkh", async () => {
     payload: {
       sessionId: sessionId,
       signature: signature,
-      publicId: ethAddress,
       signType: ethDidPkhPrefix
     }
   });
@@ -204,7 +201,7 @@ test("should issue GitHub ownership credential with solana did-pkh", async () =>
 
   const { fastify } = app.context.resolve("httpServer");
 
-  const { issueChallenge, sessionId } = await preIssue();
+  const { issueChallenge, sessionId } = await preIssue({publicId: solanaAddress});
   const signature = await solanaSupport.sign(issueChallenge);
 
   const issueResp = await fastify.inject({
@@ -213,7 +210,6 @@ test("should issue GitHub ownership credential with solana did-pkh", async () =>
     payload: {
       sessionId: sessionId,
       signature: signature,
-      publicId: solanaAddress,
       signType: solanaDidPkhPrefix
     }
   });
@@ -230,7 +226,7 @@ test("should issue GitHub ownership credential with bitcoin did-pkh", async () =
 
   const { fastify } = app.context.resolve("httpServer");
 
-  const { issueChallenge, sessionId } = await preIssue();
+  const { issueChallenge, sessionId } = await preIssue({publicId: bitcoinAddress});
   const signature = await bitcoinSupport.sing(issueChallenge);
 
   const issueResp = await fastify.inject({
@@ -239,7 +235,6 @@ test("should issue GitHub ownership credential with bitcoin did-pkh", async () =
     payload: {
       sessionId: sessionId,
       signature: signature,
-      publicId: bitcoinAddress,
       signType: bitcoinDidPkhPrefix
     }
   });
@@ -248,15 +243,19 @@ test("should issue GitHub ownership credential with bitcoin did-pkh", async () =
 });
 
 test("should redirect to default page after authorization", async () => {
+  const { address: publicId } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
   const config = app.context.resolve("config");
 
-  const payloadResp = await fastify.inject({
+  const challengeResp = await fastify.inject({
     method: "POST",
-    path: challengeEP("GitHubAccount")
+    path: challengeEP("GitHubAccount"),
+    payload: {
+      publicId: publicId
+    }
   });
-  a.is(payloadResp.statusCode, 200, "payload resp status code is not 200");
-  const { authUrl } = JSON.parse(payloadResp.body) as GitHubAccountChallenge;
+  a.is(challengeResp.statusCode, 200, `payload resp status code is not 200`);
+  const { authUrl } = JSON.parse(challengeResp.body) as GitHubAccountChallenge;
   const { query } = url.parse(authUrl, true);
   const state = query.state as string;
   a.type(state, "string");
@@ -271,7 +270,7 @@ test("should redirect to default page after authorization", async () => {
   });
   a.is(
     callbackResp.statusCode, 302,
-    "callback response status code is not 302"
+    `callback response status code is not 302. error: ${callbackResp.body}`
   );
   const defaultRedirectUrl = callbackResp.headers.location as string;
   a.is(
@@ -285,7 +284,10 @@ test("should issue credential with custom property", async () => {
   const custom = { test: { hello: "world" } };
   const { address, didPkhPrefix } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
-  const { sessionId, issueChallenge } = await preIssue({ custom });
+  const { sessionId, issueChallenge } = await preIssue({
+    publicId: address,
+    custom:custom
+  });
   const signature = await ethereumSupport.sign(issueChallenge);
   const vcResp = await fastify.inject({
     method: "POST",
@@ -293,7 +295,6 @@ test("should issue credential with custom property", async () => {
     payload: {
       sessionId: sessionId,
       signature: signature,
-      publicId: address,
       signType: didPkhPrefix
     }
   });
@@ -312,23 +313,24 @@ test("should issue credential with custom property", async () => {
 });
 
 test("should not find GitHub code", async () => {
-  const { address: ethAddress } = ethereumSupport.info.ethereum;
+  const { address: ethAddress, didPkhPrefix: signType } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
-  const payloadResp = await fastify.inject({
+  const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("GitHubAccount"),
     payload: {
+      publicId: ethAddress,
       redirectUrl: redirectUrl
     }
   });
   a.is(
-    payloadResp.statusCode, 200,
-    "payload response status code is not 200"
+    challengeResp.statusCode, 200,
+    `payload response status code is not 200. error: ${challengeResp.body}`
   );
   const {
     sessionId,
     issueChallenge
-  } = JSON.parse(payloadResp.body) as GitHubAccountChallenge;
+  } = JSON.parse(challengeResp.body) as GitHubAccountChallenge;
   const signature = await ethereumSupport.sign(issueChallenge);
   const errResp = await fastify.inject({
     method: "POST",
@@ -336,7 +338,7 @@ test("should not find GitHub code", async () => {
     payload: {
       sessionId: sessionId,
       signature: signature,
-      publicId: ethAddress
+      signType: signType
     }
   });
   a.is(
@@ -358,7 +360,10 @@ test("issue github account credential with expiration date", async () => {
     address: ethAddress
   } = ethereumSupport.info.celo;
   const expirationDate = new Date();
-  const { sessionId, issueChallenge } = await preIssue({ expirationDate });
+  const { sessionId, issueChallenge } = await preIssue({
+    publicId: ethAddress,
+    expirationDate:expirationDate
+  });
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
@@ -367,7 +372,6 @@ test("issue github account credential with expiration date", async () => {
       sessionId: sessionId,
       signType: signType,
       signature: signature,
-      publicId: ethAddress
     }
   });
   await assertIssueResp({ issueResp, subjectDID });

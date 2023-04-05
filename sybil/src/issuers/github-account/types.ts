@@ -13,9 +13,7 @@ export type GitHubAccountReq =  {
   issueChallenge: string;
 }
 
-export type GitHubAccountIssueReq = IssueReq & {
-  publicId: string;
-}
+export type GitHubAccountIssueReq = IssueReq
 
 export type GitHubAccountVC = Credential & {
   credentialSubject: {

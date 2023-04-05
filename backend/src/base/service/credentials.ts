@@ -33,7 +33,7 @@ export interface ICredentialIssuer<
 > {
   issue(vcRequest: TCredentialReq): Promise<TCredential>;
   canIssue(entry: TCanReq): Promise<TCanRes>;
-  getChallenge(challengeRequest?: TChallengeReq): Promise<TChallenge>;
+  getChallenge(challengeReq: TChallengeReq): Promise<TChallenge>;
   providedCredential: CredentialType;
 }
 

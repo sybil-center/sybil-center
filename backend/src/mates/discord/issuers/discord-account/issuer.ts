@@ -11,7 +11,7 @@ import { TimedCache } from "../../../../base/service/timed-cache.js";
 import { absoluteId } from "../../../../util/id.util.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/types/oauth.js";
-import { AnyObject } from "../../../../util/model.util.js";
+import { AnyObj } from "../../../../util/model.util.js";
 import {
   CanIssueReq,
   CanIssueResp,
@@ -33,7 +33,7 @@ export type GetDiscordAccountVC = {
   issuer: string;
   subjectDID: string;
   discordUser: DiscordUser;
-  custom?: AnyObject;
+  custom?: AnyObj;
   expirationDate?: Date;
 }
 
@@ -96,17 +96,18 @@ export class DiscordAccountIssuer
     this.sessionCache = new TimedCache(config.oAuthSessionTtl);
   }
 
-  async getChallenge(req?: DiscordAccountChallengeReq): Promise<DiscordAccountChallenge> {
-    const custom = req?.custom;
-    const expirationDate = req?.expirationDate;
-    const redirectUrl = req?.redirectUrl
-      ? new URL(req?.redirectUrl)
+  async getChallenge(req: DiscordAccountChallengeReq): Promise<DiscordAccountChallenge> {
+    const custom = req.custom;
+    const expirationDate = req.expirationDate;
+    const redirectUrl = req.redirectUrl
+      ? new URL(req.redirectUrl)
       : undefined;
 
     const issueChallenge = toIssueChallenge({
       type: this.providedCredential,
       custom: custom,
-      expirationDate: expirationDate
+      expirationDate: expirationDate,
+      publicId: req.publicId
     });
     const sessionId = absoluteId();
     this.sessionCache.set(sessionId, {
@@ -145,7 +146,6 @@ export class DiscordAccountIssuer
   async issue({
     sessionId,
     signType,
-    publicId,
     signature
   }: DiscordAccountIssueReq): Promise<Credential> {
     const session = this.sessionCache.get(sessionId);
@@ -153,11 +153,10 @@ export class DiscordAccountIssuer
     if (!code) {
       throw new ClientError("Discord processing your authorization. Wait!");
     }
+    const { custom, expirationDate, publicId } = fromIssueChallenge(issueChallenge);
     const subjectDID = await this.multiSignService
       .signAlg(signType)
       .did(signature, issueChallenge, publicId);
-
-    const { custom, expirationDate } = fromIssueChallenge(issueChallenge);
     const accessToken = await this.discordService.getAccessToken(code);
     const discordUser = await this.discordService.getUser(accessToken);
     this.sessionCache.delete(sessionId);

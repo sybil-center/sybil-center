@@ -5,19 +5,25 @@ import {
 } from "../../../../base/service/credentials.js";
 import { IProofService } from "../../../../base/service/proof.service.js";
 import { DIDService } from "../../../../base/service/did.service.js";
-import { tokens } from "typed-inject";
+import { Disposable, tokens } from "typed-inject";
 import sortKeys from "sort-keys";
-import { Challenge, ChallengeReq, Credential, IssueReq, CanIssueResp, CredentialType} from "@sybil-center/sdk/types";
+import { CanIssueResp, Challenge, ChallengeReq, Credential, CredentialType, IssueReq } from "@sybil-center/sdk/types";
 import { absoluteId } from "../../../../util/id.util.js";
+import { fromIssueChallenge, toIssueChallenge } from "../../../../util/challenge.util.js";
+import { TimedCache } from "../../../../base/service/timed-cache.js";
+import { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
 
 export type EmptyVC = Credential
 
-export function getEmptyVC(issuer: string, vcRequest: IssueReq): EmptyVC {
+export function getEmptyVC(issuer: string, subjectDID: string): EmptyVC {
   // @ts-ignore
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
       type: [DEFAULT_CREDENTIAL_TYPE, "Empty"],
+      credentialSubject: {
+        id: subjectDID
+      },
       issuer: issuer,
       issuanceDate: new Date(),
     },
@@ -29,18 +35,32 @@ export function getEmptyVC(issuer: string, vcRequest: IssueReq): EmptyVC {
  * Return empty VC
  */
 export class EmptyIssuer
-  implements ICredentialIssuer<IssueReq, Credential, ChallengeReq, Challenge> {
-  static inject = tokens("proofService", "didService");
+  implements ICredentialIssuer<
+    IssueReq,
+    Credential,
+    ChallengeReq,
+    Challenge
+  >, Disposable {
+  static inject = tokens("proofService", "didService", "config", "multiSignService");
+
+  private readonly sessionCache: TimedCache<string, { issueChallenge: string; }>;
 
   constructor(
     private readonly proofService: IProofService,
-    private readonly didService: DIDService
-  ) {}
+    private readonly didService: DIDService,
+    private readonly config: { signatureMessageTTL: number },
+    private readonly multiSignService: IMultiSignService
+  ) {
+    this.sessionCache = new TimedCache(config.signatureMessageTTL);
+  }
 
-  async getChallenge(): Promise<Challenge> {
+  async getChallenge({ publicId }: ChallengeReq): Promise<Challenge> {
+    const sessionId = absoluteId();
+    const issueChallenge = toIssueChallenge({ publicId: publicId, type: "Empty" });
+    this.sessionCache.set(sessionId, { issueChallenge });
     return {
-      sessionId: absoluteId(),
-      issueChallenge: `Sign to issue ${this.providedCredential} credential`
+      sessionId: sessionId,
+      issueChallenge: issueChallenge
     };
   }
 
@@ -48,12 +68,21 @@ export class EmptyIssuer
     return { canIssue: true };
   }
 
-  async issue(vcRequest: IssueReq): Promise<Credential> {
-    const emptyVC = getEmptyVC(this.didService.id, vcRequest);
+  async issue({ signature, sessionId, signType }: IssueReq): Promise<Credential> {
+    const { issueChallenge } = this.sessionCache.get(sessionId);
+    const { publicId } = fromIssueChallenge(issueChallenge);
+    const subjectDID = await this.multiSignService
+      .signAlg(signType)
+      .did(signature, issueChallenge, publicId);
+    const emptyVC = getEmptyVC(this.didService.id, subjectDID);
     return await this.proofService.jwsSing(emptyVC);
   }
 
   get providedCredential(): CredentialType {
     return "Empty";
+  }
+
+  dispose(): void {
+    this.sessionCache.dispose();
   }
 }

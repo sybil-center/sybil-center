@@ -10,13 +10,8 @@ import { LightMyRequestResponse } from "fastify";
 import { ethereumSupport } from "../../support/ethereum.js";
 import { bitcoinSupport } from "../../support/bitcoin.js";
 import { solanaSupport } from "../../support/solana.js";
-import {
-  CanIssueResp,
-  DiscordAccountChallenge,
-  DiscordAccountVC,
-  SignType
-} from "@sybil-center/sdk/types";
-import { AnyObject } from "../../../src/util/model.util.js";
+import { CanIssueResp, DiscordAccountChallenge, DiscordAccountVC, SignType } from "@sybil-center/sdk/types";
+import { AnyObj } from "../../../src/util/model.util.js";
 import { oauthCallbackEP } from "../../../src/util/route.util.js";
 
 const test = suite("Integration: Issue Discord account ownership vc");
@@ -53,13 +48,12 @@ test.after(async () => {
 });
 
 type PreIssueEntry = {
-  custom?: AnyObject;
+  custom?: AnyObj;
   expirationDate?: Date;
+  publicId: string;
 }
 
-async function preIssue(args?: PreIssueEntry): Promise<{ sessionId: string; issueChallenge: string }> {
-  const custom = args?.custom;
-  const expirationDate = args?.expirationDate;
+async function preIssue(args: PreIssueEntry): Promise<{ sessionId: string; issueChallenge: string }> {
   const fastify = app.context.resolve("httpServer").fastify;
 
   const challengeResp = await fastify.inject({
@@ -67,8 +61,9 @@ async function preIssue(args?: PreIssueEntry): Promise<{ sessionId: string; issu
     url: challengeEP("DiscordAccount"),
     payload: {
       redirectUrl: redirectUrl,
-      custom: custom,
-      expirationDate: expirationDate
+      custom: args.custom,
+      expirationDate: args.expirationDate,
+      publicId: args.publicId
     }
   });
   a.is(challengeResp.statusCode, 200,
@@ -181,7 +176,7 @@ test("should issue discord ownership credential with ethereum did-pkh", async ()
 
   const fastify = app.context.resolve("httpServer").fastify;
 
-  const { issueChallenge, sessionId } = await preIssue();
+  const { issueChallenge, sessionId } = await preIssue({ publicId: ethAddress });
   const signature = await ethereumSupport.sign(issueChallenge);
 
   const vcResponse = await fastify.inject({
@@ -191,11 +186,10 @@ test("should issue discord ownership credential with ethereum did-pkh", async ()
       sessionId: sessionId,
       signature: signature,
       signType: ethDidPkhPrefix,
-      publicId: ethAddress
     }
   });
-  assertSessionDeleted(sessionId);
   await assertIssueResp(vcResponse, ethDidPkh);
+  assertSessionDeleted(sessionId);
 });
 
 test("should issue discord ownership credential with solana did-pkh", async () => {
@@ -207,7 +201,7 @@ test("should issue discord ownership credential with solana did-pkh", async () =
 
   const { fastify } = app.context.resolve("httpServer");
 
-  const { sessionId, issueChallenge } = await preIssue();
+  const { sessionId, issueChallenge } = await preIssue({ publicId: solanaAddress });
   const signature = await solanaSupport.sign(issueChallenge);
 
   const vcResponse = await fastify.inject({
@@ -217,11 +211,10 @@ test("should issue discord ownership credential with solana did-pkh", async () =
       sessionId: sessionId,
       signature: signature,
       signType: solanaDidPkhPrefix,
-      publicId: solanaAddress
     }
   });
-  assertSessionDeleted(sessionId);
   await assertIssueResp(vcResponse, solanaDidPkh);
+  assertSessionDeleted(sessionId);
 });
 
 test("should issue discord ownership credential with bitcoin did-pkh", async () => {
@@ -233,7 +226,7 @@ test("should issue discord ownership credential with bitcoin did-pkh", async () 
 
   const { fastify } = app.context.resolve("httpServer");
 
-  const { sessionId, issueChallenge } = await preIssue();
+  const { sessionId, issueChallenge } = await preIssue({ publicId: bitcoinAddress });
   const signature = await bitcoinSupport.sing(issueChallenge);
 
   const vcResponse = await fastify.inject({
@@ -243,23 +236,26 @@ test("should issue discord ownership credential with bitcoin did-pkh", async () 
       sessionId: sessionId,
       signature: signature,
       signType: bitcoinDidPkhPrefix,
-      publicId: bitcoinAddress
     }
   });
-  assertSessionDeleted(sessionId);
   await assertIssueResp(vcResponse, bitcoinDidPkh);
+  assertSessionDeleted(sessionId);
 });
 
 test("should redirect to default page after authorization", async () => {
+  const { address } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
   const config = app.context.resolve("config");
-  const payloadResp = await fastify.inject({
+  const challengeResp = await fastify.inject({
     method: "POST",
-    url: challengeEP("DiscordAccount")
+    url: challengeEP("DiscordAccount"),
+    payload: {
+      publicId: address
+    }
   });
-  a.is(payloadResp.statusCode, 200, "payload resp status code is not 200");
+  a.is(challengeResp.statusCode, 200, "payload resp status code is not 200");
   const { authUrl } = JSON.parse(
-    payloadResp.body
+    challengeResp.body
   ) as DiscordAccountChallenge;
   const { query } = url.parse(authUrl, true);
   const state = query.state as string;
@@ -293,21 +289,23 @@ test("should issue vc with custom properties", async () => {
   const custom = { hello: { test: "test", world: "world" } };
   const { address, didPkhPrefix, didPkh } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
-  const { sessionId, issueChallenge } = await preIssue({ custom });
+  const { sessionId, issueChallenge } = await preIssue({
+    publicId: address,
+    custom: custom
+  });
   const signature = await ethereumSupport.sign(issueChallenge);
-  const vcResp = await fastify.inject({
+  const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("DiscordAccount"),
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signType: didPkhPrefix as SignType,
-      publicId: address
+      signType: didPkhPrefix,
     }
   });
-  a.is(vcResp.statusCode, 200, "vc resp status code is not 200");
-  await assertIssueResp(vcResp, didPkh);
-  const vc = JSON.parse(vcResp.body) as DiscordAccountVC;
+  a.is(issueResp.statusCode, 200, `issue resp status code is not 200. error: ${issueResp.body}`);
+  await assertIssueResp(issueResp, didPkh);
+  const vc = JSON.parse(issueResp.body) as DiscordAccountVC;
   const vcCustom = vc.credentialSubject.custom;
   a.ok(vcCustom, "custom property is not present");
   a.ok(vcCustom.hello, "custom hello is not present");
@@ -317,19 +315,20 @@ test("should issue vc with custom properties", async () => {
 });
 
 test("should not find Discord code", async () => {
+  const { address } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
   await fastify.ready();
   const payloadResp = await fastify.inject({
     method: "POST",
     url: challengeEP("DiscordAccount"),
     payload: {
-      redirectUrl: redirectUrl
+      redirectUrl: redirectUrl,
+      publicId: address
     }
   });
   a.is(
-    payloadResp.statusCode,
-    200,
-    "payload response status code is not 200"
+    payloadResp.statusCode, 200,
+    "challenge response status code is not 200"
   );
 
   const { sessionId, issueChallenge } = JSON.parse(
@@ -343,7 +342,6 @@ test("should not find Discord code", async () => {
     payload: {
       sessionId: sessionId,
       signature: signature,
-      publicId: "test",
       signType: "test"
     }
   });
@@ -358,7 +356,10 @@ test("issue discord account credential with expiration date", async () => {
   const { didPkhPrefix, address, didPkh: subjectDID } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
   const expirationDate = new Date();
-  const { sessionId, issueChallenge } = await preIssue({ expirationDate });
+  const { sessionId, issueChallenge } = await preIssue({
+    publicId: address,
+    expirationDate: expirationDate
+  });
   const signature = await ethereumSupport.sign(issueChallenge);
 
   const issueResp = await fastify.inject({
@@ -368,7 +369,6 @@ test("issue discord account credential with expiration date", async () => {
       sessionId: sessionId,
       signature: signature,
       signType: didPkhPrefix,
-      publicId: address
     }
   });
   await assertIssueResp(issueResp, subjectDID);

@@ -1,25 +1,28 @@
 import { randomUUID } from "node:crypto";
 import { ClientError, ServerError } from "../backbone/errors.js";
-import { AnyObject } from "./model.util.js";
+import { AnyObj } from "./model.util.js";
 import { CredentialType } from "@sybil-center/sdk/types";
 
 export interface FromChallenge {
-  id: string;
-  custom?: object;
   description: string;
-  expirationDate: Date;
+  publicId: string;
+  nonce: string;
+  custom?: object;
+  expirationDate?: Date;
 }
 
 export interface IssueChallengeOpt {
   type: CredentialType;
-  custom?: AnyObject;
+  custom?: AnyObj;
   expirationDate?: Date;
+  publicId: string;
 }
 
 export interface ChallengeEntry {
   description: string;
+  publicId: string;
   nonce: string;
-  custom?: AnyObject;
+  custom?: AnyObj;
   expirationDate?: Date;
 }
 
@@ -27,23 +30,34 @@ export interface ChallengeEntry {
  * @param opt - options for issue challenge
  */
 export function toIssueChallenge(opt: IssueChallengeOpt): string {
-  let description = `Sign this message to issue '${opt.type}' credential.`;
+  const description = [
+    `Sign this message to issue '${opt.type}' credential.`,
+    `Credential subject identifier will be associated with '${opt.publicId}'`
+  ]
   const nonce = randomUUID();
-  const challenge: ChallengeEntry = {
-    description: description,
-    nonce: nonce
-  };
 
+  let custom: AnyObj | undefined = undefined;
   if (opt.custom) {
-    challenge.description +=
-      ` In 'custom' field you can see additional fields which will be in credential.`;
-    challenge.custom = opt.custom;
+    custom = opt.custom;
+    description.push(
+      `In 'custom' field you can see additional fields which will be in credential.`
+    );
   }
+  let expirationDate: Date | undefined = undefined;
   if (opt.expirationDate) {
-    challenge.description +=
-      ` Credential expiration date represented in 'expirationDate' field.`;
-    challenge.expirationDate = opt.expirationDate;
+    expirationDate = opt.expirationDate;
+    description.push(
+      `Credential expiration date is .`
+    );
   }
+
+  const challenge: ChallengeEntry = {
+    nonce: nonce,
+    expirationDate: expirationDate,
+    custom: custom,
+    publicId: opt.publicId,
+    description: description.join(" ")
+  };
 
   try {
     return JSON.stringify(challenge, null, 2);

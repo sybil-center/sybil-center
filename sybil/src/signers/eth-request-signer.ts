@@ -25,7 +25,6 @@ export class EthRequestSigner implements ISigner {
     const signature = await this.#signMessage(address, hex);
     const chainId = await this.getChainId();
     return {
-      publicId: address,
       signature: signature,
       signType: `did:pkh:eip155:${chainId}` as SignType
     };

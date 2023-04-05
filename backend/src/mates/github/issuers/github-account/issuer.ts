@@ -17,7 +17,7 @@ import { TimedCache } from "../../../../base/service/timed-cache.js";
 import { absoluteId } from "../../../../util/id.util.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/types/oauth.js";
-import { AnyObject } from "../../../../util/model.util.js";
+import { AnyObj } from "../../../../util/model.util.js";
 import {
   CanIssueResp,
   CredentialType,
@@ -39,7 +39,7 @@ type GetGitHubAccountVC = {
   issuer: string;
   subjectDID: string;
   gitHubUser: GitHubUser;
-  custom?: AnyObject;
+  custom?: AnyObj;
   expirationDate?: Date;
 }
 
@@ -102,17 +102,17 @@ export class GitHubAccountIssuer
     this.gitHubService = new GitHubService(config);
   }
 
-  async getChallenge(req?: GitHubAccountChallengeReq): Promise<GitHubAccountChallenge> {
+  async getChallenge(req: GitHubAccountChallengeReq): Promise<GitHubAccountChallenge> {
     const sessionId = absoluteId();
-    const redirectUrl = req?.redirectUrl
+    const redirectUrl = req.redirectUrl
       ? new URL(req.redirectUrl)
       : undefined;
-    const custom = req?.custom;
-    const expirationDate = req?.expirationDate;
+
     const issueChallenge = toIssueChallenge({
+      publicId: req.publicId,
       type: this.providedCredential,
-      custom: custom,
-      expirationDate: expirationDate
+      custom: req.custom,
+      expirationDate: req.expirationDate
     });
     this.sessionCache.set(sessionId, {
       redirectUrl: redirectUrl,
@@ -149,7 +149,6 @@ export class GitHubAccountIssuer
   async issue({
     sessionId,
     signType,
-    publicId,
     signature
   }: GitHubAccountIssueReq): Promise<Credential> {
     const session = this.sessionCache.get(sessionId);
@@ -157,10 +156,10 @@ export class GitHubAccountIssuer
     if (!code) {
       throw new ClientError("GitHub processing your authorization. Wait!");
     }
+    const { custom, expirationDate, publicId } = fromIssueChallenge(issueChallenge);
     const subjectDID = await this.multiSignService
       .signAlg(signType)
       .did(signature, issueChallenge, publicId);
-    const { custom, expirationDate } = fromIssueChallenge(issueChallenge);
     const accessToken = await this.gitHubService.getAccessToken(code);
     const gitHubUser = await this.gitHubService.getUser(accessToken);
     this.sessionCache.delete(sessionId);

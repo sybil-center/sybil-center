@@ -16,8 +16,8 @@ export class GithubAccountProvider
 
   constructor(private readonly httpClient: HttpClient) {}
 
-  getPayload(payloadRequest: ChallengeReq): Promise<Challenge> {
-    return this.httpClient.payload(this.kind, payloadRequest);
+  getChallenge(payloadRequest: ChallengeReq): Promise<Challenge> {
+    return this.httpClient.challenge(this.kind, payloadRequest);
   }
 
   canIssue(sessionId: string): Promise<boolean> {
@@ -27,14 +27,12 @@ export class GithubAccountProvider
   async issueVC(signFn: SignFn, { sessionId, issueChallenge }: GitHubAccountReq): Promise<GitHubAccountVC> {
     const {
       signType,
-      publicId,
       signature
     } = await signFn({ message: issueChallenge });
     return this.httpClient.issue<GitHubAccountVC, GitHubAccountIssueReq>(this.kind, {
       sessionId: sessionId,
       signature: signature,
       signType: signType,
-      publicId: publicId
     });
   }
 }

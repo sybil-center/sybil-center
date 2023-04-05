@@ -2,15 +2,8 @@ import { suite } from "uvu";
 import * as a from "uvu/assert";
 import { App } from "../../../src/app/app.js";
 import sinon, { stub } from "sinon";
-import {
-
-  oauthCallbackEP
-} from "../../../src/util/route.util.js";
-import {
-  canIssueEP,
-  challengeEP,
-  issueEP
-} from "@sybil-center/sdk/util";
+import { oauthCallbackEP } from "../../../src/util/route.util.js";
+import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
 import * as url from "url";
 import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
@@ -18,12 +11,8 @@ import { ethereumSupport } from "../../support/ethereum.js";
 import { LightMyRequestResponse } from "fastify";
 import { solanaSupport } from "../../support/solana.js";
 import { bitcoinSupport } from "../../support/bitcoin.js";
-import {
-  CanIssueResp,
-  TwitterAccountVC,
-  TwitterAccountChallenge
-} from "@sybil-center/sdk/types"
-import { AnyObject } from "../../../src/util/model.util.js";
+import { CanIssueResp, TwitterAccountChallenge, TwitterAccountVC } from "@sybil-center/sdk/types";
+import { AnyObj } from "../../../src/util/model.util.js";
 
 const test = suite("Integration: Issue Twitter account ownership vc");
 
@@ -64,35 +53,35 @@ test.after(async () => {
 });
 
 type PreIssueArgs = {
-  custom?: AnyObject;
+  publicId: string,
+  custom?: AnyObj;
   expirationDate?: Date;
 }
 
 const preIssue = async (
-  args?: PreIssueArgs
+  args: PreIssueArgs
 ): Promise<{ issueChallenge: string; sessionId: string }> => {
-  const custom = args?.custom;
-  const expirationDate = args?.expirationDate;
   const { fastify } = app.context.resolve("httpServer");
   await fastify.ready();
-  const payloadResp = await fastify.inject({
+  const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("TwitterAccount"),
     payload: {
+      publicId: args.publicId,
       redirectUrl: redirectUrl,
-      custom: custom,
-      expirationDate: expirationDate
+      custom: args.custom,
+      expirationDate: args.expirationDate
     }
   });
   a.is(
-    payloadResp.statusCode, 200,
-    "payload status code is not 200"
+    challengeResp.statusCode, 200,
+    `challenge status code is not 200. error: ${challengeResp.body}`
   );
   const {
     authUrl,
     issueChallenge,
     sessionId
-  } = JSON.parse(payloadResp.body) as TwitterAccountChallenge;
+  } = JSON.parse(challengeResp.body) as TwitterAccountChallenge;
   const { query } = url.parse(authUrl, true);
   const state = query.state as string;
   a.type(state, "string");
@@ -106,7 +95,7 @@ const preIssue = async (
   });
   a.is(
     canIssueBeforeResp.statusCode, 200,
-    "can issue before callback resp status code is not 200"
+    `can issue before callback resp fail. error: ${canIssueBeforeResp.body}`
   );
   const { canIssue: canIssueBefore } =
     JSON.parse(canIssueBeforeResp.body) as CanIssueResp;
@@ -124,7 +113,7 @@ const preIssue = async (
   });
   a.is(
     callbackResp.statusCode, 302,
-    "callback status code is not 302"
+    `callback response fail. error: ${callbackResp.body}`
   );
   const redirectTo = callbackResp.headers.location as string;
   a.is(redirectTo, redirectUrl, "redirect url is not matched");
@@ -138,7 +127,7 @@ const preIssue = async (
   });
   a.is(
     canIssueAfterResp.statusCode, 200,
-    "can issue after callback resp status code is not 200"
+    `can issue after callback resp fail. error ${canIssueAfterResp.body}`
   );
   const { canIssue: canIssueAfter } =
     JSON.parse(canIssueAfterResp.body) as CanIssueResp;
@@ -199,7 +188,7 @@ test("should issue Twitter ownership credential with eth did-pkh", async () => {
   } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
 
-  const { issueChallenge, sessionId } = await preIssue();
+  const { issueChallenge, sessionId } = await preIssue({ publicId: ethAddress });
   const signature = await ethereumSupport.sign(issueChallenge);
 
   const issueResp = await fastify.inject({
@@ -207,7 +196,6 @@ test("should issue Twitter ownership credential with eth did-pkh", async () => {
     url: issueEP("TwitterAccount"),
     payload: {
       sessionId: sessionId,
-      publicId: ethAddress,
       signType: ethDidPkhPrefix,
       signature: signature
     }
@@ -224,7 +212,7 @@ test("should issue Twitter ownership credential with bitcoin did-pkh", async () 
   } = bitcoinSupport.info;
 
   const { fastify } = app.context.resolve("httpServer");
-  const { issueChallenge, sessionId } = await preIssue();
+  const { issueChallenge, sessionId } = await preIssue({ publicId: bitcoinAddress });
   const signature = await bitcoinSupport.sing(issueChallenge);
 
   const issueResp = await fastify.inject({
@@ -232,7 +220,6 @@ test("should issue Twitter ownership credential with bitcoin did-pkh", async () 
     url: issueEP("TwitterAccount"),
     payload: {
       sessionId: sessionId,
-      publicId: bitcoinAddress,
       signType: bitcoinDidPkhPrefix,
       signature: signature
     }
@@ -249,14 +236,13 @@ test("should issue Twitter ownership credential with solana did-pkh", async () =
   } = solanaSupport.info;
 
   const { fastify } = app.context.resolve("httpServer");
-  const { issueChallenge, sessionId } = await preIssue();
+  const { issueChallenge, sessionId } = await preIssue({ publicId: solanaAddress });
   const signature = await solanaSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("TwitterAccount"),
     payload: {
       sessionId: sessionId,
-      publicId: solanaAddress,
       signType: solanaDidPkhPrefix,
       signature: signature
     }
@@ -266,17 +252,21 @@ test("should issue Twitter ownership credential with solana did-pkh", async () =
 });
 
 test("should redirect to default page after authorization", async () => {
+  const { address: ethAddress } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
   const config = app.context.resolve("config");
-  const payloadResp = await fastify.inject({
+  const challengeResp = await fastify.inject({
     method: "POST",
-    path: challengeEP("TwitterAccount")
+    path: challengeEP("TwitterAccount"),
+    payload: {
+      publicId: ethAddress
+    }
   });
   a.is(
-    payloadResp.statusCode, 200,
-    "payload response is not matched"
+    challengeResp.statusCode, 200,
+    `challenge response fail. error: ${challengeResp.body}`
   );
-  const { authUrl } = JSON.parse(payloadResp.body) as TwitterAccountChallenge;
+  const { authUrl } = JSON.parse(challengeResp.body) as TwitterAccountChallenge;
   const { query } = url.parse(authUrl, true);
   const state = query.state as string;
   a.type(state, "string");
@@ -291,7 +281,7 @@ test("should redirect to default page after authorization", async () => {
   });
   a.is(
     callbackResp.statusCode, 302,
-    "callback status code is not 302"
+    `callback status code fail. error: ${callbackResp.body}`
   );
   const defaultRedirectUrl = callbackResp.headers.location as string;
   a.is(
@@ -304,12 +294,15 @@ test("should redirect to default page after authorization", async () => {
 test("should issue twitter account credential with custom property", async () => {
   const custom = { test: { hello: "world" } };
   const {
-    address,
+    address: ethAddress,
     didPkhPrefix,
     didPkh: subjectDID
   } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
-  const { sessionId, issueChallenge } = await preIssue({ custom });
+  const { sessionId, issueChallenge } = await preIssue({
+    publicId: ethAddress,
+    custom: custom
+  });
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
@@ -317,13 +310,12 @@ test("should issue twitter account credential with custom property", async () =>
     payload: {
       sessionId: sessionId,
       signature: signature,
-      publicId: address,
       signType: didPkhPrefix
     }
   });
   a.is(
     issueResp.statusCode, 200,
-    "vc resp status code is not 200"
+    `issue response fail. error: ${issueResp.body}`
   );
   const vc = JSON.parse(issueResp.body) as TwitterAccountVC;
   await assertIssueResp({ issueResp, subjectDID });
@@ -342,17 +334,21 @@ test("should not find Twitter code", async () => {
     ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
   await fastify.ready();
-  const payloadResp = await fastify.inject({
+  const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("TwitterAccount"),
     payload: {
+      publicId: ethAddress,
       redirectUrl: redirectUrl
     }
   });
-  a.is(payloadResp.statusCode, 200, "payload status code is not 200");
+  a.is(
+    challengeResp.statusCode, 200,
+    `challenge response fail. error: ${challengeResp.body}`
+  );
 
   const { issueChallenge, sessionId } =
-    JSON.parse(payloadResp.body) as TwitterAccountChallenge;
+    JSON.parse(challengeResp.body) as TwitterAccountChallenge;
   const signature = await ethereumSupport.sign(issueChallenge);
   const { statusCode, body } = await fastify.inject({
     method: "POST",
@@ -361,7 +357,6 @@ test("should not find Twitter code", async () => {
       sessionId: sessionId,
       signature: signature,
       signType: ethDidPkhPrefix,
-      publicId: ethAddress
     }
   });
   a.is(
@@ -374,13 +369,16 @@ test("should not find Twitter code", async () => {
 
 test("issue twitter account credential with expiration date", async () => {
   const {
-    address,
+    address: ethAddress,
     didPkh: subjectDID,
     didPkhPrefix: signType
   } = ethereumSupport.info.ethereum;
   const expirationDate = new Date();
   const fastify = app.context.resolve("httpServer").fastify;
-  const { sessionId, issueChallenge } = await preIssue({ expirationDate });
+  const { sessionId, issueChallenge } = await preIssue({
+    publicId: ethAddress,
+    expirationDate: expirationDate
+  });
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
@@ -389,7 +387,6 @@ test("issue twitter account credential with expiration date", async () => {
       signature: signature,
       sessionId: sessionId,
       signType: signType,
-      publicId: address
     }
   });
   await assertIssueResp({ issueResp, subjectDID });

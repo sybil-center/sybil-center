@@ -15,10 +15,9 @@ export const twitterAccountRoutes: CredentialRoutes = {
         properties: {
           sessionId: { type: "string" },
           signType: { type: "string" },
-          publicId: { type: "string" },
           signature: { type: "string" }
         },
-        required: ["sessionId", "signature", "publicId"]
+        required: ["sessionId", "signature", "signType"]
       }
     }
   },
@@ -53,8 +52,9 @@ export const twitterAccountRoutes: CredentialRoutes = {
       tags: tags,
       body: {
         type: "object",
-        nullable: true,
+        required: ["publicId"],
         properties: {
+          publicId: { type: "string" },
           redirectUrl: {
             type: "string",
             format: "uri",

@@ -11,7 +11,7 @@ import { fromIssueChallenge, toIssueChallenge } from "../../../../util/challenge
 import { TimedCache } from "../../../../base/service/timed-cache.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/types/oauth.js";
-import { AnyObject } from "../../../../util/model.util.js";
+import { AnyObj } from "../../../../util/model.util.js";
 import {
   CanIssueReq,
   CanIssueResp,
@@ -27,7 +27,7 @@ type GetTwitterAccountArgs = {
   issuer: string;
   subjectDID: string;
   twitterUser: TwitterUser;
-  custom?: AnyObject;
+  custom?: AnyObj;
   expirationDate?: Date;
 }
 
@@ -103,12 +103,11 @@ export class TwitterAccountIssuer
     const userRedirectUrl = req?.redirectUrl
       ? new URL(req?.redirectUrl)
       : undefined;
-    const custom = req?.custom;
-    const expirationDate = req?.expirationDate;
     const issueChallenge = toIssueChallenge({
+      publicId: req.publicId,
       type: this.providedCredential,
-      custom: custom,
-      expirationDate: expirationDate
+      custom: req.custom,
+      expirationDate: req.expirationDate
     });
     const { authUrl, codeVerifier } = this.twitterService.getOAuthLink({
       sessionId: sessionId,
@@ -143,7 +142,6 @@ export class TwitterAccountIssuer
   async issue({
     sessionId,
     signType,
-    publicId,
     signature
   }: TwitterAccountIssueReq): Promise<Credential> {
     const session = this.sessionCache.get(sessionId);
@@ -151,10 +149,10 @@ export class TwitterAccountIssuer
     if (!code) {
       throw new ClientError("Twitter processing your authorization. Wait!");
     }
+    const { custom, expirationDate, publicId } = fromIssueChallenge(issueChallenge);
     const subjectDID = await this.multiSignService
       .signAlg(signType)
       .did(signature, issueChallenge, publicId);
-    const { custom, expirationDate } = fromIssueChallenge(issueChallenge);
     const accessToken = await this.twitterService.getAccessToken({
       code: code,
       codeVerifier: codeVerifier

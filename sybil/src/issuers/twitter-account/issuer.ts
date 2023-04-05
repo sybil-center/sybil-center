@@ -1,12 +1,10 @@
 import type { Issuer } from "../../base/issuer.type.js";
-import {
-  TwitterAccountProvider,
-} from "./provider.js";
+import { TwitterAccountProvider, } from "./provider.js";
 import { HttpClient } from "../../base/http-client.js";
-import type { SignFn } from "../../types/index.js";
+import type { SubjectProof } from "../../types/index.js";
 import { popupFeatures } from "../../util/view.util.js";
 import { repeatUntil } from "../../util/repeat.until.js";
-import { TwitterAccountVC, TwitterAccountOptions } from "./types.js";
+import { TwitterAccountOptions, TwitterAccountVC } from "./types.js";
 
 export class TwitterAccountIssuer
   implements Issuer<TwitterAccountVC, TwitterAccountOptions> {
@@ -17,13 +15,14 @@ export class TwitterAccountIssuer
   ) {}
 
   async issueCredential(
-    signFn: SignFn,
+    { publicId, signFn }: SubjectProof,
     opt?: TwitterAccountOptions
   ): Promise<TwitterAccountVC> {
-    const payload = await this.provider.getPayload({
+    const payload = await this.provider.getChallenge({
       redirectUrl: opt?.redirectUrl,
       custom: opt?.custom,
-      expirationDate: opt?.expirationDate
+      expirationDate: opt?.expirationDate,
+      publicId: publicId
     });
     const popup = window.open(
       payload.authUrl,

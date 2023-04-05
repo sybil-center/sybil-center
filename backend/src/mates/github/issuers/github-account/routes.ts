@@ -14,11 +14,10 @@ export const githubAccountRoutes: CredentialRoutes = {
         type: "object",
         properties: {
           sessionId: { type: "string" },
-          publicId: { type: "string" },
           signType: { type: "string" },
           signature: { type: "string" }
         },
-        required: ["sessionId", "signature", "publicId"]
+        required: ["sessionId", "signature", "signType"]
       }
     }
   },
@@ -52,8 +51,9 @@ export const githubAccountRoutes: CredentialRoutes = {
       tags: tags,
       body: {
         type: "object",
-        nullable: true,
+        required: ["publicId"],
         properties: {
+          publicId: { type: "string" },
           redirectUrl: {
             type: "string",
             format: "uri",
