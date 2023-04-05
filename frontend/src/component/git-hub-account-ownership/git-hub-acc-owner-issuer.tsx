@@ -7,12 +7,12 @@ import { VC } from "../common/VC";
 import { Button } from "../common/Button";
 import { GitHubAccountVC } from "@sybil-center/sdk";
 import { sybil } from "../../service/sybil";
-import { useSign } from "../../hooks/sign-message";
+import { useSubjectProof } from "../../hooks/subject-proof";
 
 export function GitHubAccOwnerIssuer() {
   const cls = useStyles();
   const { isConnected: isWalletConnected } = useAccount();
-  const { signMessage } = useSign()
+  const { address, signMessage } = useSubjectProof()
 
   const [vcState, setVcState] = useState<{ loading: boolean; error?: string; data?: GitHubAccountVC }>({
     loading: false,
@@ -21,7 +21,10 @@ export function GitHubAccOwnerIssuer() {
   const handleIssue = () => {
     setVcState({ loading: true });
     sybil
-      .credential("github-account", signMessage)
+      .credential("github-account", {
+        publicId: address,
+        signFn: signMessage
+      })
       .then((vc) => {
         setVcState({ loading: false, data: vc });
       })

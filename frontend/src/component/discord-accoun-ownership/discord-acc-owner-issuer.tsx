@@ -5,14 +5,14 @@ import { ScaleLoader } from "react-spinners";
 import { VC } from "../common/VC";
 import { Button } from "../common/Button";
 import { DiscordAccountVC } from "@sybil-center/sdk";
-import { useSign } from "../../hooks/sign-message";
+import { useSubjectProof } from "../../hooks/subject-proof";
 import { sybil } from "../../service/sybil";
 import { useAccount } from "wagmi";
 
 export function DiscordAccOwnerIssuer() {
   const cls = useStyles();
-  const { isConnected: isWalletConnected } = useAccount()
-  const { signMessage } = useSign()
+  const { isConnected: isWalletConnected } = useAccount();
+  const { address, signMessage } = useSubjectProof();
   const [state, setState] = useState<{
     loading: boolean;
     error?: string;
@@ -22,7 +22,13 @@ export function DiscordAccOwnerIssuer() {
   const onIssue = () => {
     setState({ loading: true });
     sybil
-      .credential("discord-account", signMessage)
+      .credential("discord-account", {
+        publicId: address,
+        signFn: signMessage
+      }, {
+        expirationDate: new Date(),
+        custom: { hello: "from @sybil/sdk"}
+      })
       .then((vc) => {
         setState({ loading: false, data: vc });
       })
@@ -47,12 +53,12 @@ export function DiscordAccOwnerIssuer() {
 
   const renderBody = () => {
     if (!isWalletConnected) return <></>;
-    if (state.loading) return <ScaleLoader color={"white"} />;
+    if (state.loading) return <ScaleLoader color={"white"}/>;
     if (isErrors()) return <div className={cls.discordAccOwnIssuer__error}>Some errors</div>;
     if (state.data)
       return (
         <>
-          <VC vc={state.data} />
+          <VC vc={state.data}/>
           <Button theme={{ backgroundColor: "#668bef" }} onClick={onRefresh}>
             issue new
           </Button>
@@ -73,7 +79,7 @@ export function DiscordAccOwnerIssuer() {
         <div className={cls.discordAccOwnIssuer__container}>
           {renderBody()}
           <div>
-            <Web3Button />
+            <Web3Button/>
           </div>
         </div>
       </div>

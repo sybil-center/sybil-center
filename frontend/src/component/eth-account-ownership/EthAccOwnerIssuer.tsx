@@ -6,11 +6,11 @@ import { createUseStyles } from "react-jss";
 import { Web3Button } from "@web3modal/react";
 import { EthAccountVC } from "@sybil-center/sdk";
 import { sybil } from "../../service/sybil";
-import { useSign } from "../../hooks/sign-message";
+import { useSubjectProof } from "../../hooks/subject-proof";
 
 export function EthAccOwnerIssuer() {
   const { isConnected: isWalletConnected } = useAccount();
-  const { signMessage } = useSign();
+  const { address, signMessage } = useSubjectProof();
   const [state, setState] = useState<{ loading: boolean; error?: string; data?: EthAccountVC }>({
     loading: false
   });
@@ -20,7 +20,10 @@ export function EthAccOwnerIssuer() {
   const issueVC = () => {
     setState({ loading: true });
     sybil
-      .credential("ethereum-account", signMessage)
+      .credential("ethereum-account", {
+        publicId: address,
+        signFn: signMessage
+      })
       .then((vc) => {
         setState({ loading: false, data: vc });
       })
