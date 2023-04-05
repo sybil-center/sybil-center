@@ -32,9 +32,17 @@ export interface ChallengeEntry {
 export function toIssueChallenge(opt: IssueChallengeOpt): string {
   const description = [
     `Sign this message to issue '${opt.type}' credential.`,
-    `Credential subject identifier will be associated with '${opt.publicId}'`
+    `Credential subject identifier will be associated with '${opt.publicId}'.`
   ]
   const nonce = randomUUID();
+
+  let expirationDate: Date | undefined = undefined;
+  if (opt.expirationDate) {
+    expirationDate = opt.expirationDate;
+    description.push(
+      `Credential expiration date is ${expirationDate.toUTCString()}.`
+    );
+  }
 
   let custom: AnyObj | undefined = undefined;
   if (opt.custom) {
@@ -43,20 +51,13 @@ export function toIssueChallenge(opt: IssueChallengeOpt): string {
       `In 'custom' field you can see additional fields which will be in credential.`
     );
   }
-  let expirationDate: Date | undefined = undefined;
-  if (opt.expirationDate) {
-    expirationDate = opt.expirationDate;
-    description.push(
-      `Credential expiration date is .`
-    );
-  }
 
   const challenge: ChallengeEntry = {
-    nonce: nonce,
+    description: description.join(" "),
+    publicId: opt.publicId,
     expirationDate: expirationDate,
     custom: custom,
-    publicId: opt.publicId,
-    description: description.join(" ")
+    nonce: nonce
   };
 
   try {
