@@ -7,12 +7,11 @@ import { useAccount } from "wagmi";
 import { Web3Button } from "@web3modal/react";
 import { TwitterAccountVC } from "@sybil-center/sdk";
 import { sybil } from "../../service/sybil";
-import { useSign } from "../../hooks/sign-message";
-import { appConfig } from "../../config/app-config";
+import { useSubjectProof } from "../../hooks/subject-proof";
 
 export function TwitterAccOwnerIssuer() {
   const { isConnected: isWalletConnected } = useAccount();
-  const { signMessage } = useSign();
+  const { address, signMessage } = useSubjectProof();
 
   const [state, setState] = useState<{
     loading: boolean;
@@ -25,7 +24,10 @@ export function TwitterAccOwnerIssuer() {
   const handleIssue = () => {
     setState({ loading: true });
     sybil
-      .credential("twitter-account", signMessage)
+      .credential("twitter-account", {
+        publicId: address,
+        signFn: signMessage
+      })
       .then((vc) => {
         setState({ loading: false, data: vc });
       })

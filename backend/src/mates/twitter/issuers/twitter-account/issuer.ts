@@ -1,17 +1,17 @@
-import type { ICredentialIssuer, IOAuthCallback, } from "../../../../base/credentials.js";
-import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../../base/credentials.js";
+import type { ICredentialIssuer, IOAuthCallback, } from "../../../../base/service/credentials.js";
+import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../../base/service/credentials.js";
 import { Disposable, tokens } from "typed-inject";
-import { IProofService } from "../../../../base/service/proof-service.js";
+import { IProofService } from "../../../../base/service/proof.service.js";
 import { TwitterService, type TwitterUser } from "../../twitter.service.js";
-import { DIDService } from "../../../../base/service/did-service.js";
-import { absoluteId } from "../../../../util/id-util.js";
+import { DIDService } from "../../../../base/service/did.service.js";
+import { absoluteId } from "../../../../util/id.util.js";
 import { ClientError } from "../../../../backbone/errors.js";
 import type { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
-import { fromIssueChallenge, toIssueChallenge } from "../../../../util/challenge.util.js";
-import { TimedCache } from "../../../../base/timed-cache.js";
+import { fromIssueChallenge, toIssueChallenge } from "../../../../base/service/challenge.service.js";
+import { TimedCache } from "../../../../base/service/timed-cache.js";
 import sortKeys from "sort-keys";
-import { OAuthState } from "../../../../base/oauth.js";
-import { AnyObject } from "../../../../util/model.util.js";
+import { OAuthState } from "../../../../base/types/oauth.js";
+import { AnyObj } from "../../../../util/model.util.js";
 import {
   CanIssueReq,
   CanIssueResp,
@@ -27,7 +27,7 @@ type GetTwitterAccountArgs = {
   issuer: string;
   subjectDID: string;
   twitterUser: TwitterUser;
-  custom?: AnyObject;
+  custom?: AnyObj;
   expirationDate?: Date;
 }
 
@@ -103,12 +103,11 @@ export class TwitterAccountIssuer
     const userRedirectUrl = req?.redirectUrl
       ? new URL(req?.redirectUrl)
       : undefined;
-    const custom = req?.custom;
-    const expirationDate = req?.expirationDate;
     const issueChallenge = toIssueChallenge({
+      publicId: req.publicId,
       type: this.providedCredential,
-      custom: custom,
-      expirationDate: expirationDate
+      custom: req.custom,
+      expirationDate: req.expirationDate
     });
     const { authUrl, codeVerifier } = this.twitterService.getOAuthLink({
       sessionId: sessionId,
@@ -142,8 +141,7 @@ export class TwitterAccountIssuer
 
   async issue({
     sessionId,
-    signAlg,
-    publicId,
+    signType,
     signature
   }: TwitterAccountIssueReq): Promise<Credential> {
     const session = this.sessionCache.get(sessionId);
@@ -151,10 +149,10 @@ export class TwitterAccountIssuer
     if (!code) {
       throw new ClientError("Twitter processing your authorization. Wait!");
     }
+    const { custom, expirationDate, publicId } = fromIssueChallenge(issueChallenge);
     const subjectDID = await this.multiSignService
-      .signAlg(signAlg)
+      .signAlg(signType)
       .did(signature, issueChallenge, publicId);
-    const { custom, expirationDate } = fromIssueChallenge(issueChallenge);
     const accessToken = await this.twitterService.getAccessToken({
       code: code,
       codeVerifier: codeVerifier

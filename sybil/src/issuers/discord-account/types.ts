@@ -8,9 +8,7 @@ export type DiscordAccountChallenge = Challenge & {
   authUrl: string;
 }
 
-export type DiscordAccountIssueReq = IssueReq & {
-  publicId: string;
-}
+export type DiscordAccountIssueReq = IssueReq
 
 export type DiscordAccountReq = {
   sessionId: string;

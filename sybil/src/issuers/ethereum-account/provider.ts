@@ -37,8 +37,8 @@ export class EthAccountProvider
    * {@link EthAccountReq}
    * @throws Error
    */
-  getPayload(challengeReq: ChallengeReq): Promise<Challenge> {
-    return this.httpClient.payload<Challenge, ChallengeReq>(
+  getChallenge(challengeReq: ChallengeReq): Promise<Challenge> {
+    return this.httpClient.challenge<Challenge, ChallengeReq>(
       this.kind, challengeReq
     );
   }
@@ -48,14 +48,12 @@ export class EthAccountProvider
   }
   async ownerProof(proofAlg: SignFn, params: Challenge): Promise<EthAccountProofResp> {
     const {
-      signature,
-      publicId
-    } = await proofAlg({ message: params.ownerChallenge })
+      signature
+    } = await proofAlg({ message: params.ownerChallenge! })
     return await this.httpClient.proof<
       EthAccountProofResp,
       OwnerProofEthAccount
     >("EthereumAccount", {
-      publicId: publicId,
       signature: signature,
       sessionId: params.sessionId,
     })
@@ -72,14 +70,12 @@ export class EthAccountProvider
   async issueVC(signMessageAlg: SignFn, params: EthAccountReq): Promise<EthAccountVC> {
     const {
       signature,
-      publicId,
-      signAlg
+      signType
     } = await signMessageAlg({ message: params.issueChallenge });
     return this.httpClient.issue<EthAccountVC, EthAccountIssueReq>(this.kind, {
       sessionId: params.sessionId,
       signature: signature,
-      publicId: publicId,
-      signAlg: signAlg
+      signType: signType
     });
   }
 }

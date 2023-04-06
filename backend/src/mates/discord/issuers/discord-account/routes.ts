@@ -1,4 +1,4 @@
-import { CredentialRoutes } from "../../../../base/model/route/route.js";
+import { CredentialRoutes } from "../../../../base/types/route.js";
 import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
 
 
@@ -16,11 +16,10 @@ export const discordAccountRoutes: CredentialRoutes = {
         type: "object",
         properties: {
           sessionId: { type: "string" },
-          signAlg: { type: "string" },
-          publicId: { type: "string" },
+          signType: { type: "string" },
           signature: { type: "string" }
         },
-        required: ["sessionId", "signature", "publicId"]
+        required: ["sessionId", "signature", "signType"]
       }
     }
   },
@@ -55,8 +54,11 @@ export const discordAccountRoutes: CredentialRoutes = {
       tags: tags,
       body: {
         type: "object",
-        nullable: true,
+        required: ["publicId"],
         properties: {
+          publicId: {
+            type: "string"
+          },
           redirectUrl: {
             type: "string",
             format: "uri",

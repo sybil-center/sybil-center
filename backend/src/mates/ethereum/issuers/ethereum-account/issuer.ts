@@ -4,33 +4,31 @@ import {
   DEFAULT_CREDENTIAL_TYPE,
   ICredentialIssuer,
   IOwnerProofHandler,
-} from "../../../../base/credentials.js";
+} from "../../../../base/service/credentials.js";
 import { type Disposable, tokens } from "typed-inject";
-import { IProofService } from "../../../../base/service/proof-service.js";
-import { DIDService } from "../../../../base/service/did-service.js";
+import { IProofService } from "../../../../base/service/proof.service.js";
+import { DIDService } from "../../../../base/service/did.service.js";
 import { MultiSignService } from "../../../../base/service/multi-sign.service.js";
-import { fromIssueChallenge, toIssueChallenge } from "../../../../util/challenge.util.js";
-import { absoluteId } from "../../../../util/id-util.js";
-import { TimedCache } from "../../../../base/timed-cache.js";
+import { fromIssueChallenge, toIssueChallenge } from "../../../../base/service/challenge.service.js";
+import { absoluteId } from "../../../../util/id.util.js";
+import { TimedCache } from "../../../../base/service/timed-cache.js";
 import sortKeys from "sort-keys";
-import { ClientError } from "../../../../backbone/errors.js";
+import { ClientError, ServerError } from "../../../../backbone/errors.js";
 import { randomUUID } from "crypto";
-import { AnyObject } from "../../../../util/model.util.js";
+import { AnyObj } from "../../../../util/model.util.js";
 import {
+  CanIssueResp,
+  Credential,
+  CredentialType,
   EthAccountChallenge,
   EthAccountChallengeReq,
   EthAccountIssueReq,
-  EthAccountVC,
-  Credential,
-  EthAccountProofResp,
-  CredentialType,
-  CanIssueReq,
-  CanIssueResp
-} from "@sybil-center/sdk/types"
+  EthAccountVC
+} from "@sybil-center/sdk/types";
 
 export interface EthAccountSession {
   issueChallenge: string;
-  ownerChallenge: string;
+  ownerChallenge?: string;
   address?: string;
 }
 
@@ -44,7 +42,7 @@ export interface GetEthAccountVC {
   subjectDID: string;
   ethAddress: string;
   expirationDate?: Date;
-  custom?: AnyObject;
+  custom?: AnyObj;
 }
 
 function getEthAccountVC(args: GetEthAccountVC): EthAccountVC {
@@ -68,11 +66,32 @@ function getEthAccountVC(args: GetEthAccountVC): EthAccountVC {
   );
 }
 
-function ethOwnerChallenge(): string {
+function ethOwnerChallenge(ethAddress?: string): string | undefined {
+  if (!ethAddress) return undefined;
   return JSON.stringify({
-    description: `Sign this message to proof Ethereum account ownership`,
-    nonce: randomUUID()
+    description: `Sign this message to proof Ethereum account ownership with address '${ethAddress}'`,
+    nonce: randomUUID(),
+    address: ethAddress
   }, null, " ");
+}
+
+type FromOwnerChallenge = {
+  address: string;
+  description: string;
+  nonce: string;
+}
+
+function fromEthOwnerChallenge(challenge: string): FromOwnerChallenge {
+  try {
+    return JSON.parse(challenge) as FromOwnerChallenge;
+  } catch (e: any) {
+    throw new ServerError("Internal server error", {
+      props: {
+        _place: fromEthOwnerChallenge.name,
+        _log: e
+      }
+    });
+  }
 }
 
 /** ETH Account Issuer */
@@ -106,11 +125,12 @@ export class EthereumAccountIssuer
     const custom = req?.custom;
     const expirationDate = req?.expirationDate;
     const sessionId = absoluteId();
-    const ownerChallenge = ethOwnerChallenge();
+    const ownerChallenge = ethOwnerChallenge(req.ethAddress);
     const issueChallenge = toIssueChallenge({
       type: this.providedCredential,
       custom: custom,
-      expirationDate: expirationDate
+      expirationDate: expirationDate,
+      publicId: req.publicId
     });
     this.sessionCache.set(sessionId, { issueChallenge, ownerChallenge });
     return {
@@ -121,15 +141,16 @@ export class EthereumAccountIssuer
   }
   async handleOwnerProof({
     sessionId,
-    publicId,
     signature
   }: ChainOwnerProof): Promise<EthProofResult> {
     const session = this.sessionCache.get(sessionId);
-    if (session.address)
-      throw new ClientError(`Address has been proofed with session=${sessionId}`);
-    const ethAddress = await this.multiSignService
+    const ownerChallenge = session.ownerChallenge;
+    if (!ownerChallenge) throw new ClientError('Do not have challenge to proof');
+    const { address: ethAddress } = fromEthOwnerChallenge(ownerChallenge);
+    await this.multiSignService
       .ethereum
-      .verifySign(signature, session.ownerChallenge, publicId);
+      .verifySign(signature, ownerChallenge, ethAddress);
+
     session.address = ethAddress;
     return { address: ethAddress, chainId: "eip155:1" };
   }
@@ -139,13 +160,13 @@ export class EthereumAccountIssuer
   }
 
   async issue(issueReq: EthAccountIssueReq): Promise<Credential> {
-    const { subjectDID, address, issueChallenge } = await this.#resolve(issueReq);
+    const { subjectDID, ethAddress, issueChallenge } = await this.#resolve(issueReq);
     const { custom, expirationDate } = fromIssueChallenge(issueChallenge);
     this.sessionCache.delete(issueReq.sessionId);
     const vc = getEthAccountVC({
       issuerDID: this.didService.id,
       subjectDID: subjectDID,
-      ethAddress: address,
+      ethAddress: ethAddress,
       custom: custom,
       expirationDate: expirationDate
     });
@@ -161,22 +182,23 @@ export class EthereumAccountIssuer
    */
   async #resolve(
     issueReq: EthAccountIssueReq
-  ): Promise<{ address: string, subjectDID: string, issueChallenge: string }> {
-    const { sessionId, signAlg, signature, publicId } = issueReq;
+  ): Promise<{ ethAddress: string, subjectDID: string, issueChallenge: string }> {
+    const { sessionId, signType, signature } = issueReq;
 
     const { address, issueChallenge } = this.sessionCache.get(sessionId);
+    const {publicId } = fromIssueChallenge(issueChallenge);
     if (address) {
       const subjectId = await this.multiSignService
-        .signAlg(signAlg)
+        .signAlg(signType)
         .did(signature, issueChallenge, publicId);
-      return { address, subjectDID: subjectId, issueChallenge };
+      return { ethAddress: address, subjectDID: subjectId, issueChallenge };
     }
     const ethAddress = await this.multiSignService
       .ethereum
       .verifySign(signature, issueChallenge, publicId);
     const didPrefix = this.multiSignService.ethereum.didPrefix;
     return {
-      address: ethAddress,
+      ethAddress: ethAddress,
       subjectDID: `${didPrefix}:${ethAddress}`,
       issueChallenge
     };

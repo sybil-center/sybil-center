@@ -1,5 +1,6 @@
 export * from "./sybil.js";
-export * from "./signers/eth-request-signer.js";
+export * from "./wallet-providers/ethereum.wallet-provider.js";
+export * from "./wallet-providers/wallet-provider.type.js"
 export * from "./base/types/proof-type.type.js"
 export {
   Credential,
@@ -9,6 +10,6 @@ export {
   GitHubAccountVC,
   SignFn,
   SignResult,
-  SignAlgAlias,
+  SignType,
 } from "./types/index.js"
 

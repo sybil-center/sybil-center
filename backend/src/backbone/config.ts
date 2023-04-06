@@ -1,4 +1,4 @@
-import { configDotEnv } from "../util/dotenv.js";
+import { configDotEnv } from "../util/dotenv.util.js";
 
 export class Config {
   readonly protocol: string;

@@ -1,7 +1,8 @@
 import { ProofType } from "./proof-type.type.js";
 import { CredentialType } from "./credential-type.type.js";
 import { AnyObj } from "../../util/types.util.js";
-import { SignAlgAlias } from "./sign-alias.type.js";
+import { SignType } from "./sign-type.type.js";
+import { SignFn } from "./sign-fn.type.js";
 
 /** Base type of VC and its components */
 export type Credential = {
@@ -57,15 +58,11 @@ export type CredentialStatus = {
 export type IssueReq = {
   sessionId: string;
   signature: string;
-  signAlg?: SignAlgAlias;
-
-  /** Entity with executing request defined id of vc */
-  credentialId?: string;
+  signType: SignType;
 }
 
 /** For check is credential ready for issue */
 export type CanIssueReq = {
-
   /** Session id */
   sessionId: string;
 }
@@ -87,9 +84,19 @@ export type ChallengeReq = {
   custom?: AnyObj;
   /** Credential expiration date */
   expirationDate?: Date;
+  /** Verifiable credential id */
+  credentialId?: string;
+  /** Chain address refer to credential subject */
+  publicId: string;
 }
 
 export type Options = {
   custom?: AnyObj;
   expirationDate?: Date;
+  credentialId?: string;
+}
+
+export type SubjectProof = {
+  publicId: string;
+  signFn: SignFn;
 }

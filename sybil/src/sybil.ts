@@ -1,26 +1,10 @@
 import type { Issuer } from "./base/issuer.type.js";
-import {
-  TwitterAccountIssuer,
-  TwitterAccountOptions,
-  TwitterAccountVC
-} from "./issuers/twitter-account/index.js";
-import {
-  DiscordAccountIssuer,
-  DiscordAccountOptions,
-  DiscordAccountVC
-} from "./issuers/discord-account/index.js";
-import {
-  EthAccountIssuer,
-  EthAccountOptions,
-  EthAccountVC
-} from "./issuers/ethereum-account/index.js";
-import {
-  GithubAccountIssuer,
-  GitHubAccountOptions,
-  GitHubAccountVC
-} from "./issuers/github-account/index.js";
+import { TwitterAccountIssuer, TwitterAccountOptions, TwitterAccountVC } from "./issuers/twitter-account/index.js";
+import { DiscordAccountIssuer, DiscordAccountOptions, DiscordAccountVC } from "./issuers/discord-account/index.js";
+import { EthAccountIssuer, EthAccountOptions, EthAccountVC } from "./issuers/ethereum-account/index.js";
+import { GithubAccountIssuer, GitHubAccountOptions, GitHubAccountVC } from "./issuers/github-account/index.js";
 import { HttpClient } from "./base/http-client.js";
-import { SignFn } from "./base/types/index.js";
+import { SubjectProof } from "./base/types/index.js";
 
 
 export type CredentialKinds = {
@@ -63,11 +47,11 @@ export class Sybil {
 
   async credential<TName extends keyof CredentialKinds>(
     name: TName,
-    signFn: SignFn,
+    subjectProof: SubjectProof,
     options?: CredentialKinds[TName]["options"]
   ): Promise<CredentialKinds[TName]["kind"]> {
     const client = this.issuers[name];
     if (!client) throw new Error(`Provider ${name} not available`);
-    return client.issueCredential(signFn, options);
+    return client.issueCredential(subjectProof, options);
   }
 }

@@ -17,8 +17,8 @@ export class DiscordAccountProvider
 
   constructor(private readonly httpClient: HttpClient) {}
 
-  getPayload(payloadRequest: ChallengeReq): Promise<Challenge> {
-    return this.httpClient.payload<Challenge, ChallengeReq>(this.kind, payloadRequest);
+  getChallenge(payloadRequest: ChallengeReq): Promise<Challenge> {
+    return this.httpClient.challenge<Challenge, ChallengeReq>(this.kind, payloadRequest);
   }
 
   canIssue(sessionId: string): Promise<boolean> {
@@ -28,15 +28,13 @@ export class DiscordAccountProvider
   async issueVC(signFn: SignFn, { issueChallenge, sessionId }: DiscordAccountReq): Promise<DiscordAccountVC> {
     console.log("issue challenge",issueChallenge);
     const {
-      publicId,
-      signAlg,
+      signType,
       signature
     } = await signFn({ message: issueChallenge });
     return this.httpClient.issue<DiscordAccountVC, DiscordAccountIssueReq>(this.kind, {
       sessionId: sessionId,
       signature: signature,
-      publicId: publicId,
-      signAlg: signAlg
+      signType: signType
     });
   }
 }

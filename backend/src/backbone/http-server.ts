@@ -72,11 +72,14 @@ export class HttpServer implements Disposable {
     this.fastify.setErrorHandler<Error>((error, _, reply) => {
       if (error instanceof ClientError) {
         reply.status(error.statusCode).send({ message: error.message });
+
       } else if (error instanceof ServerError) {
         this.logger.error(`${error._place}: ${error._log}`);
         reply.status(error.statusCode).send({ message: error.message });
+
       } else {
-        reply.send(error);
+        this.logger.error(error);
+        reply.status(500).send({ message: "Internal server error" });
       }
     });
     await this.fastify.listen({

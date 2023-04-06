@@ -1,9 +1,9 @@
-import type { ICredentialIssuer, IOAuthCallback, IOwnerProofHandler } from "../credentials.js";
+import type { ICredentialIssuer, IOAuthCallback, IOwnerProofHandler } from "./credentials.js";
 import type { ILogger } from "../../backbone/logger.js";
-import type { OAuthState } from "../oauth.js";
+import type { OAuthState } from "../types/oauth.js";
 import { type Disposable, type Injector, INJECTOR_TOKEN, tokens } from "typed-inject";
 import { ClientError } from "../../backbone/errors.js";
-import { AnyObject } from "../../util/model.util.js";
+import { AnyObj } from "../../util/model.util.js";
 import {
   CanIssueReq,
   CanIssueResp,
@@ -83,8 +83,8 @@ export class IssuerContainer implements Disposable {
 
   async handleOwnerProof(
     type: CredentialType,
-    proof: AnyObject
-  ): Promise<AnyObject> {
+    proof: AnyObj
+  ): Promise<AnyObj> {
     const issuer = this.getIssuer(type);
     return await issuer.handleOwnerProof!(proof);
   }
@@ -92,14 +92,14 @@ export class IssuerContainer implements Disposable {
   /**
    * Get payload for providing VC issue process
    * @param type type of VC that need to be issued
-   * @param payloadRequest
+   * @param challengeReq
    */
   getChallenge(
     type: CredentialType,
-    payloadRequest?: ChallengeReq
+    challengeReq: ChallengeReq
   ): Promise<Challenge> {
     const issuer = this.getIssuer(type);
-    return issuer.getChallenge(payloadRequest);
+    return issuer.getChallenge(challengeReq);
   }
 
   /**
@@ -112,7 +112,7 @@ export class IssuerContainer implements Disposable {
     type: CredentialType
   ): UnknownCredentialIssuer
     & Partial<IOAuthCallback>
-    & Partial<IOwnerProofHandler<AnyObject, AnyObject>> {
+    & Partial<IOwnerProofHandler<AnyObj, AnyObj>> {
     const issuer = this.issuers.get(type);
     if (issuer) return issuer;
     throw new ClientError(`Issuer ${type} not found`);

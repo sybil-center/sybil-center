@@ -17,8 +17,8 @@ export class TwitterAccountProvider
 
   constructor(private readonly httpClient: HttpClient) {}
 
-  getPayload(payloadRequest: ChallengeReq): Promise<Challenge> {
-    return this.httpClient.payload(this.kind, payloadRequest);
+  getChallenge(payloadRequest: ChallengeReq): Promise<Challenge> {
+    return this.httpClient.challenge(this.kind, payloadRequest);
   }
 
   canIssue(sessionId: string): Promise<boolean> {
@@ -37,14 +37,12 @@ export class TwitterAccountProvider
   ): Promise<TwitterAccountVC> {
     const {
       signature,
-      publicId,
-      signAlg
+      signType
     } = await signFn({ message: issueChallenge });
     return this.httpClient.issue<TwitterAccountVC, TwitterAccountIssueReq>(this.kind, {
       sessionId: sessionId,
       signature: signature,
-      signAlg: signAlg,
-      publicId: publicId
+      signType: signType,
     });
   }
 }

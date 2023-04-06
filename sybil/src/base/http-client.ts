@@ -8,9 +8,8 @@ export class HttpClient {
     readonly issuerDomain: URL
   ) {}
 
-  async payload<
+  async challenge<
     TResponse, // TODO It should be unknown
-    // TParams extends Record<string, string> = any TODO It should be some kind of Record<string, string>
     TParams = any
   >(credentialType: CredentialType, params?: TParams): Promise<TResponse> {
     // FIXME ts-essential Opaque

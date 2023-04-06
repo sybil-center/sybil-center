@@ -1,4 +1,4 @@
-import { toFullJWT } from "./jwt.js";
+import { toFullJWT } from "./jwt.util.js";
 import KeyResolver from "key-did-resolver";
 import { DID } from "dids";
 import { Credential } from "@sybil-center/sdk/types";
