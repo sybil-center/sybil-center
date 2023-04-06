@@ -1,7 +1,7 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { EthereumSignService } from "../../../../src/base/service/sign/ethereum-sign.service.js";
-import { ethereumSupport } from "../../../support/ethereum.js";
+import { ethereumSupport } from "../../../test-support/ethereum.js";
 
 const test = suite("Ethereum sign test");
 

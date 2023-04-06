@@ -3,7 +3,7 @@ import * as a from "uvu/assert";
 import { App } from "../../../src/app/app.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
 import { challengeEP } from "@sybil-center/sdk/util";
-import { ethereumSupport } from "../../support/ethereum.js";
+import { ethereumSupport } from "../../test-support/ethereum.js";
 
 const test = suite("Custom property size limit test");
 
@@ -44,4 +44,4 @@ test("should throw client error because custom property is too large", async () 
   );
 });
 
-// test.run();
+test.run();

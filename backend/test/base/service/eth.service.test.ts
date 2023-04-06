@@ -2,7 +2,7 @@ import { suite } from "uvu";
 import * as a from "uvu/assert";
 import sinon from "sinon";
 import { ethers } from "ethers";
-import { EthService } from "../../src/base/service/eth.service.js";
+import { EthService } from "../../../src/base/service/eth.service.js";
 const BigNumber = ethers.BigNumber
 const test = suite("Ethereum service test");
 

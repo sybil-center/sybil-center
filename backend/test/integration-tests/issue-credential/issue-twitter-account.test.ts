@@ -7,14 +7,14 @@ import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
 import * as url from "url";
 import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
-import { ethereumSupport } from "../../support/ethereum.js";
+import { ethereumSupport } from "../../test-support/ethereum.js";
 import { LightMyRequestResponse } from "fastify";
-import { solanaSupport } from "../../support/solana.js";
-import { bitcoinSupport } from "../../support/bitcoin.js";
+import { solanaSupport } from "../../test-support/solana.js";
+import { bitcoinSupport } from "../../test-support/bitcoin.js";
 import { CanIssueResp, TwitterAccountChallenge, TwitterAccountVC } from "@sybil-center/sdk/types";
 import { AnyObj } from "../../../src/util/model.util.js";
 
-const test = suite("Integration: Issue Twitter account ownership vc");
+const test = suite("Integration: issue Twitter account credential");
 
 let app: App;
 

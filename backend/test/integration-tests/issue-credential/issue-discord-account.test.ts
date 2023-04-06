@@ -7,14 +7,14 @@ import * as url from "url";
 import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
 import { LightMyRequestResponse } from "fastify";
-import { ethereumSupport } from "../../support/ethereum.js";
-import { bitcoinSupport } from "../../support/bitcoin.js";
-import { solanaSupport } from "../../support/solana.js";
+import { ethereumSupport } from "../../test-support/ethereum.js";
+import { bitcoinSupport } from "../../test-support/bitcoin.js";
+import { solanaSupport } from "../../test-support/solana.js";
 import { CanIssueResp, DiscordAccountChallenge, DiscordAccountVC } from "@sybil-center/sdk/types";
 import { AnyObj } from "../../../src/util/model.util.js";
 import { oauthCallbackEP } from "../../../src/util/route.util.js";
 
-const test = suite("Integration: Issue Discord account ownership vc");
+const test = suite("Integration: issue Discord account credential");
 
 let app: App;
 

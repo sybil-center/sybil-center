@@ -7,14 +7,14 @@ import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
 import * as url from "url";
 import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
-import { ethereumSupport } from "../../support/ethereum.js";
+import { ethereumSupport } from "../../test-support/ethereum.js";
 import { LightMyRequestResponse } from "fastify";
-import { solanaSupport } from "../../support/solana.js";
-import { bitcoinSupport } from "../../support/bitcoin.js";
+import { solanaSupport } from "../../test-support/solana.js";
+import { bitcoinSupport } from "../../test-support/bitcoin.js";
 import { CanIssueResp, GitHubAccountChallenge, GitHubAccountVC } from "@sybil-center/sdk/types";
 import { AnyObj } from "../../../src/util/model.util.js";
 
-const test = suite("Integration: Issue GitHub account ownership vc");
+const test = suite("Integration: issue GitHub account credential");
 
 let app: App;
 

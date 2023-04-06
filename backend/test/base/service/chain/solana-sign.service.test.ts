@@ -1,7 +1,7 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { SolanaSignService } from "../../../../src/base/service/sign/solana-sign.service.js";
-import { solanaSupport } from "../../../support/solana.js";
+import { solanaSupport } from "../../../test-support/solana.js";
 
 const test = suite("Solana sign test");
 

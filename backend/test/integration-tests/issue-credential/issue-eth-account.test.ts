@@ -6,15 +6,15 @@ import { challengeEP, issueEP, ownerProofEP } from "@sybil-center/sdk/util";
 import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
 //@ts-ignore
-import { ethereumSupport } from "../../support/ethereum.js";
+import { ethereumSupport } from "../../test-support/ethereum.js";
 import { EthAccountChallenge, EthAccountVC, SignType } from "@sybil-center/sdk/types";
 import { EthProofResult } from "../../../src/mates/ethereum/issuers/ethereum-account/index.js";
 //@ts-ignore
-import { solanaSupport } from "../../support/solana.js";
+import { solanaSupport } from "../../test-support/solana.js";
 import { AnyObj } from "../../../src/util/model.util.js";
 import { LightMyRequestResponse } from "fastify";
 
-const test = suite("Integration: Issue ETH account ownership vc");
+const test = suite("Integration: issue Ethereum account credential");
 
 let app: App;
 
