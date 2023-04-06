@@ -10,7 +10,7 @@ import { LightMyRequestResponse } from "fastify";
 import { ethereumSupport } from "../../support/ethereum.js";
 import { bitcoinSupport } from "../../support/bitcoin.js";
 import { solanaSupport } from "../../support/solana.js";
-import { CanIssueResp, DiscordAccountChallenge, DiscordAccountVC, SignType } from "@sybil-center/sdk/types";
+import { CanIssueResp, DiscordAccountChallenge, DiscordAccountVC } from "@sybil-center/sdk/types";
 import { AnyObj } from "../../../src/util/model.util.js";
 import { oauthCallbackEP } from "../../../src/util/route.util.js";
 

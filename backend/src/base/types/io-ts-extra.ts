@@ -24,6 +24,7 @@ export const bytesAsB64U = new t.Type<Uint8Array, string, string>(
  */
 export const jsonAsBytes = new t.Type<any, Uint8Array, Uint8Array>(
   "JSON-as-Uint8Array",
+  // @ts-ignore
   (input: unknown): input is any => true,
   (input, context) => {
     try {

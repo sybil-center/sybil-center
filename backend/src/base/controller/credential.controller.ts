@@ -3,11 +3,12 @@ import type { FastifyInstance } from "fastify";
 import type { OAuthQueryCallBack } from "../service/credentials.js";
 import { genVCRotes } from "./routes/credential.route.js";
 import { vcOAuthCallback } from "./routes/callback.route.js";
-import { ClientError } from "../../backbone/errors.js";
+
 import { OAuthState } from "../types/oauth.js";
 import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 import { AnyObj } from "../../util/model.util.js";
 import { CanIssueReq, ChallengeReq, IssueReq } from "@sybil-center/sdk/types";
+import { ClientError } from "../../backbone/errors.js";
 
 type ConfigFields = {
   pathToExposeDomain: URL;
@@ -85,7 +86,7 @@ export function credentialController(
         method: ownerProofRoute.method,
         url: ownerProofRoute.url,
         schema: ownerProofRoute.schema,
-        handler: async (req, resp) => {
+        handler: async (req) => {
           const ownerProof = req.body;
           return await issuerContainer.handleOwnerProof(routes.credentialType, ownerProof);
         }

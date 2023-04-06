@@ -202,10 +202,10 @@ test("should issue ethereum account credential with custom property", async () =
   const credential = JSON.parse(issueResp.body) as EthAccountVC;
   const { custom: vcCustom } = credential.credentialSubject;
   a.ok(vcCustom, "custom is not present");
-  a.ok(vcCustom.test, "custom.test is not present");
-  a.ok(vcCustom.test.hello, "custom.test.hello is not present");
+  a.ok(vcCustom["test"], "custom.test is not present");
+  a.ok(vcCustom["test"]?.hello, "custom.test.hello is not present");
   a.is(
-    vcCustom.test.hello, "world",
+    vcCustom["test"]?.hello, "world",
     "hello custom property is not matched"
   );
   assertSessionDeleted(sessionId);

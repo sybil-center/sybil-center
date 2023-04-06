@@ -60,8 +60,8 @@ test("should convert jws as string to dag jws", async () => {
   assert.ok(dagJWSFromStrJws.payload, "payload is undefined");
   assert.ok(dagJWSFromStrJws.signatures, "signatures is undefined");
   const signature = dagJWSFromStrJws.signatures[0];
-  assert.ok(signature.signature, "signature is undefined");
-  assert.ok(signature.protected, "protected is undefined");
+  assert.ok(signature?.signature, "signature is undefined");
+  assert.ok(signature?.protected, "protected is undefined");
 });
 
 test("should convert dag jws to jws string", async () => {
@@ -80,8 +80,8 @@ test("should convert detached jws and payload to full dag jws", async () => {
   assert.ok(dagJWSFromDetachedJWS.payload, "payload is undefined");
   assert.ok(dagJWSFromDetachedJWS.signatures, "signatures is undefined");
   const signature = dagJWSFromDetachedJWS.signatures[0];
-  assert.ok(signature.signature, "signature is undefined");
-  assert.ok(signature.protected, "protected is undefined");
+  assert.ok(signature?.signature, "signature is undefined");
+  assert.ok(signature?.protected, "protected is undefined");
 });
 
 test.run();

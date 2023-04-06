@@ -15,8 +15,7 @@ import { IMultiSignService } from "../../../../base/service/multi-sign.service.j
 
 export type EmptyVC = Credential
 
-export function getEmptyVC(issuer: string, subjectDID: string): EmptyVC {
-  // @ts-ignore
+function getEmptyVC(issuer: string, subjectDID: string): EmptyVC {
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
@@ -24,16 +23,14 @@ export function getEmptyVC(issuer: string, subjectDID: string): EmptyVC {
       credentialSubject: {
         id: subjectDID
       },
-      issuer: issuer,
+      issuer: { id: issuer },
       issuanceDate: new Date(),
     },
     { deep: true }
   );
 }
 
-/**
- * Return empty VC
- */
+/** Return empty VC */
 export class EmptyIssuer
   implements ICredentialIssuer<
     IssueReq,
@@ -51,7 +48,7 @@ export class EmptyIssuer
     private readonly config: { signatureMessageTTL: number },
     private readonly multiSignService: IMultiSignService
   ) {
-    this.sessionCache = new TimedCache(config.signatureMessageTTL);
+    this.sessionCache = new TimedCache(this.config.signatureMessageTTL);
   }
 
   async getChallenge({ publicId }: ChallengeReq): Promise<Challenge> {
