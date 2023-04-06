@@ -1,11 +1,7 @@
 // Mostly copied from PathReporter of io-ts.
 // The difference is our ThrowDecoder returns a value if decoding succeeds.
 
-import {
-  getFunctionName,
-  type ValidationError as IOValidationError,
-  type Decoder,
-} from "io-ts";
+import { type Decoder, getFunctionName, type ValidationError as IOValidationError, } from "io-ts";
 import { isLeft } from "fp-ts/lib/Either.js";
 
 function stringify(v: any): string {
@@ -56,9 +52,10 @@ export class ValidationError extends Error {}
  * If decoding fails, throw an error.
  */
 export const ThrowDecoder = {
-  decode<A, I>(type: Decoder<I, A>, input: I): A {
+  decode<A, I>(type: Decoder<I, A>, input: I, err?: Error): A {
     const validation = type.decode(input);
     if (isLeft(validation)) {
+      if (err) throw err;
       throw new ValidationError(makeErrorMessage(validation.left));
     }
     return validation.right;

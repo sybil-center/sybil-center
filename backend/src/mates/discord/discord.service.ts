@@ -1,7 +1,7 @@
 import * as t from "io-ts";
 import { ServerError } from "../../backbone/errors.js";
 import type { IOAuthService } from "../../base/types/oauth.js";
-import { vcOAuthCallbackUrl } from "../../util/route.util.js";
+import { credentialOAuthCallbackURL } from "../../util/route.util.js";
 import { AccessTokenResponse, OAuthState } from "../../base/types/oauth.js";
 import { fetchDecode } from "../../util/fetch.util.js";
 import { makeURL } from "../../util/make-url.util.js";
@@ -68,7 +68,7 @@ export class DiscordService implements IOAuthService<LinkReq, URL, string> {
   getOAuthLink({ sessionId, credentialType, scope }: LinkReq): URL {
     return makeURL("https://discord.com/api/oauth2/authorize", {
       client_id: this.discordClientId,
-      redirect_uri: vcOAuthCallbackUrl(this.pathToExposeDomain).href,
+      redirect_uri: credentialOAuthCallbackURL(this.pathToExposeDomain).href,
       response_type: "code",
       state: OAuthState.encode({
         sessionId: sessionId,
@@ -91,7 +91,7 @@ export class DiscordService implements IOAuthService<LinkReq, URL, string> {
             client_id: this.discordClientId,
             client_secret: this.discordClientSecret,
             code: code,
-            redirect_uri: vcOAuthCallbackUrl(this.pathToExposeDomain).href,
+            redirect_uri: credentialOAuthCallbackURL(this.pathToExposeDomain).href,
             grant_type: "authorization_code",
           }),
         }

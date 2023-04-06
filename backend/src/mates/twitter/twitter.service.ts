@@ -1,7 +1,7 @@
 import { TwitterApi } from "twitter-api-v2";
 import { ServerError } from "../../backbone/errors.js";
 import { IOAuthService, OAuthState } from "../../base/types/oauth.js";
-import { vcOAuthCallbackUrl } from "../../util/route.util.js";
+import { credentialOAuthCallbackURL } from "../../util/route.util.js";
 import { CredentialType } from "@sybil-center/sdk/types";
 
 export type TwitterUser = {
@@ -70,7 +70,7 @@ export class TwitterService
     credentialType,
   }: TwitterOAuthLinkProps): TwitterOAuthLink {
     const link = this.twitterApi.generateOAuth2AuthLink(
-      vcOAuthCallbackUrl(this.pathToExposeDomain).href,
+      credentialOAuthCallbackURL(this.pathToExposeDomain).href,
       {
         scope: scope,
         state: OAuthState.encode({ sessionId: sessionId, credentialType: credentialType }),
@@ -90,7 +90,7 @@ export class TwitterService
       const { accessToken } = await this.twitterApi.loginWithOAuth2({
         code: code,
         codeVerifier: codeVerifier,
-        redirectUri: vcOAuthCallbackUrl(this.pathToExposeDomain).href,
+        redirectUri: credentialOAuthCallbackURL(this.pathToExposeDomain).href,
       });
       return accessToken;
     } catch (e) {

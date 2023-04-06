@@ -9,7 +9,7 @@ import { type Disposable, tokens } from "typed-inject";
 import { IProofService } from "../../../../base/service/proof.service.js";
 import { DIDService } from "../../../../base/service/did.service.js";
 import { MultiSignService } from "../../../../base/service/multi-sign.service.js";
-import { fromIssueChallenge, toIssueChallenge } from "../../../../util/challenge.util.js";
+import { fromIssueChallenge, toIssueChallenge } from "../../../../base/service/challenge.service.js";
 import { absoluteId } from "../../../../util/id.util.js";
 import { TimedCache } from "../../../../base/service/timed-cache.js";
 import sortKeys from "sort-keys";

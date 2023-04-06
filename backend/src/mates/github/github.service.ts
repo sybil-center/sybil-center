@@ -2,7 +2,7 @@ import { ServerError } from "../../backbone/errors.js";
 import * as t from "io-ts";
 import { fetchDecode } from "../../util/fetch.util.js";
 import { AccessTokenResponse, type IOAuthService, OAuthState, } from "../../base/types/oauth.js";
-import { vcOAuthCallbackUrl } from "../../util/route.util.js";
+import { credentialOAuthCallbackURL } from "../../util/route.util.js";
 import { makeURL } from "../../util/make-url.util.js";
 import { CredentialType } from "@sybil-center/sdk/types";
 
@@ -66,7 +66,7 @@ export class GitHubService implements IOAuthService<LinkReq, URL, string> {
 
   getOAuthLink({ sessionId, credentialType, scope }: LinkReq): URL {
     return makeURL("https://github.com/login/oauth/authorize", {
-      redirect_uri: vcOAuthCallbackUrl(this.pathToExposeDomain).href,
+      redirect_uri: credentialOAuthCallbackURL(this.pathToExposeDomain).href,
       client_id: this.gitHubClientId,
       state: OAuthState.encode({ sessionId: sessionId, credentialType: credentialType }),
       scope: scope.join("%20"),
@@ -82,7 +82,7 @@ export class GitHubService implements IOAuthService<LinkReq, URL, string> {
           method: "POST",
           body: JSON.stringify({
             code: code,
-            redirect_uri: vcOAuthCallbackUrl(this.pathToExposeDomain),
+            redirect_uri: credentialOAuthCallbackURL(this.pathToExposeDomain),
             client_id: this.gitHubClientId,
             client_secret: this.gitHubClientSecret,
           }),

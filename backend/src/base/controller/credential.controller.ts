@@ -7,8 +7,9 @@ import { vcOAuthCallback } from "./routes/callback.route.js";
 import { OAuthState } from "../types/oauth.js";
 import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 import { AnyObj } from "../../util/model.util.js";
-import { CanIssueReq, ChallengeReq, IssueReq } from "@sybil-center/sdk/types";
+import { CanIssueReq, IssueReq } from "@sybil-center/sdk/types";
 import { ClientError } from "../../backbone/errors.js";
+import { ChallengeReq } from "../types/challenge.js";
 
 type ConfigFields = {
   pathToExposeDomain: URL;
@@ -18,11 +19,9 @@ type ConfigFields = {
 function validateCustomSize(custom: object, sizeLimit: number): void {
   const customSize = new Uint8Array(Buffer.from(JSON.stringify(custom))).length;
   const customOutOfLimit = customSize > sizeLimit;
-  if (customOutOfLimit) {
-    throw new ClientError(
-      `"custom" property is too large. Bytes limit is ${sizeLimit}`
-    );
-  }
+  if (customOutOfLimit) throw new ClientError(
+    `"custom" property is too large. Bytes limit is ${sizeLimit}`
+  );
 }
 
 export function credentialController(
@@ -53,11 +52,10 @@ export function credentialController(
         url: challengeRoute.url,
         schema: challengeRoute.schema,
         preHandler: async (req) => {
-          const { custom, expirationDate } = req.body;
+          const { custom } = req.body;
           if (custom) validateCustomSize(custom, config.customSizeLimit);
-          req.body.expirationDate = expirationDate
-            ? new Date(expirationDate)
-            : undefined
+          req.body = ThrowDecoder
+            .decode(ChallengeReq, req.body, new ClientError("Bad request"));
         },
         handler: async (req) => {
           const challengeReq = req.body;

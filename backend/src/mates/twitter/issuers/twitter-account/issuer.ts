@@ -7,7 +7,7 @@ import { DIDService } from "../../../../base/service/did.service.js";
 import { absoluteId } from "../../../../util/id.util.js";
 import { ClientError } from "../../../../backbone/errors.js";
 import type { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
-import { fromIssueChallenge, toIssueChallenge } from "../../../../util/challenge.util.js";
+import { fromIssueChallenge, toIssueChallenge } from "../../../../base/service/challenge.service.js";
 import { TimedCache } from "../../../../base/service/timed-cache.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/types/oauth.js";

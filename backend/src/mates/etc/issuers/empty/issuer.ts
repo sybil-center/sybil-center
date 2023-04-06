@@ -9,7 +9,7 @@ import { Disposable, tokens } from "typed-inject";
 import sortKeys from "sort-keys";
 import { CanIssueResp, Challenge, ChallengeReq, Credential, CredentialType, IssueReq } from "@sybil-center/sdk/types";
 import { absoluteId } from "../../../../util/id.util.js";
-import { fromIssueChallenge, toIssueChallenge } from "../../../../util/challenge.util.js";
+import { fromIssueChallenge, toIssueChallenge } from "../../../../base/service/challenge.service.js";
 import { TimedCache } from "../../../../base/service/timed-cache.js";
 import { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
 
