@@ -9,5 +9,4 @@ export type CredentialRoutes = {
   issue: Route,
   challenge?: Route,
   canIssue?: Route,
-  ownerProof?: Route
 }

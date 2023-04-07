@@ -53,7 +53,12 @@ type PreIssueEntry = {
   publicId: string;
 }
 
-async function preIssue(args: PreIssueEntry): Promise<{ sessionId: string; issueChallenge: string }> {
+const preIssue = async (
+  args: PreIssueEntry
+): Promise<{
+  sessionId: string;
+  issueChallenge: string
+}> => {
   const fastify = app.context.resolve("httpServer").fastify;
 
   const challengeResp = await fastify.inject({

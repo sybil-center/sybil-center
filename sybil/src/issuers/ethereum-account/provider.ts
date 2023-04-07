@@ -1,8 +1,7 @@
-import { ICredentialProvider, IOwnerProofProvider } from "../../base/credential-provider.type.js";
+import { ICredentialProvider } from "../../base/credential-provider.type.js";
 import { HttpClient } from "../../base/http-client.js";
 import type {
-  EthAccountChallengeReq as ChallengeReq, EthAccountProofResp,
-  OwnerProofEthAccount,
+  EthAccountChallengeReq as ChallengeReq,
   SignFn
 } from "../../types/index.js";
 import {
@@ -23,8 +22,7 @@ export class EthAccountProvider
     Challenge,
     EthAccountReq,
     EthAccountVC
-  >,
-    IOwnerProofProvider<EthAccountProofResp, Challenge, SignFn> {
+  > {
 
   readonly kind: CredentialType = "EthereumAccount";
 
@@ -45,18 +43,6 @@ export class EthAccountProvider
 
   canIssue(sessionId: string): Promise<boolean> {
     return this.httpClient.canIssue(this.kind, sessionId);
-  }
-  async ownerProof(proofAlg: SignFn, params: Challenge): Promise<EthAccountProofResp> {
-    const {
-      signature
-    } = await proofAlg({ message: params.ownerChallenge! })
-    return await this.httpClient.proof<
-      EthAccountProofResp,
-      OwnerProofEthAccount
-    >("EthereumAccount", {
-      signature: signature,
-      sessionId: params.sessionId,
-    })
   }
 
   /**

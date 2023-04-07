@@ -21,11 +21,7 @@ export class EthAccountIssuer
       custom: opt?.custom,
       expirationDate: opt?.expirationDate,
       publicId: publicId,
-      ethAddress: opt?.ethOwnerProof?.publicId
     });
-    if (opt?.ethOwnerProof) {
-      await this.provider.ownerProof(opt.ethOwnerProof.signFn, challenge);
-    }
     return await this.provider.issueVC(signFn, {
       sessionId: challenge.sessionId,
       issueChallenge: challenge.issueChallenge

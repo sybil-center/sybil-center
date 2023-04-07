@@ -1,4 +1,4 @@
-import { canIssueEP, challengeEP, issueEP, ownerProofEP } from "../util/index.js";
+import { canIssueEP, challengeEP, issueEP } from "../util/index.js";
 import { Credential, CredentialType } from "../types/index.js";
 import { parse } from "../util/parse.util.js";
 
@@ -58,23 +58,6 @@ export class HttpClient {
     const body = await resp.json();
     if (resp.status === 200) {
       return parse(body, "credential") as TResponse;
-    }
-    throw new Error(body.message);
-  }
-
-
-  async proof<TProofResp, TParams = any>(credentialType: CredentialType, params: TParams): Promise<TProofResp> {
-    const endpoint = new URL(ownerProofEP(credentialType), this.issuerDomain);
-    const resp = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(params)
-    });
-    const body = await resp.json();
-    if (resp.status === 200) {
-      return body;
     }
     throw new Error(body.message);
   }
