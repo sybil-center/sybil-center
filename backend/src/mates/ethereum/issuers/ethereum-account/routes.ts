@@ -1,5 +1,5 @@
 import { CredentialRoutes } from "../../../../base/types/route.js";
-import { challengeEP, issueEP, ownerProofEP } from "@sybil-center/sdk/util";
+import { challengeEP, issueEP } from "@sybil-center/sdk/util";
 
 const tags = ["Ethereum account ownership verifiable credential"];
 export const ethereumAccountRoutes: CredentialRoutes = {
@@ -32,7 +32,6 @@ export const ethereumAccountRoutes: CredentialRoutes = {
         required: ["publicId"],
         properties: {
           publicId: { type: "string", },
-          ethAddress: { type: "string" },
           custom: {
             type: "object",
             nullable: true
@@ -43,18 +42,6 @@ export const ethereumAccountRoutes: CredentialRoutes = {
             nullable: true
           }
         }
-      }
-    }
-  },
-
-  ownerProof: {
-    method: "POST",
-    url: ownerProofEP("EthereumAccount"),
-    schema: {
-      tags: tags,
-      body: {
-        signature: { type: "string" },
-        sessionId: { type: "string" }
       }
     }
   }

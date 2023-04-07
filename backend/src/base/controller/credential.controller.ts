@@ -6,7 +6,6 @@ import { vcOAuthCallback } from "./routes/callback.route.js";
 
 import { OAuthState } from "../types/oauth.js";
 import { ThrowDecoder } from "../../util/throw-decoder.util.js";
-import { AnyObj } from "../../util/model.util.js";
 import { CanIssueReq, IssueReq } from "@sybil-center/sdk/types";
 import { ClientError } from "../../backbone/errors.js";
 import { ChallengeReq } from "../types/challenge.js";
@@ -74,19 +73,6 @@ export function credentialController(
         handler: async (req) => {
           const canIssueEntry = req.query;
           return issuerContainer.canIssue(routes.credentialType, canIssueEntry);
-        }
-      });
-    }
-
-    const ownerProofRoute = routes.ownerProof;
-    if (ownerProofRoute) {
-      fastifyServ.route<{ Body: AnyObj }>({
-        method: ownerProofRoute.method,
-        url: ownerProofRoute.url,
-        schema: ownerProofRoute.schema,
-        handler: async (req) => {
-          const ownerProof = req.body;
-          return await issuerContainer.handleOwnerProof(routes.credentialType, ownerProof);
         }
       });
     }

@@ -2,15 +2,11 @@ import { suite } from "uvu";
 import * as a from "uvu/assert";
 import { App } from "../../../src/app/app.js";
 import sinon from "sinon";
-import { challengeEP, issueEP, ownerProofEP } from "@sybil-center/sdk/util";
+import { challengeEP, issueEP } from "@sybil-center/sdk/util";
 import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
-//@ts-ignore
 import { ethereumSupport } from "../../test-support/ethereum.js";
 import { EthAccountChallenge, EthAccountVC, SignType } from "@sybil-center/sdk/types";
-import { EthProofResult } from "../../../src/mates/ethereum/issuers/ethereum-account/index.js";
-//@ts-ignore
-import { solanaSupport } from "../../test-support/solana.js";
 import { AnyObj } from "../../../src/util/model.util.js";
 import { LightMyRequestResponse } from "fastify";
 
@@ -32,7 +28,6 @@ test.after(async () => {
 
 type PreIssueEntry = {
   publicId: string;
-  ethAddress?: string;
   custom?: AnyObj,
   expirationDate?: Date,
 }
@@ -41,7 +36,6 @@ const preIssue = async (
 ): Promise<{
   sessionId: string;
   issueChallenge: string;
-  ownerChallenge?: string
 }> => {
   const fastify = app.context.resolve("httpServer").fastify;
   const challengeResp = await fastify.inject({
@@ -49,7 +43,6 @@ const preIssue = async (
     url: challengeEP("EthereumAccount"),
     payload: {
       publicId: args.publicId,
-      ethAddress: args.ethAddress,
       custom: args.custom,
       expirationDate: args.expirationDate,
     }
@@ -58,10 +51,10 @@ const preIssue = async (
     challengeResp.statusCode, 200,
     "challenge response status code is not 200"
   );
-  const { sessionId, issueChallenge, ownerChallenge } = JSON.parse(
+  const { sessionId, issueChallenge } = JSON.parse(
     challengeResp.body
   ) as EthAccountChallenge;
-  return { sessionId, issueChallenge, ownerChallenge };
+  return { sessionId, issueChallenge };
 };
 
 type AssertIssueRespArgs = {
@@ -141,7 +134,7 @@ test("should issue ethereum account vc", async () => {
   assertSessionDeleted(sessionId);
 });
 
-test("should not issue vc because not valid signature", async () => {
+test("should not issue credential because not valid signature", async () => {
   const { address: publicId } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
   const signType: SignType = "ethereum"
@@ -208,57 +201,6 @@ test("should issue ethereum account credential with custom property", async () =
     vcCustom["test"]?.hello, "world",
     "hello custom property is not matched"
   );
-  assertSessionDeleted(sessionId);
-});
-
-test("issue ethereum account credential with different subject and address", async () => {
-  const {
-    didPkh: subjectDID,
-    address: solanaAddress
-  } = solanaSupport.info;
-  const {
-    address: ethereumAddress
-  } = ethereumSupport.info.ethereum;
-  const { fastify } = app.context.resolve("httpServer");
-  const { issueChallenge, sessionId, ownerChallenge } = await preIssue({
-    publicId: solanaAddress,
-    ethAddress: ethereumAddress,
-  });
-  const ethSignature = await ethereumSupport.sign(ownerChallenge!);
-  const ethSignType: SignType = "ethereum";
-  const ownerProofResp = await fastify.inject({
-    method: "POST",
-    url: ownerProofEP("EthereumAccount"),
-    payload: {
-      sessionId: sessionId,
-      signature: ethSignature,
-      signType: ethSignType,
-    }
-  });
-  a.is(ownerProofResp.statusCode, 200,
-    `owner proof response status is not matched. body: ${ownerProofResp.body}`);
-  const proofResult = JSON.parse(ownerProofResp.body) as EthProofResult;
-  a.is(
-    proofResult.chainId, "eip155:1",
-    `proof result chain id is not matched`
-  );
-  a.is(
-    proofResult.address, ethereumAddress,
-    `proof result address is not matched`
-  );
-
-  const solanaSignature = await solanaSupport.sign(issueChallenge);
-  const solanaSignType: SignType = "solana";
-  const issueResp = await fastify.inject({
-    method: "POST",
-    url: issueEP("EthereumAccount"),
-    payload: {
-      signature: solanaSignature,
-      sessionId: sessionId,
-      signType: solanaSignType
-    }
-  });
-  await assertIssueResp({ issueResp, subjectDID, ethereumAddress });
   assertSessionDeleted(sessionId);
 });
 

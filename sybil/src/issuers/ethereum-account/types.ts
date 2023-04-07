@@ -1,13 +1,9 @@
-import { Challenge, ChallengeReq, Credential, IssueReq, Options, SubjectProof } from "../../base/types/index.js";
+import { Challenge, ChallengeReq, Credential, IssueReq, Options } from "../../base/types/index.js";
 import { AnyObj } from "../../util/types.util.js";
 
-export type EthAccountChallengeReq = ChallengeReq & {
-  ethAddress?: string;
-}
+export type EthAccountChallengeReq = ChallengeReq
 
-export type EthAccountChallenge = Challenge & {
-  ownerChallenge?: string;
-}
+export type EthAccountChallenge = Challenge
 
 export type EthAccountReq = Omit<EthAccountChallenge, "ownerChallenge">
 
@@ -24,15 +20,4 @@ export type EthAccountVC = Credential & {
   };
 }
 
-export type EthAccountOptions = Options & {
-  ethOwnerProof?: SubjectProof;
-}
-
-export type OwnerProofEthAccount = {
-  sessionId: string;
-  signature: string;
-}
-
-export type EthAccountProofResp = {
-  address: string;
-}
+export type EthAccountOptions = Options

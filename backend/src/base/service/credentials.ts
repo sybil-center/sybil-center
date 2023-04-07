@@ -6,8 +6,7 @@ import {
   ChallengeReq,
   Credential,
   CredentialType,
-  IssueReq,
-  SignResult
+  IssueReq
 } from "@sybil-center/sdk/types";
 
 export const DEFAULT_CREDENTIAL_CONTEXT =
@@ -39,12 +38,4 @@ export interface ICredentialIssuer<
 
 export interface IOAuthCallback {
   handleOAuthCallback(code: string, state: OAuthState): Promise<URL | undefined>;
-}
-
-export interface ChainOwnerProof extends SignResult {
-  sessionId: string;
-}
-
-export interface IOwnerProofHandler<TOwnerProof, TProofResult> {
-  handleOwnerProof(proof: TOwnerProof): Promise<TProofResult>;
 }

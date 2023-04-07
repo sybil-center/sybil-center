@@ -5,11 +5,3 @@ export interface ICredentialProvider<TChallengeReq, TChallenge, TCredentialReq, 
   canIssue(sessionId: string): Promise<boolean>;
   issueVC(signFn: SignFn, credentialReq: TCredentialReq): Promise<TCredential>;
 }
-
-export interface IOwnerProofProvider<
-  TProofResp,
-  TProofReq,
-  TProofFn = (...args: any[]) => any,
-> {
-  ownerProof(proofAlg: TProofFn, credentialReq: TProofReq): Promise<TProofResp>;
-}
