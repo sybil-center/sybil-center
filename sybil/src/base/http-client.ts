@@ -1,5 +1,5 @@
-import { canIssueEP, challengeEP, issueEP } from "../util/index.js";
-import { Credential, CredentialType } from "../types/index.js";
+import { canIssueEP, challengeEP, issueEP, verifyCredentialEP } from "../util/index.js";
+import { Credential, CredentialType, VerifyResult } from "../types/index.js";
 import { parse } from "../util/parse.util.js";
 
 export class HttpClient {
@@ -35,7 +35,10 @@ export class HttpClient {
    * @param sessionId
    * @throws error
    */
-  async canIssue(credentialType: CredentialType, sessionId: string): Promise<boolean> {
+  async canIssue(
+    credentialType: CredentialType,
+    sessionId: string
+  ): Promise<boolean> {
     const endpoint = new URL(canIssueEP(credentialType), this.issuerDomain);
     endpoint.searchParams.set("sessionId", sessionId);
     const resp = await fetch(endpoint);
@@ -46,7 +49,10 @@ export class HttpClient {
     throw new Error(body.message);
   }
 
-  async issue<TResponse = Credential, TParams = any>(credentialType: CredentialType, params: TParams): Promise<TResponse> {
+  async issue<
+    TResponse = Credential,
+    TParams = any
+  >(credentialType: CredentialType, params: TParams): Promise<TResponse> {
     const endpoint = new URL(issueEP(credentialType), this.issuerDomain);
     const resp = await fetch(endpoint, {
       method: "POST",
@@ -60,5 +66,22 @@ export class HttpClient {
       return parse(body, "credential") as TResponse;
     }
     throw new Error(body.message);
+  }
+
+  async verify<
+    TCredential = Credential,
+    TVerifyResult = VerifyResult
+  >(credential: TCredential): Promise<TVerifyResult> {
+    const endpoint = new URL(verifyCredentialEP(), this.issuerDomain);
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(credential)
+    });
+    const body = await resp.json();
+    if (resp.status === 200) return body
+    throw new Error(body.message)
   }
 }
