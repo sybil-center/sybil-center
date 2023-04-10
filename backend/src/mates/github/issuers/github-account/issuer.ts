@@ -8,7 +8,7 @@ import {
 } from "../../../../base/service/credentials.js";
 import { type Disposable, tokens } from "typed-inject";
 import { GitHubService, type GitHubUser } from "../../github.service.js";
-import { IProofService } from "../../../../base/service/proof.service.js";
+import { ProofService } from "../../../../base/service/proof.service.js";
 import { DIDService } from "../../../../base/service/did.service.js";
 import { ClientError } from "../../../../backbone/errors.js";
 import type { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
@@ -89,7 +89,7 @@ export class GitHubAccountIssuer
 
   constructor(
     private multiSignService: IMultiSignService,
-    private proofService: IProofService,
+    private proofService: ProofService,
     private readonly didService: DIDService,
     config: {
       oAuthSessionTtl: number;
@@ -170,7 +170,7 @@ export class GitHubAccountIssuer
       custom: custom,
       expirationDate: expirationDate
     });
-    return this.proofService.jwsSing(vc);
+    return this.proofService.sign("JsonWebSignature2020", vc);
   }
 
   get providedCredential(): CredentialType {

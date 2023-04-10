@@ -2,7 +2,7 @@ import type { ICredentialIssuer, IOAuthCallback, } from "../../../../base/servic
 import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../../base/service/credentials.js";
 import { Disposable, tokens } from "typed-inject";
 import { DiscordService, type DiscordUser } from "../../discord.service.js";
-import { IProofService } from "../../../../base/service/proof.service.js";
+import { ProofService } from "../../../../base/service/proof.service.js";
 import { DIDService } from "../../../../base/service/did.service.js";
 import { ClientError } from "../../../../backbone/errors.js";
 import type { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
@@ -83,7 +83,7 @@ export class DiscordAccountIssuer
 
   constructor(
     private readonly multiSignService: IMultiSignService,
-    private readonly proofService: IProofService,
+    private readonly proofService: ProofService,
     private readonly didService: DIDService,
     config: {
       oAuthSessionTtl: number;
@@ -167,7 +167,7 @@ export class DiscordAccountIssuer
       custom: custom,
       expirationDate: expirationDate
     });
-    return this.proofService.jwsSing(credential);
+    return this.proofService.sign("JsonWebSignature2020", credential);
   }
 
   get providedCredential(): CredentialType {

@@ -6,23 +6,15 @@ export class Config {
   readonly port: number;
   readonly pathToExposeDomain: URL;
 
-  /**
-   * Secret phrase for generating DID
-   */
+  /**  Secret phrase for generating DID */
   readonly secret: string;
 
-  /**
-   * Size limit in bytes for custom property for Verifiable Credential
-   */
+  /** Size limit in bytes for custom property for Verifiable Credential */
   readonly customSizeLimit: number;
 
-  /**
-   * Url of ethereum node
-   */
+  /**  Url of ethereum node */
   readonly ethNodeUrl: string;
-  /**
-   * TTL for signature message cache in ms
-   */
+  /** TTL for signature message cache in ms */
   readonly signatureMessageTTL: number;
   readonly oAuthSessionTtl: number;
 

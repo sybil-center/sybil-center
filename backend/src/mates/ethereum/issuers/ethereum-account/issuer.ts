@@ -4,7 +4,7 @@ import {
   ICredentialIssuer,
 } from "../../../../base/service/credentials.js";
 import { type Disposable, tokens } from "typed-inject";
-import { IProofService } from "../../../../base/service/proof.service.js";
+import { ProofService } from "../../../../base/service/proof.service.js";
 import { DIDService } from "../../../../base/service/did.service.js";
 import { MultiSignService } from "../../../../base/service/multi-sign.service.js";
 import { fromIssueChallenge, toIssueChallenge } from "../../../../base/service/challenge.service.js";
@@ -76,7 +76,7 @@ export class EthereumAccountIssuer
   );
 
   constructor(
-    private readonly proofService: IProofService,
+    private readonly proofService: ProofService,
     private readonly multiSignService: MultiSignService,
     private readonly didService: DIDService,
     config: { signatureMessageTTL: number },
@@ -123,7 +123,7 @@ export class EthereumAccountIssuer
       custom: custom,
       expirationDate: expirationDate
     });
-    return this.proofService.jwsSing(vc);
+    return this.proofService.sign("JsonWebSignature2020", vc);
   }
 
   get providedCredential(): CredentialType {

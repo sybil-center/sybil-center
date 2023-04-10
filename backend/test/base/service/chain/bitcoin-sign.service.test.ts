@@ -1,7 +1,7 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { BitcoinSignService } from "../../../../src/base/service/sign/bitcoin-sign.service.js";
-import { bitcoinSupport } from "../../../test-support/bitcoin.js";
+import { bitcoinSupport } from "../../../test-support/chain/bitcoin.js";
 
 const test = suite("Bitcoin sign test");
 

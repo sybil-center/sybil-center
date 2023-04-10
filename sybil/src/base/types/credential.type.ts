@@ -100,3 +100,7 @@ export type SubjectProof = {
   publicId: string;
   signFn: SignFn;
 }
+
+export type VerifyResult = {
+  isVerified: boolean
+}

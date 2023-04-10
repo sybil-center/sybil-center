@@ -1,7 +1,7 @@
 import type { IssuerContainer } from "../service/issuer-container.js";
 import type { FastifyInstance } from "fastify";
 import type { OAuthQueryCallBack } from "../service/credentials.js";
-import { genVCRotes } from "./routes/credential.route.js";
+import { genVCRotes, verifyCredentialRoute } from "./routes/credential.route.js";
 import { vcOAuthCallback } from "./routes/callback.route.js";
 
 import { OAuthState } from "../types/oauth.js";
@@ -9,6 +9,8 @@ import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 import { CanIssueReq, IssueReq } from "@sybil-center/sdk/types";
 import { ClientError } from "../../backbone/errors.js";
 import { ChallengeReq } from "../types/challenge.js";
+import { Credential } from "../types/credential.js";
+import { CredentialVerifier } from "../service/credential-verifivator.js";
 
 type ConfigFields = {
   pathToExposeDomain: URL;
@@ -24,15 +26,16 @@ function validateCustomSize(custom: object, sizeLimit: number): void {
 }
 
 export function credentialController(
-  fastifyServ: FastifyInstance,
+  fastify: FastifyInstance,
   issuerContainer: IssuerContainer,
-  config: ConfigFields
+  config: ConfigFields,
+  verifier: CredentialVerifier
 ): FastifyInstance {
   genVCRotes.forEach((routes) => {
     // initialize issuer endpoints
     const issueRoute = routes.issue;
     // @ts-ignore
-    fastifyServ.route<{ Body: IssueReq }>({
+    fastify.route<{ Body: IssueReq }>({
       method: issueRoute.method,
       url: issueRoute.url,
       schema: issueRoute.schema,
@@ -46,7 +49,7 @@ export function credentialController(
     const challengeRoute = routes.challenge;
     if (challengeRoute) {
       // @ts-ignore
-      fastifyServ.route<{ Body: ChallengeReq }>({
+      fastify.route<{ Body: ChallengeReq }>({
         method: challengeRoute.method,
         url: challengeRoute.url,
         schema: challengeRoute.schema,
@@ -66,7 +69,7 @@ export function credentialController(
     const canIssueRoute = routes.canIssue;
     if (canIssueRoute) {
       // @ts-ignore
-      fastifyServ.route<{ Querystring: CanIssueReq }>({
+      fastify.route<{ Querystring: CanIssueReq }>({
         method: canIssueRoute.method,
         url: canIssueRoute.url,
         schema: canIssueRoute.schema,
@@ -79,7 +82,7 @@ export function credentialController(
   });
 
   // Init oauth callback endpoint
-  fastifyServ.route<{ Querystring: OAuthQueryCallBack }>({
+  fastify.route<{ Querystring: OAuthQueryCallBack }>({
     method: vcOAuthCallback.method,
     url: vcOAuthCallback.url,
     schema: vcOAuthCallback.schema,
@@ -103,7 +106,21 @@ export function credentialController(
     }
   });
 
-  return fastifyServ;
+  // Init verify credential endpoint
+  fastify.route<{ Body: Credential }>({
+    method: verifyCredentialRoute.method,
+    url: verifyCredentialRoute.url,
+    schema: verifyCredentialRoute.schema,
+    preHandler: async (req) => {
+      req.body = ThrowDecoder
+        .decode(Credential, req.body, new ClientError("Bad request"));
+    },
+    handler: async (req) => {
+      return await verifier.verify(req.body);
+    }
+  });
+
+  return fastify;
 }
 
 

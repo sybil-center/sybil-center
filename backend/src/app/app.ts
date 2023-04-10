@@ -13,6 +13,7 @@ import { TwitterAccountIssuer } from "../mates/twitter/issuers/twitter-account/i
 import { GitHubAccountIssuer } from "../mates/github/issuers/github-account/index.js";
 import { DiscordAccountIssuer } from "../mates/discord/issuers/discord-account/index.js";
 import { oauthPageController } from "../base/controller/oauth-page.controller.js";
+import { CredentialVerifier } from "../base/service/credential-verifivator.js";
 
 type DI = {
   logger: ILogger;
@@ -26,6 +27,7 @@ type DI = {
   discordAccountIssuer: DiscordAccountIssuer;
   twitterAccountIssuer: TwitterAccountIssuer;
   gitHubAccountIssuer: GitHubAccountIssuer;
+  credentialVerifier: CredentialVerifier;
 };
 
 export class App {
@@ -39,6 +41,7 @@ export class App {
       .provideClass("didService", DIDService)
       .provideClass("multiSignService", MultiSignService)
       .provideClass("proofService", ProofService)
+      .provideClass("credentialVerifier", CredentialVerifier)
 
       // Issuers
       .provideClass("emptyIssuer", EmptyIssuer)
@@ -52,8 +55,9 @@ export class App {
     const fastify = this.context.resolve("httpServer").fastify;
     const issuerContainer = this.context.resolve("issuerContainer");
     const config = this.context.resolve("config");
+    const verifier = this.context.resolve("credentialVerifier");
 
-    credentialController(fastify, issuerContainer, config);
+    credentialController(fastify, issuerContainer, config, verifier);
     oauthPageController(fastify);
   }
 
