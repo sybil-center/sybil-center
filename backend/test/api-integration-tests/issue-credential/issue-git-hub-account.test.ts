@@ -5,14 +5,15 @@ import sinon, { stub } from "sinon";
 import { oauthCallbackEP } from "../../../src/util/route.util.js";
 import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
 import * as url from "url";
-import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
-import { ethereumSupport } from "../../test-support/ethereum.js";
+import { ethereumSupport } from "../../test-support/chain/ethereum.js";
 import { LightMyRequestResponse } from "fastify";
-import { solanaSupport } from "../../test-support/solana.js";
-import { bitcoinSupport } from "../../test-support/bitcoin.js";
+import { solanaSupport } from "../../test-support/chain/solana.js";
+import { bitcoinSupport } from "../../test-support/chain/bitcoin.js";
 import { CanIssueResp, GitHubAccountChallenge, GitHubAccountVC } from "@sybil-center/sdk/types";
 import { AnyObj } from "../../../src/util/model.util.js";
+import { api } from "../../test-support/api/index.js";
+import { delay } from "../../../src/util/delay.util.js";
 
 const test = suite("Integration: issue GitHub account credential");
 
@@ -158,7 +159,6 @@ const assertIssueResp = async (args: AssertIssueRespArgs) => {
   a.is(github.id, 1337, "github user id not matched");
   a.is(github.username, username, "github username not matched");
   a.is(github.userPage, "test", "github user page not matched");
-  a.is(await isValidVC(vc), true, "vc is not valid");
 };
 
 const assertSessionDeleted = (sessionId: string) => {
@@ -190,6 +190,8 @@ test("should issue GitHub ownership credential with eth did-pkh", async () => {
   });
   await assertIssueResp({ issueResp, subjectDID });
   assertSessionDeleted(sessionId);
+  const credential = JSON.parse(issueResp.body);
+  await api.verifyCredential(credential, app);
 });
 
 test("should issue GitHub ownership credential with solana did-pkh", async () => {
@@ -215,6 +217,8 @@ test("should issue GitHub ownership credential with solana did-pkh", async () =>
   });
   await assertIssueResp({ subjectDID, issueResp });
   assertSessionDeleted(sessionId);
+  const credential = JSON.parse(issueResp.body);
+  await api.verifyCredential(credential, app)
 });
 
 test("should issue GitHub ownership credential with bitcoin did-pkh", async () => {
@@ -240,6 +244,8 @@ test("should issue GitHub ownership credential with bitcoin did-pkh", async () =
   });
   await assertIssueResp({ issueResp, subjectDID });
   assertSessionDeleted(sessionId);
+  const credential = JSON.parse(issueResp.body);
+  await api.verifyCredential(credential, app);
 });
 
 test("should redirect to default page after authorization", async () => {
@@ -299,9 +305,8 @@ test("should issue credential with custom property", async () => {
     }
   });
   a.is(vcResp.statusCode, 200, "vc resp status code is not 200");
-  const vc = JSON.parse(vcResp.body) as GitHubAccountVC;
-  const { custom: vcCustom } = vc.credentialSubject;
-  a.is(await isValidVC(vc), true, "vc is not valid");
+  const credential = JSON.parse(vcResp.body);
+  const { custom: vcCustom } = credential.credentialSubject;
   a.ok(vcCustom, "custom property is not present");
   a.ok(vcCustom.test, "custom.test property is not present");
   a.is(
@@ -310,6 +315,7 @@ test("should issue credential with custom property", async () => {
     "hello custom property is not matched"
   );
   assertSessionDeleted(sessionId);
+  await api.verifyCredential(credential, app);
 });
 
 test("should not find GitHub code", async () => {
@@ -376,11 +382,13 @@ test("issue github account credential with expiration date", async () => {
   });
   await assertIssueResp({ issueResp, subjectDID });
   assertSessionDeleted(sessionId);
-  const credential = JSON.parse(issueResp.body) as GitHubAccountVC;
+  const credential = JSON.parse(issueResp.body);
   a.is(
     credential.expirationDate, expirationDate.toISOString(),
     "credential expiration date is not matched"
   );
+  await delay(20);
+  await api.verifyCredential(credential, app, false)
 });
 
 test.run();

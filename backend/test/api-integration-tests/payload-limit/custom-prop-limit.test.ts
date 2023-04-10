@@ -3,7 +3,7 @@ import * as a from "uvu/assert";
 import { App } from "../../../src/app/app.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
 import { challengeEP } from "@sybil-center/sdk/util";
-import { ethereumSupport } from "../../test-support/ethereum.js";
+import { ethereumSupport } from "../../test-support/chain/ethereum.js";
 
 const test = suite("Custom property size limit test");
 

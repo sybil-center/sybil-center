@@ -4,15 +4,16 @@ import { App } from "../../../src/app/app.js";
 import sinon, { stub } from "sinon";
 import { canIssueEP, challengeEP, issueEP, } from "@sybil-center/sdk/util";
 import * as url from "url";
-import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
 import { LightMyRequestResponse } from "fastify";
-import { ethereumSupport } from "../../test-support/ethereum.js";
-import { bitcoinSupport } from "../../test-support/bitcoin.js";
-import { solanaSupport } from "../../test-support/solana.js";
+import { ethereumSupport } from "../../test-support/chain/ethereum.js";
+import { bitcoinSupport } from "../../test-support/chain/bitcoin.js";
+import { solanaSupport } from "../../test-support/chain/solana.js";
 import { CanIssueResp, DiscordAccountChallenge, DiscordAccountVC } from "@sybil-center/sdk/types";
 import { AnyObj } from "../../../src/util/model.util.js";
 import { oauthCallbackEP } from "../../../src/util/route.util.js";
+import { api } from "../../test-support/api/index.js";
+import { delay } from "../../../src/util/delay.util.js";
 
 const test = suite("Integration: issue Discord account credential");
 
@@ -119,8 +120,7 @@ const preIssue = async (
     }
   });
   a.is(
-    canIssueAfterResp.statusCode,
-    200,
+    canIssueAfterResp.statusCode, 200,
     "can issue after callback resp status is not 200"
   );
   const { canIssue: canIssueAfter } =
@@ -131,12 +131,12 @@ const preIssue = async (
     sessionId: sessionId,
     issueChallenge: issueChallenge
   };
-}
+};
 
-async function assertIssueResp(
+const assertIssueResp = async (
   issueResp: LightMyRequestResponse,
   subjectDID: string
-) {
+) => {
   const issuerId = app.context.resolve("didService").id;
   a.is(issueResp.statusCode, 200,
     `issue resp status code is not 200. error: ${issueResp.body}`);
@@ -161,10 +161,10 @@ async function assertIssueResp(
   );
   a.is(discordId, discordUser.id, "discord user id is not matched");
   a.is(username, discordUser.username, "discord username is not matched");
-  a.is(await isValidVC(vc), true, "vc is not valid");
-}
+};
 
-function assertSessionDeleted(sessionId: string) {
+
+const assertSessionDeleted = (sessionId: string) => {
   //@ts-ignore
   const { sessionCache } = app.context.resolve("discordAccountIssuer");
   a.throws(() => {
@@ -195,6 +195,8 @@ test("should issue discord ownership credential with ethereum did-pkh", async ()
   });
   await assertIssueResp(vcResponse, ethDidPkh);
   assertSessionDeleted(sessionId);
+  const credential = JSON.parse(vcResponse.body);
+  await api.verifyCredential(credential, app);
 });
 
 test("should issue discord ownership credential with solana did-pkh", async () => {
@@ -220,6 +222,8 @@ test("should issue discord ownership credential with solana did-pkh", async () =
   });
   await assertIssueResp(vcResponse, solanaDidPkh);
   assertSessionDeleted(sessionId);
+  const credential = JSON.parse(vcResponse.body);
+  await api.verifyCredential(credential, app);
 });
 
 test("should issue discord ownership credential with bitcoin did-pkh", async () => {
@@ -245,6 +249,8 @@ test("should issue discord ownership credential with bitcoin did-pkh", async () 
   });
   await assertIssueResp(vcResponse, bitcoinDidPkh);
   assertSessionDeleted(sessionId);
+  const credential = JSON.parse(vcResponse.body);
+  await api.verifyCredential(credential, app);
 });
 
 test("should redirect to default page after authorization", async () => {
@@ -317,6 +323,8 @@ test("should issue vc with custom properties", async () => {
   a.is(vcCustom.hello.test, "test", "custom property is not matched");
   a.is(vcCustom.hello.world, "world", "custom property is not matched");
   assertSessionDeleted(sessionId);
+  //@ts-ignore
+  await api.verifyCredential(vc, app);
 });
 
 test("should not find Discord code", async () => {
@@ -378,12 +386,15 @@ test("issue discord account credential with expiration date", async () => {
   });
   await assertIssueResp(issueResp, subjectDID);
   assertSessionDeleted(sessionId);
-  const credential = JSON.parse(issueResp.body) as DiscordAccountVC;
+  const credential = JSON.parse(issueResp.body);
   a.ok(credential.expirationDate, "credential expiration date is not present");
   a.is(
     credential.expirationDate,
     expirationDate.toISOString(),
     "credential expiration date is not matched");
+
+  await delay(20);
+  await api.verifyCredential(credential, app, false);
 });
 
 test("not valid date-time format for expiration date", async () => {

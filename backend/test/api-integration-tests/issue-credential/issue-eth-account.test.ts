@@ -3,12 +3,13 @@ import * as a from "uvu/assert";
 import { App } from "../../../src/app/app.js";
 import sinon from "sinon";
 import { challengeEP, issueEP } from "@sybil-center/sdk/util";
-import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
-import { ethereumSupport } from "../../test-support/ethereum.js";
+import { ethereumSupport } from "../../test-support/chain/ethereum.js";
 import { EthAccountChallenge, EthAccountVC, SignType } from "@sybil-center/sdk/types";
 import { AnyObj } from "../../../src/util/model.util.js";
 import { LightMyRequestResponse } from "fastify";
+import { api } from "../../test-support/api/index.js";
+import { delay } from "../../../src/util/delay.util.js";
 
 const test = suite("Integration: issue Ethereum account credential");
 
@@ -97,11 +98,6 @@ const assertIssueResp = async ({
     credential.credentialSubject.ethereum.chainId, "eip155:1",
     "credential subject ethereum chain id is not matched"
   );
-  a.is(
-    await isValidVC(credential), true,
-    "credential is not valid"
-  );
-
 };
 
 const assertSessionDeleted = (sessionId: string) => {
@@ -132,6 +128,8 @@ test("should issue ethereum account vc", async () => {
   });
   await assertIssueResp({ issueResp, subjectDID, ethereumAddress: ethAddress });
   assertSessionDeleted(sessionId);
+  const credential = JSON.parse(issueResp.body);
+  await api.verifyCredential(credential, app);
 });
 
 test("should not issue credential because not valid signature", async () => {
@@ -202,6 +200,8 @@ test("should issue ethereum account credential with custom property", async () =
     "hello custom property is not matched"
   );
   assertSessionDeleted(sessionId);
+  //@ts-ignore
+  await api.verifyCredential(credential, app);
 });
 
 test("issue eth account credential with expiration date", async () => {
@@ -233,6 +233,9 @@ test("issue eth account credential with expiration date", async () => {
     "credential expiration date is not matched"
   );
   assertSessionDeleted(sessionId);
+  await delay(20);
+  // @ts-ignore
+  await api.verifyCredential(credential, app, false);
 });
 
 test.run();

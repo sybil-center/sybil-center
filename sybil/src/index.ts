@@ -11,5 +11,6 @@ export {
   SignFn,
   SignResult,
   SignType,
+  CredentialType
 } from "./types/index.js"
 

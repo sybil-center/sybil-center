@@ -2,7 +2,6 @@ import { suite } from "uvu";
 import * as a from "uvu/assert";
 import { ProofService } from "../../../src/base/service/proof.service.js";
 import { Credential } from "@sybil-center/sdk/types";
-import { toJWTPayload } from "../../../src/util/jwt.util.js";
 import sortKeys from "sort-keys";
 import { createInjector, Injector } from "typed-inject";
 import { Config } from "../../../src/backbone/config.js";
@@ -13,23 +12,30 @@ const test = suite("ProofService test");
 const PATH_TO_CONFIG = new URL("../test.env", import.meta.url);
 let injector: Injector<{ didService: DIDService; proofService: ProofService }>;
 
-test.before.each(async () => {
+test.before(async () => {
   injector = createInjector()
     .provideValue("config", new Config(PATH_TO_CONFIG))
     .provideClass("didService", DIDService)
     .provideClass("proofService", ProofService);
   await injector.resolve("didService").init();
+});
 
-  vc = {
-    type: ["VerifiableCredential", "Empty"],
-    issuer: { id: "issuer" },
-    "@context": ["test"],
-    id: "testId",
-    issuanceDate: new Date(),
-    credentialSubject: {
-      id: "testSubjectId"
+test.before.each(async () => {
+  const issuerDID = injector.resolve("didService").id;
+  //@ts-ignore
+  vc = sortKeys(
+    {
+      type: ["VerifiableCredential", "Empty"],
+      issuer: { id: issuerDID },
+      "@context": ["test"],
+      id: "testId",
+      issuanceDate: new Date(),
+      credentialSubject: {
+        id: "testSubjectId"
+      },
     },
-  };
+    { deep: true }
+  );
 });
 
 let vc: Credential | null = null;
@@ -37,13 +43,13 @@ let vc: Credential | null = null;
 test("should correct sign JWS", async () => {
   const proofService = injector.resolve("proofService");
   const didService = injector.resolve("didService");
-  const { proof } = await proofService.jwsSing(vc!);
+  const { proof } = await proofService.sign("JsonWebSignature2020", vc!);
   a.ok(proof, "proof is undefined after signing by ProofService");
   a.ok(
     proof.jws,
     "proof.jws property is undefined after signing by ProofService"
   );
-  a.type(proof.jws, "string", 'proof.jws should be "string" type');
+  a.type(proof.jws, "string", "proof.jws should be \"string\" type");
   a.is(proof.proofPurpose, "assertionMethod");
   a.is(
     proof.verificationMethod,
@@ -52,19 +58,11 @@ test("should correct sign JWS", async () => {
   );
 });
 
-test("should verify JWS", async () => {
+test("should verify credential with jws proof", async () => {
   const proofService = injector.resolve("proofService");
-  const { proof } = await proofService.jwsSing(vc!);
-  const jws = proof!.jws!;
-
-  vc!.proof = undefined;
-
-  const [jwsHeader, _, jwsVerifySignature] = jws.split(".");
-  const jwsPayload = toJWTPayload(sortKeys(vc!));
-
-  const fullJws = `${jwsHeader}.${jwsPayload}.${jwsVerifySignature}`;
-
-  await injector.resolve("didService").verifyJWS(fullJws);
+  const credential = await proofService.sign("JsonWebSignature2020", vc!);
+  const isVerified = await proofService.verify(credential);
+  a.is(isVerified, true, "proof is not verified");
 });
 
 test.run();

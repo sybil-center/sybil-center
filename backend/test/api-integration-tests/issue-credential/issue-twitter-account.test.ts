@@ -5,14 +5,15 @@ import sinon, { stub } from "sinon";
 import { oauthCallbackEP } from "../../../src/util/route.util.js";
 import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
 import * as url from "url";
-import { isValidVC } from "../../../src/util/credential.utils.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
-import { ethereumSupport } from "../../test-support/ethereum.js";
+import { ethereumSupport } from "../../test-support/chain/ethereum.js";
 import { LightMyRequestResponse } from "fastify";
-import { solanaSupport } from "../../test-support/solana.js";
-import { bitcoinSupport } from "../../test-support/bitcoin.js";
+import { solanaSupport } from "../../test-support/chain/solana.js";
+import { bitcoinSupport } from "../../test-support/chain/bitcoin.js";
 import { CanIssueResp, TwitterAccountChallenge, TwitterAccountVC } from "@sybil-center/sdk/types";
 import { AnyObj } from "../../../src/util/model.util.js";
+import { api } from "../../test-support/api/index.js";
+import { delay } from "../../../src/util/delay.util.js";
 
 const test = suite("Integration: issue Twitter account credential");
 
@@ -170,7 +171,6 @@ const assertIssueResp = async (args: AssertIssueRespArgs) => {
   a.is(subjectDID, id, "credential subject id no matched");
   a.is(twitterUsername, twitter.username, "twitter username not matched");
   a.is(twitter.id, "test", "twitter user id not matched");
-  a.is(await isValidVC(credential), true, "vc is invalid");
 };
 
 const assertSessionDeleted = (sessionId: string) => {
@@ -202,6 +202,8 @@ test("should issue Twitter ownership credential with eth did-pkh", async () => {
   });
   await assertIssueResp({ issueResp, subjectDID });
   assertSessionDeleted(sessionId);
+  const credential = JSON.parse(issueResp.body);
+  await api.verifyCredential(credential, app);
 });
 
 test("should issue Twitter ownership credential with bitcoin did-pkh", async () => {
@@ -226,6 +228,8 @@ test("should issue Twitter ownership credential with bitcoin did-pkh", async () 
   });
   await assertIssueResp({ issueResp, subjectDID });
   assertSessionDeleted(sessionId);
+  const credential = JSON.parse(issueResp.body);
+  await api.verifyCredential(credential, app);
 });
 
 test("should issue Twitter ownership credential with solana did-pkh", async () => {
@@ -249,6 +253,8 @@ test("should issue Twitter ownership credential with solana did-pkh", async () =
   });
   await assertIssueResp({ issueResp, subjectDID });
   assertSessionDeleted(sessionId);
+  const credential = JSON.parse(issueResp.body);
+  await api.verifyCredential(credential, app);
 });
 
 test("should redirect to default page after authorization", async () => {
@@ -317,16 +323,17 @@ test("should issue twitter account credential with custom property", async () =>
     issueResp.statusCode, 200,
     `issue response fail. error: ${issueResp.body}`
   );
-  const vc = JSON.parse(issueResp.body) as TwitterAccountVC;
+  const credential = JSON.parse(issueResp.body);
   await assertIssueResp({ issueResp, subjectDID });
   assertSessionDeleted(sessionId);
-  const { custom: vcCustom } = vc.credentialSubject;
+  const { custom: vcCustom } = credential.credentialSubject;
   a.ok(vcCustom, "custom property is not present");
   a.ok(vcCustom.test, "custom.test property is not present");
   a.is(
     vcCustom.test.hello, "world",
     "custom hello property is not matched"
   );
+  await api.verifyCredential(credential, app);
 });
 
 test("should not find Twitter code", async () => {
@@ -391,11 +398,13 @@ test("issue twitter account credential with expiration date", async () => {
   });
   await assertIssueResp({ issueResp, subjectDID });
   assertSessionDeleted(sessionId);
-  const credential = JSON.parse(issueResp.body) as TwitterAccountVC;
+  const credential = JSON.parse(issueResp.body);
   a.is(
     credential.expirationDate, expirationDate.toISOString(),
     "credential expiration date is not matched"
   );
+  await delay(20);
+  await api.verifyCredential(credential, app, false);
 });
 
 test.run();

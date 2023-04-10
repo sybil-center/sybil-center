@@ -1,7 +1,7 @@
 import type { ICredentialIssuer, IOAuthCallback, } from "../../../../base/service/credentials.js";
 import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../../base/service/credentials.js";
 import { Disposable, tokens } from "typed-inject";
-import { IProofService } from "../../../../base/service/proof.service.js";
+import { ProofService } from "../../../../base/service/proof.service.js";
 import { TwitterService, type TwitterUser } from "../../twitter.service.js";
 import { DIDService } from "../../../../base/service/did.service.js";
 import { absoluteId } from "../../../../util/id.util.js";
@@ -84,7 +84,7 @@ export class TwitterAccountIssuer
   readonly twitterService: TwitterService;
 
   constructor(
-    private proofService: IProofService,
+    private proofService: ProofService,
     private multiSignService: IMultiSignService,
     private readonly didService: DIDService,
     config: {
@@ -166,7 +166,7 @@ export class TwitterAccountIssuer
       custom: custom,
       expirationDate: expirationDate
     });
-    return this.proofService.jwsSing(vc);
+    return this.proofService.sign("JsonWebSignature2020", vc);
   }
 
   get providedCredential(): CredentialType {

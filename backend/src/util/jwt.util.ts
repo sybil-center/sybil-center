@@ -1,5 +1,6 @@
 import { DagJWS, JWSSignature } from "dids";
 import * as uint8arrays from "uint8arrays";
+import { AnyObj } from "./model.util.js";
 
 export function toJWTPayload(obj: Object): string {
   const bytes = uint8arrays.fromString(JSON.stringify(obj));
@@ -12,7 +13,7 @@ export function toFullJWT(detachedJWT: string, payloadObj: Object): string {
   return `${header}.${payload}.${signature}`;
 }
 
-export function toFullDagJWT(detachedJWT: string, payloadObj: Object): DagJWS {
+export function toFullDagJWT(detachedJWT: string, payloadObj: AnyObj): DagJWS {
   const [header, _, signature] = detachedJWT.split(".");
   if (!header) throw new Error(`Can not get header`);
   if (!signature) throw new Error(`Can not get signature`);

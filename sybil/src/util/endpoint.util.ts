@@ -12,3 +12,7 @@ export function challengeEP(type: CredentialType) {
 export function canIssueEP(type: CredentialType) {
   return `/api/v1/vcs/${urlCredentialType(type)}/can-issue`
 }
+
+export function verifyCredentialEP(): string {
+  return "/api/v1/vcs/verify";
+}

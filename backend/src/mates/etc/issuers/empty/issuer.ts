@@ -3,7 +3,7 @@ import {
   DEFAULT_CREDENTIAL_TYPE,
   ICredentialIssuer,
 } from "../../../../base/service/credentials.js";
-import { IProofService } from "../../../../base/service/proof.service.js";
+import { ProofService } from "../../../../base/service/proof.service.js";
 import { DIDService } from "../../../../base/service/did.service.js";
 import { Disposable, tokens } from "typed-inject";
 import sortKeys from "sort-keys";
@@ -43,7 +43,7 @@ export class EmptyIssuer
   private readonly sessionCache: TimedCache<string, { issueChallenge: string; }>;
 
   constructor(
-    private readonly proofService: IProofService,
+    private readonly proofService: ProofService,
     private readonly didService: DIDService,
     private readonly config: { signatureMessageTTL: number },
     private readonly multiSignService: IMultiSignService
@@ -71,8 +71,8 @@ export class EmptyIssuer
     const subjectDID = await this.multiSignService
       .signAlg(signType)
       .did(signature, issueChallenge, publicId);
-    const emptyVC = getEmptyVC(this.didService.id, subjectDID);
-    return await this.proofService.jwsSing(emptyVC);
+    const vc = getEmptyVC(this.didService.id, subjectDID);
+    return await this.proofService.sign("JsonWebSignature2020", vc);
   }
 
   get providedCredential(): CredentialType {
