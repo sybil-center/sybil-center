@@ -5,3 +5,7 @@ export function oauthCallbackEP(): string {
 export function credentialOAuthCallbackURL(pathToExposeDomain: URL): URL {
   return new URL(oauthCallbackEP(), pathToExposeDomain);
 }
+
+export function generateAPIkeysEP(): string {
+  return "/api/v1/keys";
+}

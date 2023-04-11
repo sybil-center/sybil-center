@@ -1,5 +1,7 @@
 import { verifyCredential } from "./verify-credential.js";
+import { issueEthAccountVC } from "./issue.js";
 
 export const api = {
-  verifyCredential: verifyCredential
+  verifyCredential: verifyCredential,
+  issueEthAccountVC: issueEthAccountVC
 }
