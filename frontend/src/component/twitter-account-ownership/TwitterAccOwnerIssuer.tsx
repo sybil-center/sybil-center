@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { VC } from "../common/VC";
 import { createUseStyles } from "react-jss";
-import { Button } from "../common/Button";
+import { OldButton } from "../common/OldButton";
 import { ScaleLoader } from "react-spinners";
 import { useAccount } from "wagmi";
 import { Web3Button } from "@web3modal/react";
@@ -47,25 +47,25 @@ export function TwitterAccOwnerIssuer() {
       return (
         <>
           <div className={cls.twitterAccOwnIssuer__error}>Some errors</div>
-          <Button theme={{ backgroundColor: "#668bef" }} onClick={refreshAll}>
+          <OldButton theme={{ backgroundColor: "#668bef" }} onClick={refreshAll}>
             issue new
-          </Button>
+          </OldButton>
         </>
       );
     if (state.data)
       return (
         <>
           <VC vc={state.data} />
-          <Button theme={{ backgroundColor: "#668bef" }} onClick={refreshAll}>
+          <OldButton theme={{ backgroundColor: "#668bef" }} onClick={refreshAll}>
             issue new
-          </Button>
+          </OldButton>
         </>
       );
 
     return (
-      <Button theme={{ backgroundColor: "#668bef" }} onClick={handleIssue}>
+      <OldButton theme={{ backgroundColor: "#668bef" }} onClick={handleIssue}>
         issue VC
-      </Button>
+      </OldButton>
     );
   };
 

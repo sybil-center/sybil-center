@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Web3Button } from "@web3modal/react";
 import { ScaleLoader } from "react-spinners";
 import { VC } from "../common/VC";
-import { Button } from "../common/Button";
+import { OldButton } from "../common/OldButton";
 import { GitHubAccountVC } from "@sybil-center/sdk";
 import { sybil } from "../../service/sybil";
 import { useSubjectProof } from "../../hooks/subject-proof";
@@ -55,16 +55,16 @@ export function GitHubAccOwnerIssuer() {
       return (
         <>
           <VC vc={vcState.data!} />
-          <Button theme={{ backgroundColor: "#668bef" }} onClick={handleRefresh}>
+          <OldButton theme={{ backgroundColor: "#668bef" }} onClick={handleRefresh}>
             issue new
-          </Button>
+          </OldButton>
         </>
       );
 
     return (
-      <Button theme={{ backgroundColor: "#668bef" }} onClick={handleIssue}>
+      <OldButton theme={{ backgroundColor: "#668bef" }} onClick={handleIssue}>
         issue VC
-      </Button>
+      </OldButton>
     );
   };
 

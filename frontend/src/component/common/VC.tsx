@@ -3,7 +3,7 @@ import { useState } from "react";
 import { copyTextToClipBoard } from "../../util/copy-value";
 import { ShowVC } from "./ShowVC";
 import { createUseStyles } from "react-jss";
-import { Button } from "./Button";
+import { OldButton } from "./OldButton";
 
 interface VCProps {
   vc: Credential;
@@ -42,15 +42,15 @@ export function VC({ vc }: VCProps) {
       {isShowed && <ShowVC vc={vc} />}
 
       <div>
-        <Button theme={{ backgroundColor: showButtonColor() }} onClick={() => setIsShowed((prev) => !prev)}>
+        <OldButton theme={{ backgroundColor: showButtonColor() }} onClick={() => setIsShowed((prev) => !prev)}>
           {isShowed && "Hide VC"}
           {!isShowed && "Show VC"}
-        </Button>
+        </OldButton>
       </div>
       <div>
-        <Button theme={{ backgroundColor: copyButtonColor() }} onClick={() => copyVC()}>
+        <OldButton theme={{ backgroundColor: copyButtonColor() }} onClick={() => copyVC()}>
           {!isCopied && "Copy VC"} {isCopied && "Copied"}
-        </Button>
+        </OldButton>
       </div>
     </div>
   );
