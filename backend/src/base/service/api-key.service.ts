@@ -4,13 +4,8 @@ import * as u8a from "uint8arrays";
 import crypto from "node:crypto";
 import { ClientError } from "../../backbone/errors.js";
 import { EthAccountVC } from "@sybil-center/sdk";
+import { APIKeys } from "@sybil-center/sdk/types";
 import { CredentialVerifier } from "./credential-verifivator.js";
-
-
-export type APIKeys = {
-  apiKey: string;
-  secretKey: string;
-}
 
 /** Result of verifying key */
 export type KeyVerifyResult = {
