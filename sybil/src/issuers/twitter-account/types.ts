@@ -8,11 +8,6 @@ export type TwitterAccountChallenge = Challenge & {
   authUrl: string;
 }
 
-export type TwitterAccountReq = {
-  sessionId: string;
-  issueChallenge: string;
-}
-
 export type TwitterAccountIssueReq = IssueReq
 
 export type TwitterAccountVC = Credential & {
