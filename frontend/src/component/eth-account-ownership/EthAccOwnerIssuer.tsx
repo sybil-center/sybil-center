@@ -1,6 +1,6 @@
 import { useAccount } from "wagmi";
 import { useState } from "react";
-import { Button } from "../common/Button";
+import { OldButton } from "../common/OldButton";
 import { VC } from "../common/VC";
 import { createUseStyles } from "react-jss";
 import { Web3Button } from "@web3modal/react";
@@ -36,25 +36,25 @@ export function EthAccOwnerIssuer() {
     if (!isWalletConnected) return <></>;
     if (state.error) {
       return (
-        <Button theme={{ backgroundColor: "#CC4141" }} onClick={issueVC}>
+        <OldButton theme={{ backgroundColor: "#CC4141" }} onClick={issueVC}>
           issue error
-        </Button>
+        </OldButton>
       );
     }
     if (!state.data) {
       return (
-        <Button theme={{ backgroundColor: "#668bef" }} onClick={issueVC}>
+        <OldButton theme={{ backgroundColor: "#668bef" }} onClick={issueVC}>
           issue
-        </Button>
+        </OldButton>
       );
     }
 
     return (
       <>
         <VC vc={state.data} />
-        <Button theme={{ backgroundColor: "#668bef" }} onClick={() => setState({ loading: false })}>
+        <OldButton theme={{ backgroundColor: "#668bef" }} onClick={() => setState({ loading: false })}>
           get new
-        </Button>
+        </OldButton>
       </>
     );
   };

@@ -1,6 +1,6 @@
 import { createUseStyles } from "react-jss";
 import React, { useState } from "react";
-import { Button } from "./Button";
+import { OldButton } from "./OldButton";
 import { VCValidator } from "./VCValidator";
 
 interface ContentProps {
@@ -23,10 +23,10 @@ export function Content({ children }: ContentProps) {
         </div>
 
         <div className={ cls.content__validatorContainer }>
-          <Button theme={ { backgroundColor: isValidateClicked ? '#C166EFFF' : '#668bef' } }
-                  onClick={ () => setIsValidateClicked(prev => !prev) }>
+          <OldButton theme={ { backgroundColor: isValidateClicked ? '#C166EFFF' : '#668bef' } }
+                     onClick={ () => setIsValidateClicked(prev => !prev) }>
             { isValidateClicked ? 'hide validator' : 'validate vc' }
-          </Button>
+          </OldButton>
 
           { isValidateClicked && <VCValidator/> }
         </div>

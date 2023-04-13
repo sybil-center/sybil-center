@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Web3Button } from "@web3modal/react";
 import { ScaleLoader } from "react-spinners";
 import { VC } from "../common/VC";
-import { Button } from "../common/Button";
+import { OldButton } from "../common/OldButton";
 import { DiscordAccountVC } from "@sybil-center/sdk";
 import { useSubjectProof } from "../../hooks/subject-proof";
 import { sybil } from "../../service/sybil";
@@ -59,16 +59,16 @@ export function DiscordAccOwnerIssuer() {
       return (
         <>
           <VC vc={state.data}/>
-          <Button theme={{ backgroundColor: "#668bef" }} onClick={onRefresh}>
+          <OldButton theme={{ backgroundColor: "#668bef" }} onClick={onRefresh}>
             issue new
-          </Button>
+          </OldButton>
         </>
       );
 
     return (
-      <Button theme={{ backgroundColor: "#668bef" }} onClick={onIssue}>
+      <OldButton theme={{ backgroundColor: "#668bef" }} onClick={onIssue}>
         issue VC
-      </Button>
+      </OldButton>
     );
   };
 

@@ -104,3 +104,8 @@ export type SubjectProof = {
 export type VerifyResult = {
   isVerified: boolean
 }
+
+export type APIKeys = {
+  apiKey: string;
+  secretKey: string;
+}
