@@ -10,9 +10,13 @@ export async function issueEthAccountVC(
   opt?: {expirationDate?: Date}
 ): Promise<EthAccountVC> {
   const fastify = app.context.resolve("httpServer").fastify;
+  const frontendOrigin = app.context.resolve("config").frontendOrigin.origin;
   const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("EthereumAccount"),
+    headers: {
+      "Referer": frontendOrigin
+    },
     payload: {
       publicId: publicId,
       expirationDate: opt?.expirationDate
@@ -27,6 +31,9 @@ export async function issueEthAccountVC(
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("EthereumAccount"),
+    headers: {
+      "Referer": frontendOrigin
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,

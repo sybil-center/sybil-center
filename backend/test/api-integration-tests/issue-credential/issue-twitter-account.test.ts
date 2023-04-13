@@ -18,6 +18,7 @@ import { delay } from "../../../src/util/delay.util.js";
 const test = suite("Integration: issue Twitter account credential");
 
 let app: App;
+let apiKey: string;
 
 const redirectUrl = "https://example.com/";
 const code = "code";
@@ -30,6 +31,8 @@ test.before(async () => {
 
   app = new App();
   await app.init();
+  const keys = await api.apiKeys(app);
+  apiKey = keys.apiKey
 
   const issuer = app.context.resolve("twitterAccountIssuer");
   const twitterService = issuer.twitterService;
@@ -67,6 +70,9 @@ const preIssue = async (
   const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("TwitterAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       publicId: args.publicId,
       redirectUrl: redirectUrl,
@@ -90,6 +96,9 @@ const preIssue = async (
   const canIssueBeforeResp = await fastify.inject({
     method: "GET",
     url: canIssueEP("TwitterAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     query: {
       sessionId: sessionId
     }
@@ -122,6 +131,9 @@ const preIssue = async (
   const canIssueAfterResp = await fastify.inject({
     method: "GET",
     url: canIssueEP("TwitterAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     query: {
       sessionId: sessionId
     }
@@ -194,6 +206,9 @@ test("should issue Twitter ownership credential with eth did-pkh", async () => {
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("TwitterAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signType: ethDidPkhPrefix,
@@ -220,6 +235,9 @@ test("should issue Twitter ownership credential with bitcoin did-pkh", async () 
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("TwitterAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signType: bitcoinDidPkhPrefix,
@@ -245,6 +263,9 @@ test("should issue Twitter ownership credential with solana did-pkh", async () =
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("TwitterAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signType: solanaDidPkhPrefix,
@@ -264,6 +285,9 @@ test("should redirect to default page after authorization", async () => {
   const challengeResp = await fastify.inject({
     method: "POST",
     path: challengeEP("TwitterAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       publicId: ethAddress
     }
@@ -313,6 +337,9 @@ test("should issue twitter account credential with custom property", async () =>
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("TwitterAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -344,6 +371,9 @@ test("should not find Twitter code", async () => {
   const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("TwitterAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       publicId: ethAddress,
       redirectUrl: redirectUrl
@@ -360,6 +390,9 @@ test("should not find Twitter code", async () => {
   const { statusCode, body } = await fastify.inject({
     method: "POST",
     url: issueEP("TwitterAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -390,6 +423,9 @@ test("issue twitter account credential with expiration date", async () => {
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("TwitterAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       signature: signature,
       sessionId: sessionId,

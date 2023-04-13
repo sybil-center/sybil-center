@@ -18,6 +18,7 @@ import { delay } from "../../../src/util/delay.util.js";
 const test = suite("Integration: issue Discord account credential");
 
 let app: App;
+let apiKey: string;
 
 const redirectUrl = "https://example.com/";
 const code = "code";
@@ -34,6 +35,8 @@ test.before(async () => {
   configDotEnv({ path: config, override: true });
   app = new App();
   await app.init();
+  const keys = await api.apiKeys(app);
+  apiKey = keys.apiKey;
 
   const discordAccountIssuer = app.context.resolve(
     "discordAccountIssuer"
@@ -65,6 +68,9 @@ const preIssue = async (
   const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       redirectUrl: redirectUrl,
       custom: args.custom,
@@ -83,6 +89,9 @@ const preIssue = async (
   const canIssueBeforeResp = await fastify.inject({
     method: "GET",
     url: canIssueEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     query: {
       sessionId: sessionId
     }
@@ -115,6 +124,9 @@ const preIssue = async (
   const canIssueAfterResp = await fastify.inject({
     method: "GET",
     url: canIssueEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     query: {
       sessionId: sessionId
     }
@@ -170,7 +182,7 @@ const assertSessionDeleted = (sessionId: string) => {
   a.throws(() => {
     sessionCache.get(sessionId);
   }, "session is not deleted");
-}
+};
 
 test("should issue discord ownership credential with ethereum did-pkh", async () => {
   const {
@@ -178,7 +190,6 @@ test("should issue discord ownership credential with ethereum did-pkh", async ()
     didPkhPrefix: ethDidPkhPrefix,
     didPkh: ethDidPkh
   } = ethereumSupport.info.ethereum;
-
   const fastify = app.context.resolve("httpServer").fastify;
 
   const { issueChallenge, sessionId } = await preIssue({ publicId: ethAddress });
@@ -187,6 +198,9 @@ test("should issue discord ownership credential with ethereum did-pkh", async ()
   const vcResponse = await fastify.inject({
     method: "POST",
     url: issueEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -205,7 +219,6 @@ test("should issue discord ownership credential with solana did-pkh", async () =
     didPkh: solanaDidPkh,
     address: solanaAddress
   } = solanaSupport.info;
-
   const { fastify } = app.context.resolve("httpServer");
 
   const { sessionId, issueChallenge } = await preIssue({ publicId: solanaAddress });
@@ -214,6 +227,9 @@ test("should issue discord ownership credential with solana did-pkh", async () =
   const vcResponse = await fastify.inject({
     method: "POST",
     url: issueEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -232,7 +248,6 @@ test("should issue discord ownership credential with bitcoin did-pkh", async () 
     didPkh: bitcoinDidPkh,
     didPkhPrefix: bitcoinDidPkhPrefix
   } = bitcoinSupport.info;
-
   const { fastify } = app.context.resolve("httpServer");
 
   const { sessionId, issueChallenge } = await preIssue({ publicId: bitcoinAddress });
@@ -241,6 +256,9 @@ test("should issue discord ownership credential with bitcoin did-pkh", async () 
   const vcResponse = await fastify.inject({
     method: "POST",
     url: issueEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -260,6 +278,9 @@ test("should redirect to default page after authorization", async () => {
   const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       publicId: address
     }
@@ -308,6 +329,9 @@ test("should issue vc with custom properties", async () => {
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -334,6 +358,9 @@ test("should not find Discord code", async () => {
   const payloadResp = await fastify.inject({
     method: "POST",
     url: challengeEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       redirectUrl: redirectUrl,
       publicId: address
@@ -352,6 +379,9 @@ test("should not find Discord code", async () => {
   const errResp = await fastify.inject({
     method: "POST",
     url: issueEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -378,6 +408,9 @@ test("issue discord account credential with expiration date", async () => {
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -402,6 +435,9 @@ test("not valid date-time format for expiration date", async () => {
   const errResp = await fastify.inject({
     method: "POST",
     url: challengeEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       redirectUrl: redirectUrl,
       expirationDate: "not a date"

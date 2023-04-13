@@ -75,7 +75,7 @@ export class ApiKeyService {
         isSecret: Boolean(isSecret)
       };
     } catch (e) {
-      throw new ClientError("API key or secret key is not valid");
+      throw new ClientError("API key or secret key is not valid", 403);
     }
   }
 

@@ -4,10 +4,12 @@ import { App } from "../../../src/app/app.js";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
 import { challengeEP } from "@sybil-center/sdk/util";
 import { ethereumSupport } from "../../test-support/chain/ethereum.js";
+import { api } from "../../test-support/api/index.js";
 
 const test = suite("Custom property size limit test");
 
 let app: App;
+let apiKey: string;
 
 test.before(async () => {
   const globalTestConf = new URL("../../test.env", import.meta.url);
@@ -16,6 +18,8 @@ test.before(async () => {
   configDotEnv({ path: localTestConf, override: true });
   app = new App();
   await app.init();
+  const keys = await api.apiKeys(app);
+  apiKey = keys.apiKey;
 });
 
 test.after(async () => {
@@ -29,6 +33,9 @@ test("should throw client error because custom property is too large", async () 
   const errResp = await fastify.inject({
     method: "POST",
     url: challengeEP("EthereumAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       custom: { message: "tests are good, no tests are bugs" },
       publicId: publicId
