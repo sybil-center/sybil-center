@@ -26,7 +26,6 @@ export class DiscordAccountProvider
   }
 
   async issueVC(signFn: SignFn, { issueChallenge, sessionId }: DiscordAccountReq): Promise<DiscordAccountVC> {
-    console.log("issue challenge",issueChallenge);
     const {
       signType,
       signature

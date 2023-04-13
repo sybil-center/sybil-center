@@ -17,7 +17,6 @@ export function parse<TName extends keyof NameObj>(
 }
 
 function parseCredential(input: any): Credential {
-  console.log("start");
   const credential = (typeof input === "string")
     ? JSON.parse(input)
     : input;
@@ -25,7 +24,6 @@ function parseCredential(input: any): Credential {
   credential.expirationDate = toDateIfPresent(credential.expirationDate);
   const proof = credential?.proof;
   if (proof) proof.created = toDateIfPresent(proof.created);
-  console.log("end");
   return credential as Credential;
 }
 

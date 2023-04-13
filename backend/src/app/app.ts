@@ -64,7 +64,7 @@ export class App {
 
     credentialController(fastify, issuerContainer, config, verifier);
     oauthPageController(fastify);
-    apiKeyController(fastify, apiKeyService);
+    apiKeyController(fastify, apiKeyService, config);
   }
 
   async init() {

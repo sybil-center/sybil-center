@@ -6,14 +6,16 @@ import * as a from "uvu/assert";
 export async function issueEthAccountVC(
   publicId: string,
   signFn: (msg: string) => Promise<string>,
-  app: App
+  app: App,
+  opt?: {expirationDate?: Date}
 ): Promise<EthAccountVC> {
   const fastify = app.context.resolve("httpServer").fastify;
   const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("EthereumAccount"),
     payload: {
-      publicId: publicId
+      publicId: publicId,
+      expirationDate: opt?.expirationDate
     }
   });
   a.is(

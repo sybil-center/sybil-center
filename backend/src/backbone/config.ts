@@ -27,6 +27,8 @@ export class Config {
   readonly twitterClientId: string;
   readonly twitterClientSecret: string;
 
+  readonly frontendOrigin: URL;
+
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -56,6 +58,8 @@ export class Config {
 
     this.twitterClientId = getStrOrThrow("TWITTER_CLIENT_ID");
     this.twitterClientSecret = getStrOrThrow("TWITTER_CLIENT_SECRET");
+
+    this.frontendOrigin = new URL(getStrOrThrow("FRONTEND_ORIGIN"))
   }
 }
 
