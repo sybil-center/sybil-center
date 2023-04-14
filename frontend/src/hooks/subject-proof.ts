@@ -13,7 +13,7 @@ export function useSubjectProof() {
     const signature = uint8array.toString(uint8array.fromString(sign.substring(2), "hex"), "base64");
     return {
       signature: signature,
-      signType: `did:pkh:eip155:${chain?.id!}` as SignType
+      signType: `eip155:${chain?.id!}` as SignType
     }
   };
 
