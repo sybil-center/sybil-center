@@ -1,14 +1,14 @@
 import { canIssueEP, challengeEP, issueEP, verifyCredentialEP } from "../util/index.js";
 import { APIKeys, Credential, CredentialType, VerifyResult } from "../types/index.js";
 import { parse } from "../util/parse.util.js";
-import { AtLeastOne } from "./types/useful.js";
+import { Optionals } from "./types/useful.js";
 
 const DEFAULT_ENDPOINT = new URL("https://api.sybil.center");
 
 export class HttpClient {
 
   constructor(
-    private readonly apiKeys: AtLeastOne<APIKeys>,
+    private readonly apiKeys: Optionals<APIKeys, "secretKey">,
     readonly issuerDomain: URL = DEFAULT_ENDPOINT,
   ) {}
 

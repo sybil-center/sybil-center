@@ -28,23 +28,18 @@ export class MultiSignService implements IMultiSignService {
     this.signServices = new Map<SignType, SignService>([
       ["bitcoin", bitcoin],
       ["bip122:000000000019d6689c085ae165831e93", bitcoin],
-      ["did:pkh:bip122:000000000019d6689c085ae165831e93", bitcoin],
 
       ["celo", celo],
       ["eip155:42220", celo],
-      ["did:pkh:eip155:42220", celo],
 
       ["ethereum", ethereum],
       ["eip155:1", ethereum],
-      ["did:pkh:eip155:1", ethereum],
 
       ["polygon", polygon],
       ["eip155:137", polygon],
-      ["did:pkh:eip155:137", polygon],
 
       ["solana", solana],
       ["solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ", solana],
-      ["did:pkh:solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ", solana],
     ]);
   }
 

@@ -1,8 +1,9 @@
 import { FormEvent, useState } from "react";
-import { DiscordAccountVC, EthWalletProvider, IEIP1193Provider } from "@sybil-center/sdk";
-import { sybil } from "@/service/sybil";
+import { DiscordAccountVC, EthWalletProvider, IEIP1193Provider, Sybil } from "@sybil-center/sdk";
 import styles from "@/styles/twitter-pos.module.css";
 
+export const sybil = new Sybil(
+  { apiKey: "get API keys from Dev Portal" });
 
 export function DiscordPos() {
   const [state, setState] = useState<{
