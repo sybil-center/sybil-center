@@ -187,7 +187,7 @@ const assertSessionDeleted = (sessionId: string) => {
 test("should issue discord ownership credential with ethereum did-pkh", async () => {
   const {
     address: ethAddress,
-    didPkhPrefix: ethDidPkhPrefix,
+    signType: ethSignType,
     didPkh: ethDidPkh
   } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
@@ -204,7 +204,7 @@ test("should issue discord ownership credential with ethereum did-pkh", async ()
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signType: ethDidPkhPrefix,
+      signType: ethSignType,
     }
   });
   await assertIssueResp(vcResponse, ethDidPkh);
@@ -215,7 +215,7 @@ test("should issue discord ownership credential with ethereum did-pkh", async ()
 
 test("should issue discord ownership credential with solana did-pkh", async () => {
   const {
-    didPkhPrefix: solanaDidPkhPrefix,
+    signType: solanaSignType,
     didPkh: solanaDidPkh,
     address: solanaAddress
   } = solanaSupport.info;
@@ -233,7 +233,7 @@ test("should issue discord ownership credential with solana did-pkh", async () =
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signType: solanaDidPkhPrefix,
+      signType: solanaSignType,
     }
   });
   await assertIssueResp(vcResponse, solanaDidPkh);
@@ -246,7 +246,7 @@ test("should issue discord ownership credential with bitcoin did-pkh", async () 
   const {
     address: bitcoinAddress,
     didPkh: bitcoinDidPkh,
-    didPkhPrefix: bitcoinDidPkhPrefix
+    signType: bitcoinSignType
   } = bitcoinSupport.info;
   const { fastify } = app.context.resolve("httpServer");
 
@@ -262,7 +262,7 @@ test("should issue discord ownership credential with bitcoin did-pkh", async () 
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signType: bitcoinDidPkhPrefix,
+      signType: bitcoinSignType,
     }
   });
   await assertIssueResp(vcResponse, bitcoinDidPkh);
@@ -319,7 +319,7 @@ test("should redirect to default page after authorization", async () => {
 
 test("should issue vc with custom properties", async () => {
   const custom = { hello: { test: "test", world: "world" } };
-  const { address, didPkhPrefix, didPkh } = ethereumSupport.info.ethereum;
+  const { address, signType, didPkh } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
   const { sessionId, issueChallenge } = await preIssue({
     publicId: address,
@@ -335,7 +335,7 @@ test("should issue vc with custom properties", async () => {
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signType: didPkhPrefix,
+      signType: signType,
     }
   });
   a.is(issueResp.statusCode, 200, `issue resp status code is not 200. error: ${issueResp.body}`);
@@ -355,7 +355,7 @@ test("should not find Discord code", async () => {
   const { address } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
   await fastify.ready();
-  const payloadResp = await fastify.inject({
+  const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("DiscordAccount"),
     headers: {
@@ -367,12 +367,12 @@ test("should not find Discord code", async () => {
     }
   });
   a.is(
-    payloadResp.statusCode, 200,
+    challengeResp.statusCode, 200,
     "challenge response status code is not 200"
   );
 
   const { sessionId, issueChallenge } = JSON.parse(
-    payloadResp.body
+    challengeResp.body
   ) as DiscordAccountChallenge;
   const signature = await ethereumSupport.sign(issueChallenge);
 
@@ -396,7 +396,7 @@ test("should not find Discord code", async () => {
 });
 
 test("issue discord account credential with expiration date", async () => {
-  const { didPkhPrefix, address, didPkh: subjectDID } = ethereumSupport.info.ethereum;
+  const { signType, address, didPkh: subjectDID } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
   const expirationDate = new Date();
   const { sessionId, issueChallenge } = await preIssue({
@@ -414,7 +414,7 @@ test("issue discord account credential with expiration date", async () => {
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signType: didPkhPrefix,
+      signType: signType,
     }
   });
   await assertIssueResp(issueResp, subjectDID);

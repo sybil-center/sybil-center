@@ -1,1 +1,3 @@
-export type AtLeastOne<T, U = {[K in keyof T]: Pick<T, K> }> = Partial<T> & U[keyof U]
+export type Optionals<T, Keys extends keyof T> = Omit<T, Keys> & {
+  [Key in Keys]?: T[Key]
+}

@@ -194,7 +194,7 @@ const assertSessionDeleted = (sessionId: string) => {
 
 test("should issue Twitter ownership credential with eth did-pkh", async () => {
   const {
-    didPkhPrefix: ethDidPkhPrefix,
+    signType: ethSignType,
     didPkh: subjectDID,
     address: ethAddress
   } = ethereumSupport.info.ethereum;
@@ -211,7 +211,7 @@ test("should issue Twitter ownership credential with eth did-pkh", async () => {
     },
     payload: {
       sessionId: sessionId,
-      signType: ethDidPkhPrefix,
+      signType: ethSignType,
       signature: signature
     }
   });
@@ -223,7 +223,7 @@ test("should issue Twitter ownership credential with eth did-pkh", async () => {
 
 test("should issue Twitter ownership credential with bitcoin did-pkh", async () => {
   const {
-    didPkhPrefix: bitcoinDidPkhPrefix,
+    signType: bitcoinSignType,
     didPkh: subjectDID,
     address: bitcoinAddress
   } = bitcoinSupport.info;
@@ -240,7 +240,7 @@ test("should issue Twitter ownership credential with bitcoin did-pkh", async () 
     },
     payload: {
       sessionId: sessionId,
-      signType: bitcoinDidPkhPrefix,
+      signType: bitcoinSignType,
       signature: signature
     }
   });
@@ -252,7 +252,7 @@ test("should issue Twitter ownership credential with bitcoin did-pkh", async () 
 
 test("should issue Twitter ownership credential with solana did-pkh", async () => {
   const {
-    didPkhPrefix: solanaDidPkhPrefix,
+    signType: solanaSignType,
     didPkh: subjectDID,
     address: solanaAddress
   } = solanaSupport.info;
@@ -268,7 +268,7 @@ test("should issue Twitter ownership credential with solana did-pkh", async () =
     },
     payload: {
       sessionId: sessionId,
-      signType: solanaDidPkhPrefix,
+      signType: solanaSignType,
       signature: signature
     }
   });
@@ -325,7 +325,7 @@ test("should issue twitter account credential with custom property", async () =>
   const custom = { test: { hello: "world" } };
   const {
     address: ethAddress,
-    didPkhPrefix,
+    signType,
     didPkh: subjectDID
   } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
@@ -343,7 +343,7 @@ test("should issue twitter account credential with custom property", async () =>
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signType: didPkhPrefix
+      signType: signType
     }
   });
   a.is(
@@ -364,7 +364,7 @@ test("should issue twitter account credential with custom property", async () =>
 });
 
 test("should not find Twitter code", async () => {
-  const { address: ethAddress, didPkhPrefix: ethDidPkhPrefix } =
+  const { address: ethAddress, signType } =
     ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
   await fastify.ready();
@@ -396,7 +396,7 @@ test("should not find Twitter code", async () => {
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signType: ethDidPkhPrefix,
+      signType: signType,
     }
   });
   a.is(
@@ -411,7 +411,7 @@ test("issue twitter account credential with expiration date", async () => {
   const {
     address: ethAddress,
     didPkh: subjectDID,
-    didPkhPrefix: signType
+    signType
   } = ethereumSupport.info.ethereum;
   const expirationDate = new Date();
   const fastify = app.context.resolve("httpServer").fastify;

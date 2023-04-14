@@ -4,8 +4,7 @@ import { EthAccountIssuer, EthAccountOptions, EthAccountVC } from "./issuers/eth
 import { GithubAccountIssuer, GitHubAccountOptions, GitHubAccountVC } from "./issuers/github-account/index.js";
 import { HttpClient } from "./base/http-client.js";
 import { APIKeys, Credential, SubjectProof, VerifyResult } from "./base/types/index.js";
-import { AtLeastOne } from "./base/types/useful.js";
-
+import { Optionals } from "./base/types/useful.js";
 
 export type CredentialKinds = {
   "twitter-account": {
@@ -40,7 +39,7 @@ export class Sybil {
   private readonly httpClient: HttpClient;
 
   constructor(
-    readonly apiKeys: AtLeastOne<APIKeys>,
+    readonly apiKeys: Optionals<APIKeys, "secretKey">,
     readonly issuerDomain?: URL
   ) {
     this.httpClient = new HttpClient(this.apiKeys, issuerDomain);

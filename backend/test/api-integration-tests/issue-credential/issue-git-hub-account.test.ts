@@ -184,7 +184,7 @@ test("should issue GitHub ownership credential with eth did-pkh", async () => {
   const {
     address: ethAddress,
     didPkh: subjectDID,
-    didPkhPrefix: ethDidPkhPrefix
+    signType: ethSignType
   } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
 
@@ -200,7 +200,7 @@ test("should issue GitHub ownership credential with eth did-pkh", async () => {
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signType: ethDidPkhPrefix
+      signType: ethSignType
     }
   });
   await assertIssueResp({ issueResp, subjectDID });
@@ -211,7 +211,7 @@ test("should issue GitHub ownership credential with eth did-pkh", async () => {
 
 test("should issue GitHub ownership credential with solana did-pkh", async () => {
   const {
-    didPkhPrefix: solanaDidPkhPrefix,
+    signType: solanaSignType,
     didPkh: subjectDID,
     address: solanaAddress
   } = solanaSupport.info;
@@ -230,7 +230,7 @@ test("should issue GitHub ownership credential with solana did-pkh", async () =>
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signType: solanaDidPkhPrefix
+      signType: solanaSignType
     }
   });
   await assertIssueResp({ subjectDID, issueResp });
@@ -241,7 +241,7 @@ test("should issue GitHub ownership credential with solana did-pkh", async () =>
 
 test("should issue GitHub ownership credential with bitcoin did-pkh", async () => {
   const {
-    didPkhPrefix: bitcoinDidPkhPrefix,
+    signType: bitcoinSignType,
     didPkh: subjectDID,
     address: bitcoinAddress
   } = bitcoinSupport.info;
@@ -260,7 +260,7 @@ test("should issue GitHub ownership credential with bitcoin did-pkh", async () =
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signType: bitcoinDidPkhPrefix
+      signType: bitcoinSignType
     }
   });
   await assertIssueResp({ issueResp, subjectDID });
@@ -312,7 +312,7 @@ test("should redirect to default page after authorization", async () => {
 
 test("should issue credential with custom property", async () => {
   const custom = { test: { hello: "world" } };
-  const { address, didPkhPrefix } = ethereumSupport.info.ethereum;
+  const { address, signType } = ethereumSupport.info.ethereum;
   const { fastify } = app.context.resolve("httpServer");
   const { sessionId, issueChallenge } = await preIssue({
     publicId: address,
@@ -328,7 +328,7 @@ test("should issue credential with custom property", async () => {
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signType: didPkhPrefix
+      signType: signType
     }
   });
   a.is(vcResp.statusCode, 200, "vc resp status code is not 200");
@@ -346,7 +346,7 @@ test("should issue credential with custom property", async () => {
 });
 
 test("should not find GitHub code", async () => {
-  const { address: ethAddress, didPkhPrefix: signType } = ethereumSupport.info.ethereum;
+  const { address: ethAddress, signType } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
   const challengeResp = await fastify.inject({
     method: "POST",
@@ -395,7 +395,7 @@ test("issue github account credential with expiration date", async () => {
   const fastify = app.context.resolve("httpServer").fastify;
   const {
     didPkh: subjectDID,
-    didPkhPrefix: signType,
+    signType,
     address: ethAddress
   } = ethereumSupport.info.celo;
   const expirationDate = new Date();
