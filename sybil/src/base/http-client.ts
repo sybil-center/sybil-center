@@ -1,11 +1,15 @@
 import { canIssueEP, challengeEP, issueEP, verifyCredentialEP } from "../util/index.js";
-import { Credential, CredentialType, VerifyResult } from "../types/index.js";
+import { APIKeys, Credential, CredentialType, VerifyResult } from "../types/index.js";
 import { parse } from "../util/parse.util.js";
+import { AtLeastOne } from "./types/useful.js";
+
+const DEFAULT_ENDPOINT = new URL("https://api.sybil.center");
 
 export class HttpClient {
 
   constructor(
-    readonly issuerDomain: URL
+    private readonly apiKeys: AtLeastOne<APIKeys>,
+    readonly issuerDomain: URL = DEFAULT_ENDPOINT,
   ) {}
 
   async challenge<
@@ -17,7 +21,8 @@ export class HttpClient {
     const resp = await fetch(endpoint, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKeys.apiKey}`
       },
       body: JSON.stringify(params)
     });
@@ -41,7 +46,12 @@ export class HttpClient {
   ): Promise<boolean> {
     const endpoint = new URL(canIssueEP(credentialType), this.issuerDomain);
     endpoint.searchParams.set("sessionId", sessionId);
-    const resp = await fetch(endpoint);
+    const resp = await fetch(endpoint, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.apiKeys.apiKey}`
+      }
+    });
     const body = await resp.json();
     if (resp.status === 200) {
       return Boolean((body.canIssue));
@@ -57,7 +67,8 @@ export class HttpClient {
     const resp = await fetch(endpoint, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKeys.apiKey}`
       },
       body: JSON.stringify(params)
     });

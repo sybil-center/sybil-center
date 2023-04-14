@@ -3,7 +3,7 @@ import { hash } from "@stablelib/sha256";
 import * as u8a from "uint8arrays";
 import crypto from "node:crypto";
 import { ClientError } from "../../backbone/errors.js";
-import { EthAccountVC } from "@sybil-center/sdk";
+import { CredentialType, EthAccountVC } from "@sybil-center/sdk";
 import { APIKeys } from "@sybil-center/sdk/types";
 import { CredentialVerifier } from "./credential-verifivator.js";
 
@@ -32,10 +32,11 @@ export class ApiKeyService {
     const secretBytes = u8a.fromString(config.secret, "utf-8");
     const forIV = u8a.fromString(`for iv: ${config.secret}`, "utf-8");
     this.password = hash(secretBytes);
-    this.iv = Buffer.from(u8a.toString(hash(forIV),"hex").substring(0, 32), "hex");
+    this.iv = Buffer.from(u8a.toString(hash(forIV), "hex").substring(0, 32), "hex");
   }
 
   async generate(credential: EthAccountVC): Promise<APIKeys> {
+    this.#validate(credential)
     const { isVerified } = await this.verifier.verify(credential);
     if (!isVerified) throw new ClientError("Credential is not verified");
     const { chainId, address } = credential.credentialSubject.ethereum;
@@ -49,6 +50,22 @@ export class ApiKeyService {
     };
   }
 
+  #validate(credential: EthAccountVC) {
+    const ethAccountVCType: CredentialType = "EthereumAccount";
+    if (credential.type[1] !== ethAccountVCType) {
+      throw new ClientError(`Credential must have '${ethAccountVCType}' type`);
+    }
+    const threeMinMS = 60 * 3 * 1000;
+    const expirationDate = credential.expirationDate?.getTime();
+    const issuanceDate = credential.issuanceDate.getTime()
+    if (!expirationDate) {
+      throw new ClientError(`Credential must has 'expirationDate'`);
+    }
+    if (expirationDate - issuanceDate > threeMinMS) {
+      throw new ClientError(`Credential expirationDate must be bigger issuanceDate under 3 min`);
+    }
+  }
+
   async verify(key: string): Promise<KeyVerifyResult> {
     try {
       const originKey = this.#verifyAES(key);
@@ -58,7 +75,7 @@ export class ApiKeyService {
         isSecret: Boolean(isSecret)
       };
     } catch (e) {
-      throw new ClientError("API key or secret key is not valid");
+      throw new ClientError("API key or secret key is not valid", 403);
     }
   }
 

@@ -14,12 +14,15 @@ import { delay } from "../../../src/util/delay.util.js";
 const test = suite("Integration: issue Ethereum account credential");
 
 let app: App;
+let apiKey: string;
 
 test.before(async () => {
   const config = new URL("../../test.env", import.meta.url);
   configDotEnv({ path: config, override: true });
   app = new App();
   await app.init();
+  const keys = await api.apiKeys(app);
+  apiKey = keys.apiKey
 });
 
 test.after(async () => {
@@ -42,6 +45,9 @@ const preIssue = async (
   const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("EthereumAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       publicId: args.publicId,
       custom: args.custom,
@@ -120,6 +126,9 @@ test("should issue ethereum account vc", async () => {
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("EthereumAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -135,10 +144,13 @@ test("should issue ethereum account vc", async () => {
 test("should not issue credential because not valid signature", async () => {
   const { address: publicId } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
-  const signType: SignType = "ethereum"
+  const signType: SignType = "ethereum";
   const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("EthereumAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       publicId: publicId
     }
@@ -154,6 +166,9 @@ test("should not issue credential because not valid signature", async () => {
   const errResp = await fastify.inject({
     method: "POST",
     url: issueEP("EthereumAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: issueChallenge,
@@ -183,6 +198,9 @@ test("should issue ethereum account credential with custom property", async () =
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("EthereumAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       signature: signature,
       sessionId: sessionId,
@@ -214,12 +232,15 @@ test("issue eth account credential with expiration date", async () => {
   const expirationDate = new Date();
   const { sessionId, issueChallenge } = await preIssue({
     publicId: ethereumAddress,
-    expirationDate:expirationDate
+    expirationDate: expirationDate
   });
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("EthereumAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signType: didPkhPrefix,

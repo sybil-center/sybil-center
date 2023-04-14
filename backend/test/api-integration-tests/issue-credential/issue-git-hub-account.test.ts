@@ -18,6 +18,7 @@ import { delay } from "../../../src/util/delay.util.js";
 const test = suite("Integration: issue GitHub account credential");
 
 let app: App;
+let apiKey: string;
 
 const redirectUrl = "https://example.com/";
 const code = "code";
@@ -30,6 +31,8 @@ test.before(async () => {
   configDotEnv({ path: configUrl, override: true });
   app = new App();
   await app.init();
+  const keys = await api.apiKeys(app);
+  apiKey = keys.apiKey;
 
   const issuer = app.context.resolve("gitHubAccountIssuer");
   const gitHubService = issuer.gitHubService;
@@ -62,6 +65,9 @@ const preIssue = async (
   const challengeResp = await fastify.inject({
     method: "POST",
     path: challengeEP("GitHubAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       publicId: args.publicId,
       redirectUrl: redirectUrl,
@@ -86,6 +92,9 @@ const preIssue = async (
   const canIssueBeforeResp = await fastify.inject({
     method: "GET",
     url: canIssueEP("GitHubAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     query: {
       sessionId: sessionId
     }
@@ -117,6 +126,9 @@ const preIssue = async (
   const canIssueAfterResp = await fastify.inject({
     method: "GET",
     url: canIssueEP("GitHubAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     query: {
       sessionId: sessionId
     }
@@ -182,6 +194,9 @@ test("should issue GitHub ownership credential with eth did-pkh", async () => {
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("GitHubAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -209,6 +224,9 @@ test("should issue GitHub ownership credential with solana did-pkh", async () =>
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("GitHubAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -236,6 +254,9 @@ test("should issue GitHub ownership credential with bitcoin did-pkh", async () =
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("GitHubAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -256,6 +277,9 @@ test("should redirect to default page after authorization", async () => {
   const challengeResp = await fastify.inject({
     method: "POST",
     path: challengeEP("GitHubAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       publicId: publicId
     }
@@ -298,6 +322,9 @@ test("should issue credential with custom property", async () => {
   const vcResp = await fastify.inject({
     method: "POST",
     url: issueEP("GitHubAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -324,6 +351,9 @@ test("should not find GitHub code", async () => {
   const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("GitHubAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       publicId: ethAddress,
       redirectUrl: redirectUrl
@@ -341,6 +371,9 @@ test("should not find GitHub code", async () => {
   const errResp = await fastify.inject({
     method: "POST",
     url: issueEP("GitHubAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signature: signature,
@@ -374,6 +407,9 @@ test("issue github account credential with expiration date", async () => {
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("GitHubAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
     payload: {
       sessionId: sessionId,
       signType: signType,

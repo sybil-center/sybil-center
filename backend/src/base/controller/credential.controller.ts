@@ -1,5 +1,5 @@
 import type { IssuerContainer } from "../service/issuer-container.js";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { OAuthQueryCallBack } from "../service/credentials.js";
 import { genVCRotes, verifyCredentialRoute } from "./routes/credential.route.js";
 import { vcOAuthCallback } from "./routes/callback.route.js";
@@ -11,11 +11,8 @@ import { ClientError } from "../../backbone/errors.js";
 import { ChallengeReq } from "../types/challenge.js";
 import { Credential } from "../types/credential.js";
 import { CredentialVerifier } from "../service/credential-verifivator.js";
-
-type ConfigFields = {
-  pathToExposeDomain: URL;
-  customSizeLimit: number;
-};
+import { Config } from "../../backbone/config.js";
+import { ApiKeyService } from "../service/api-key.service.js";
 
 function validateCustomSize(custom: object, sizeLimit: number): void {
   const customSize = new Uint8Array(Buffer.from(JSON.stringify(custom))).length;
@@ -28,9 +25,37 @@ function validateCustomSize(custom: object, sizeLimit: number): void {
 export function credentialController(
   fastify: FastifyInstance,
   issuerContainer: IssuerContainer,
-  config: ConfigFields,
-  verifier: CredentialVerifier
+  config: Config,
+  verifier: CredentialVerifier,
+  apiKeyService: ApiKeyService
 ): FastifyInstance {
+
+  const isFrontend = async (req: FastifyRequest): Promise<boolean> => {
+    try {
+      const frontendDomain = config.frontendOrigin.origin;
+      const referer = req.headers.referer;
+      if (!referer) return false;
+      const refererDomain = new URL(referer).origin;
+      return refererDomain === frontendDomain;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const isAPIkey = async (req: FastifyRequest): Promise<boolean> => {
+    const authorization = req.headers.authorization;
+    if (!authorization) return false;
+    const key = authorization.split(" ")[1];
+    if (!key) return false;
+    await apiKeyService.verify(key);
+    return true;
+  };
+
+  const authorize = async (req: FastifyRequest): Promise<void> => {
+    const isAuthorized = await isFrontend(req) || await isAPIkey(req);
+    if (!isAuthorized) throw new ClientError("Forbidden", 403);
+  };
+
   genVCRotes.forEach((routes) => {
     // initialize issuer endpoints
     const issueRoute = routes.issue;
@@ -39,6 +64,7 @@ export function credentialController(
       method: issueRoute.method,
       url: issueRoute.url,
       schema: issueRoute.schema,
+      preHandler: async (req) => await authorize(req),
       handler: (req) => {
         const credentialRequest = req.body;
         return issuerContainer.issue(routes.credentialType, credentialRequest);
@@ -54,7 +80,8 @@ export function credentialController(
         url: challengeRoute.url,
         schema: challengeRoute.schema,
         preHandler: async (req) => {
-          const { custom } = req.body;
+          await authorize(req);
+          const custom = req.body.custom;
           if (custom) validateCustomSize(custom, config.customSizeLimit);
           req.body = ThrowDecoder
             .decode(ChallengeReq, req.body, new ClientError("Bad request"));
@@ -73,6 +100,7 @@ export function credentialController(
         method: canIssueRoute.method,
         url: canIssueRoute.url,
         schema: canIssueRoute.schema,
+        preHandler: async (req) => await authorize(req),
         handler: async (req) => {
           const canIssueEntry = req.query;
           return issuerContainer.canIssue(routes.credentialType, canIssueEntry);

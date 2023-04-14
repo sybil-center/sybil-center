@@ -62,9 +62,15 @@ export class App {
     const verifier = this.context.resolve("credentialVerifier");
     const apiKeyService = this.context.resolve("apiKeyService");
 
-    credentialController(fastify, issuerContainer, config, verifier);
+    credentialController(
+      fastify,
+      issuerContainer,
+      config,
+      verifier,
+      apiKeyService
+    );
     oauthPageController(fastify);
-    apiKeyController(fastify, apiKeyService);
+    apiKeyController(fastify, apiKeyService, config);
   }
 
   async init() {

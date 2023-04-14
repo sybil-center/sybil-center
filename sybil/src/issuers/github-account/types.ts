@@ -8,11 +8,6 @@ export type GitHubAccountChallenge = Challenge & {
   authUrl: string;
 }
 
-export type GitHubAccountReq =  {
-  sessionId: string;
-  issueChallenge: string;
-}
-
 export type GitHubAccountIssueReq = IssueReq
 
 export type GitHubAccountVC = Credential & {

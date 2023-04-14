@@ -43,7 +43,6 @@ export class EthService implements IEthService {
       const balance = await this.provider.getBalance(address);
       return balance.gt(0);
     } catch (err) {
-      console.log(`ethereum account: ${address} not exists`);
       return false;
     }
   }

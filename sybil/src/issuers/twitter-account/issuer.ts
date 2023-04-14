@@ -1,31 +1,43 @@
 import type { Issuer } from "../../base/issuer.type.js";
-import { TwitterAccountProvider, } from "./provider.js";
 import { HttpClient } from "../../base/http-client.js";
-import type { SubjectProof } from "../../types/index.js";
+import type {
+  SubjectProof,
+  TwitterAccountChallenge,
+  TwitterAccountChallengeReq,
+  TwitterAccountIssueReq
+} from "../../types/index.js";
 import { popupFeatures } from "../../util/view.util.js";
 import { repeatUntil } from "../../util/repeat.until.js";
 import { TwitterAccountOptions, TwitterAccountVC } from "./types.js";
+import { CredentialType } from "../../types/index.js";
 
 export class TwitterAccountIssuer
-  implements Issuer<TwitterAccountVC, TwitterAccountOptions> {
+  implements Issuer<
+    TwitterAccountVC,
+    TwitterAccountOptions,
+    TwitterAccountChallengeReq,
+    TwitterAccountChallenge,
+    TwitterAccountIssueReq
+  > {
+
+  readonly kind: CredentialType = "TwitterAccount";
 
   constructor(
-    httpClient: HttpClient,
-    private readonly provider = new TwitterAccountProvider(httpClient)
+    private readonly httpClient: HttpClient,
   ) {}
 
   async issueCredential(
     { publicId, signFn }: SubjectProof,
     opt?: TwitterAccountOptions
   ): Promise<TwitterAccountVC> {
-    const payload = await this.provider.getChallenge({
+    const challenge = await this.getChallenge({
       redirectUrl: opt?.redirectUrl,
       custom: opt?.custom,
       expirationDate: opt?.expirationDate,
       publicId: publicId
     });
     const popup = window.open(
-      payload.authUrl,
+      challenge.authUrl,
       "_blank",
       opt?.windowFeatures ? opt?.windowFeatures : popupFeatures()
     );
@@ -33,12 +45,37 @@ export class TwitterAccountIssuer
     const result = await repeatUntil<boolean>(
       (r) => (r instanceof Error) ? true : r,
       1000,
-      () => this.provider.canIssue(payload.sessionId)
+      () => this.canIssue(challenge.sessionId)
     );
     if (result instanceof Error) throw result;
-    return this.provider.issueVC(signFn, {
-      sessionId: payload.sessionId,
-      issueChallenge: payload.issueChallenge
+
+    const {
+      signature,
+      signType
+    } = await signFn({ message: challenge.issueChallenge });
+    return this.issue({
+      sessionId: challenge.sessionId,
+      signature: signature,
+      signType: signType
     });
   }
+
+  async getChallenge(
+    challengeReq: TwitterAccountChallengeReq
+  ): Promise<TwitterAccountChallenge> {
+    return this.httpClient.challenge(this.kind, challengeReq);
+  }
+
+  canIssue(sessionId: string): Promise<boolean> {
+    return this.httpClient.canIssue(this.kind, sessionId);
+  }
+
+  issue(issueReq: TwitterAccountIssueReq): Promise<TwitterAccountVC> {
+    return this.httpClient.issue<
+      TwitterAccountVC,
+      TwitterAccountIssueReq
+    >(this.kind, issueReq)
+  }
+
+
 }

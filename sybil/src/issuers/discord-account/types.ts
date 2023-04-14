@@ -10,11 +10,6 @@ export type DiscordAccountChallenge = Challenge & {
 
 export type DiscordAccountIssueReq = IssueReq
 
-export type DiscordAccountReq = {
-  sessionId: string;
-  issueChallenge: string;
-}
-
 export type DiscordAccountVC = Credential & {
   credentialSubject: {
     id: string;

@@ -1,31 +1,43 @@
 import type { Issuer } from "../../base/issuer.type.js";
-import { DiscordAccountProvider } from "./povider.js";
 import { HttpClient } from "../../base/http-client.js";
-import type { SubjectProof } from "../../types/index.js";
+import type {
+  DiscordAccountChallenge,
+  DiscordAccountChallengeReq,
+  DiscordAccountIssueReq,
+  SubjectProof
+} from "../../types/index.js";
+import { CredentialType } from "../../types/index.js";
 import { DiscordAccountOptions, DiscordAccountVC } from "./types.js";
 import { popupFeatures } from "../../util/view.util.js";
 import { repeatUntil } from "../../util/repeat.until.js";
 
 export class DiscordAccountIssuer
-  implements Issuer<DiscordAccountVC, DiscordAccountOptions> {
+  implements Issuer<
+    DiscordAccountVC,
+    DiscordAccountOptions,
+    DiscordAccountChallengeReq,
+    DiscordAccountChallenge,
+    DiscordAccountIssueReq
+  > {
+
+  readonly kind: CredentialType = "DiscordAccount";
 
   constructor(
-    httpClient: HttpClient,
-    private readonly provider = new DiscordAccountProvider(httpClient)
+    readonly httpClient: HttpClient,
   ) {}
 
   async issueCredential(
     { publicId, signFn }: SubjectProof,
     opt?: DiscordAccountOptions
   ): Promise<DiscordAccountVC> {
-    const payload = await this.provider.getChallenge({
+    const challenge = await this.getChallenge({
       redirectUrl: opt?.redirectUrl,
       custom: opt?.custom,
       expirationDate: opt?.expirationDate,
       publicId: publicId,
     });
     const popup = window.open(
-      payload.authUrl,
+      challenge.authUrl,
       "_blank",
       opt?.windowFeature ? opt?.windowFeature : popupFeatures()
     );
@@ -33,12 +45,34 @@ export class DiscordAccountIssuer
     const result = await repeatUntil<boolean>(
       (r) => (r instanceof Error) ? true : r,
       1000,
-      () => this.provider.canIssue(payload.sessionId)
+      () => this.canIssue(challenge.sessionId)
     );
     if (result instanceof Error) throw result;
-    return this.provider.issueVC(signFn, {
-      sessionId: payload.sessionId,
-      issueChallenge: payload.issueChallenge
+    const {
+      signature,
+      signType
+    } = await signFn({ message: challenge.issueChallenge });
+    return this.issue({
+      sessionId: challenge.sessionId,
+      signature: signature,
+      signType: signType
     });
+  }
+
+  getChallenge(
+    challengeReq: DiscordAccountChallengeReq
+  ): Promise<DiscordAccountChallenge> {
+    return this.httpClient.challenge(this.kind, challengeReq);
+  }
+
+  canIssue(sessionId: string): Promise<boolean> {
+    return this.httpClient.canIssue(this.kind, sessionId);
+  }
+
+  issue(issueReq: DiscordAccountIssueReq): Promise<DiscordAccountVC> {
+    return this.httpClient.issue<
+      DiscordAccountVC,
+      DiscordAccountIssueReq
+    >(this.kind, issueReq);
   }
 }
