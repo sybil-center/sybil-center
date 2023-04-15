@@ -1,4 +1,4 @@
-import { IWalletProvider } from "./wallet-provider.type.js";
+import { SubjectProofProvider } from "./subject-proof-provider.type.js";
 import type { SignResult, SubjectProof } from "../types/index.js";
 import * as uint8arrays from "uint8arrays";
 import { SignType } from "../types/index.js";
@@ -13,9 +13,10 @@ export interface IEIP1193Provider {
   request<T = unknown>(args: RequestArguments): Promise<T>;
 }
 
-export class EthWalletProvider implements IWalletProvider {
+export class EthProofProvider implements SubjectProofProvider {
   constructor(private readonly provider: IEIP1193Provider) {
     this.sign = this.sign.bind(this);
+    this.getAddress = this.getAddress.bind(this);
   }
   async proof(): Promise<SubjectProof> {
     return {

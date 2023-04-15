@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import styles from "@/styles/twitter-pos.module.css";
-import { TwitterAccountVC, EthWalletProvider, type IEIP1193Provider, Sybil } from "@sybil-center/sdk";
+import { TwitterAccountVC, EthProofProvider, type IEIP1193Provider, Sybil } from "@sybil-center/sdk";
 
 export const sybil = new Sybil(
   { apiKey: "get API keys from Dev Portal" });
@@ -17,7 +17,7 @@ export function TwitterPos() {
   const wallet = () => {
     const injected = "ethereum" in window && (window.ethereum as IEIP1193Provider);
     if (!injected) throw new Error(`Only injected provider is supported`);
-    return new EthWalletProvider(injected);
+    return new EthProofProvider(injected);
   };
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
