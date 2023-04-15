@@ -1,6 +1,6 @@
 import type { SignFn, SubjectProof } from "../types/index.js";
 
-export interface IWalletProvider {
+export interface SubjectProofProvider {
   sign: SignFn;
   getAddress(): Promise<string>
   proof(): Promise<SubjectProof>
