@@ -5,7 +5,7 @@ import sinon from "sinon";
 import { challengeEP, issueEP } from "@sybil-center/sdk/util";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
 import { ethereumSupport } from "../../test-support/chain/ethereum.js";
-import { EthAccountChallenge, EthAccountVC, SignType } from "@sybil-center/sdk/types";
+import { EthAccountChallenge, EthAccountProps, EthAccountVC, SignType } from "@sybil-center/sdk/types";
 import { AnyObj } from "../../../src/util/model.util.js";
 import { LightMyRequestResponse } from "fastify";
 import { api } from "../../test-support/api/index.js";
@@ -22,7 +22,7 @@ test.before(async () => {
   app = new App();
   await app.init();
   const keys = await api.apiKeys(app);
-  apiKey = keys.apiKey
+  apiKey = keys.apiKey;
 });
 
 test.after(async () => {
@@ -34,6 +34,7 @@ type PreIssueEntry = {
   publicId: string;
   custom?: AnyObj,
   expirationDate?: Date,
+  props?: EthAccountProps[],
 }
 const preIssue = async (
   args: PreIssueEntry
@@ -52,6 +53,7 @@ const preIssue = async (
       publicId: args.publicId,
       custom: args.custom,
       expirationDate: args.expirationDate,
+      props: args.props
     }
   });
   a.is(
@@ -258,5 +260,55 @@ test("issue eth account credential with expiration date", async () => {
   // @ts-ignore
   await api.verifyCredential(credential, app, false);
 });
+
+test("should issue eth credential without props", async () => {
+  const fastify = app.context.resolve("httpServer").fastify;
+  const { signType, address } = ethereumSupport.info.ethereum;
+  const { issueChallenge, sessionId } = await preIssue({ publicId: address, props: [] });
+  const signature = await ethereumSupport.sign(issueChallenge);
+  const issueResp = await fastify.inject({
+    method: "POST",
+    path: issueEP("EthereumAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
+    payload: {
+      sessionId: sessionId,
+      signature: signature,
+      signType: signType
+    }
+  });
+  a.is(issueResp.statusCode, 200, `issue resp fail. error ${issueResp.body}`);
+  const credential = JSON.parse(issueResp.body) as EthAccountVC;
+  const ethereum = credential.credentialSubject.ethereum;
+  a.ok(ethereum, `subject ethereum field is undefined`);
+  a.not.ok(ethereum.chainId, `subject ethereum field has to be empty`);
+  a.not.ok(ethereum.address, `subject ethereum field has to be empty`);
+});
+
+test("should issue eth account credential with only one prop", async () => {
+  const fastify = app.context.resolve("httpServer").fastify;
+  const {signType, address} = ethereumSupport.info.ethereum;
+  const { sessionId, issueChallenge} = await preIssue({publicId: address, props: ["address"]});
+  const signature = await ethereumSupport.sign(issueChallenge);
+  const issueResp = await fastify.inject({
+    method: "POST",
+    path: issueEP("EthereumAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
+    payload: {
+      sessionId: sessionId,
+      signature: signature,
+      signType: signType
+    }
+  });
+  a.is(issueResp.statusCode, 200, `issue reps fail. error: ${issueResp.body}`);
+  const credential = JSON.parse(issueResp.body) as EthAccountVC;
+  const ethereum = credential.credentialSubject.ethereum;
+  a.ok(ethereum, `subject ethereum field is empty`);
+  a.is(ethereum.address, address, `ethereum address is not matched`);
+  a.not.ok(ethereum.chainId, `subject ethereum.chainId must be empty`);
+})
 
 test.run();

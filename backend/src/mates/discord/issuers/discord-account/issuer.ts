@@ -11,7 +11,7 @@ import { TimedCache } from "../../../../base/service/timed-cache.js";
 import { absoluteId } from "../../../../util/id.util.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/types/oauth.js";
-import { AnyObj } from "../../../../util/model.util.js";
+import { AnyObj, extractProps } from "../../../../util/model.util.js";
 import {
   CanIssueReq,
   CanIssueResp,
@@ -20,7 +20,8 @@ import {
   DiscordAccountChallenge,
   DiscordAccountChallengeReq,
   DiscordAccountIssueReq,
-  DiscordAccountVC
+  DiscordAccountVC,
+  discordAccountProps
 } from "@sybil-center/sdk/types";
 
 export type DiscordOAuthSession = {
@@ -35,10 +36,11 @@ export type GetDiscordAccountVC = {
   discordUser: DiscordUser;
   custom?: AnyObj;
   expirationDate?: Date;
+  props?: string[];
 }
 
 export function getDiscordAccountVC(args: GetDiscordAccountVC): DiscordAccountVC {
-  const discordUser = args.discordUser;
+  const discordUser = extractProps(args.discordUser, args.props);
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
@@ -47,9 +49,7 @@ export function getDiscordAccountVC(args: GetDiscordAccountVC): DiscordAccountVC
       credentialSubject: {
         id: args.subjectDID,
         discord: {
-          id: discordUser.id,
-          username: discordUser.username,
-          discriminator: discordUser.discriminator
+          ...discordUser
         },
         custom: args.custom
       },
@@ -103,11 +103,16 @@ export class DiscordAccountIssuer
       ? new URL(req.redirectUrl)
       : undefined;
 
-    const issueChallenge = toIssueChallenge({
+    const issueChallenge = toIssueChallenge<DiscordAccountVC, "discord">({
       type: this.providedCredential,
       custom: custom,
       expirationDate: expirationDate,
-      publicId: req.publicId
+      publicId: req.publicId,
+      subProps: {
+        name: "discord",
+        props: req.props,
+        allProps: discordAccountProps
+      }
     });
     const sessionId = absoluteId();
     this.sessionCache.set(sessionId, {
@@ -153,7 +158,7 @@ export class DiscordAccountIssuer
     if (!code) {
       throw new ClientError("Discord processing your authorization. Wait!");
     }
-    const { custom, expirationDate, publicId } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate, publicId, props } = fromIssueChallenge(issueChallenge);
     const subjectDID = await this.multiSignService
       .signAlg(signType)
       .did(signature, issueChallenge, publicId);
@@ -165,7 +170,8 @@ export class DiscordAccountIssuer
       subjectDID: subjectDID,
       discordUser: discordUser,
       custom: custom,
-      expirationDate: expirationDate
+      expirationDate: expirationDate,
+      props: props
     });
     return this.proofService.sign("JsonWebSignature2020", credential);
   }

@@ -10,7 +10,7 @@ import { ethereumSupport } from "../../test-support/chain/ethereum.js";
 import { LightMyRequestResponse } from "fastify";
 import { solanaSupport } from "../../test-support/chain/solana.js";
 import { bitcoinSupport } from "../../test-support/chain/bitcoin.js";
-import { CanIssueResp, TwitterAccountChallenge, TwitterAccountVC } from "@sybil-center/sdk/types";
+import { CanIssueResp, TwitterAccountChallenge, TwitterAccountVC, TwitterAccountProps } from "@sybil-center/sdk/types";
 import { AnyObj } from "../../../src/util/model.util.js";
 import { api } from "../../test-support/api/index.js";
 import { delay } from "../../../src/util/delay.util.js";
@@ -60,6 +60,7 @@ type PreIssueArgs = {
   publicId: string,
   custom?: AnyObj;
   expirationDate?: Date;
+  props?: TwitterAccountProps[]
 }
 
 const preIssue = async (
@@ -77,7 +78,8 @@ const preIssue = async (
       publicId: args.publicId,
       redirectUrl: redirectUrl,
       custom: args.custom,
-      expirationDate: args.expirationDate
+      expirationDate: args.expirationDate,
+      props: args.props
     }
   });
   a.is(
@@ -442,5 +444,55 @@ test("issue twitter account credential with expiration date", async () => {
   await delay(20);
   await api.verifyCredential(credential, app, false);
 });
+
+test("should issue twitter account credential without props", async () => {
+  const fastify = app.context.resolve("httpServer").fastify;
+  const {address, signType} = ethereumSupport.info.ethereum;
+  const { sessionId, issueChallenge } = await preIssue({ publicId: address, props: [] });
+  const signature = await ethereumSupport.sign(issueChallenge);
+  const issueResp = await fastify.inject({
+    method: "POST",
+    url: issueEP("TwitterAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
+    payload: {
+      sessionId: sessionId,
+      signature: signature,
+      signType: signType
+    }
+  });
+  a.is(issueResp.statusCode, 200, `issue resp fail. error: ${issueResp.body}`);
+  const credential = JSON.parse(issueResp.body) as TwitterAccountVC;
+  const twitter = credential.credentialSubject.twitter;
+  a.ok(twitter, `subject twitter field is undefined`);
+  a.not.ok(twitter.id, `subject twitter field must be empty`);
+  a.not.ok(twitter.username,  `subject twitter field must be empty`);
+});
+
+test("should issue twitter account credential with only one prop", async () => {
+  const fastify = app.context.resolve("httpServer").fastify;
+  const { address, signType } = ethereumSupport.info.ethereum;
+  const { sessionId, issueChallenge } = await preIssue({ publicId: address, props: ["username"] });
+  const signature = await ethereumSupport.sign(issueChallenge);
+  const issueResp = await fastify.inject({
+    method: "POST",
+    url: issueEP("TwitterAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
+    payload: {
+      sessionId: sessionId,
+      signType: signType,
+      signature: signature
+    }
+  });
+  a.is(issueResp.statusCode, 200, `issue resp fail. ${issueResp.body}`);
+  const credential = JSON.parse(issueResp.body) as TwitterAccountVC;
+  const twitter = credential.credentialSubject.twitter;
+  a.ok(twitter, `subject twitter field is undefined`);
+  a.is(twitter.username, twitterUsername, `twitter user name is not matched`);
+  a.not.ok(twitter.id, `twitter.id must be undefiend`);
+})
 
 test.run();

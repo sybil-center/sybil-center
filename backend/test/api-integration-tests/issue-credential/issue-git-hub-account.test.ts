@@ -10,10 +10,11 @@ import { ethereumSupport } from "../../test-support/chain/ethereum.js";
 import { LightMyRequestResponse } from "fastify";
 import { solanaSupport } from "../../test-support/chain/solana.js";
 import { bitcoinSupport } from "../../test-support/chain/bitcoin.js";
-import { CanIssueResp, GitHubAccountChallenge, GitHubAccountVC } from "@sybil-center/sdk/types";
+import { CanIssueResp, GitHubAccountChallenge, GitHubAccountProps, GitHubAccountVC } from "@sybil-center/sdk/types";
 import { AnyObj } from "../../../src/util/model.util.js";
 import { api } from "../../test-support/api/index.js";
 import { delay } from "../../../src/util/delay.util.js";
+import { rest } from "../../../src/util/fetch.util.js";
 
 const test = suite("Integration: issue GitHub account credential");
 
@@ -38,7 +39,7 @@ test.before(async () => {
   const gitHubService = issuer.gitHubService;
 
   stub(gitHubService, "getAccessToken").resolves(accessToken);
-  stub(gitHubService, "getUser").resolves({
+  stub(rest, "fetchJson").resolves({
     html_url: "test",
     login: username,
     id: 1337,
@@ -56,6 +57,7 @@ type PreIssueArgs = {
   publicId: string,
   custom?: AnyObj,
   expirationDate?: Date,
+  props?: GitHubAccountProps[]
 }
 
 const preIssue = async (
@@ -72,7 +74,8 @@ const preIssue = async (
       publicId: args.publicId,
       redirectUrl: redirectUrl,
       custom: args.custom,
-      expirationDate: args.expirationDate
+      expirationDate: args.expirationDate,
+      props: args.props
     }
   });
   a.is(
@@ -188,7 +191,7 @@ test("should issue GitHub ownership credential with eth did-pkh", async () => {
   } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
 
-  const { issueChallenge, sessionId } = await preIssue({publicId: ethAddress});
+  const { issueChallenge, sessionId } = await preIssue({ publicId: ethAddress });
   const signature = await ethereumSupport.sign(issueChallenge);
 
   const issueResp = await fastify.inject({
@@ -218,7 +221,7 @@ test("should issue GitHub ownership credential with solana did-pkh", async () =>
 
   const { fastify } = app.context.resolve("httpServer");
 
-  const { issueChallenge, sessionId } = await preIssue({publicId: solanaAddress});
+  const { issueChallenge, sessionId } = await preIssue({ publicId: solanaAddress });
   const signature = await solanaSupport.sign(issueChallenge);
 
   const issueResp = await fastify.inject({
@@ -236,7 +239,7 @@ test("should issue GitHub ownership credential with solana did-pkh", async () =>
   await assertIssueResp({ subjectDID, issueResp });
   assertSessionDeleted(sessionId);
   const credential = JSON.parse(issueResp.body);
-  await api.verifyCredential(credential, app)
+  await api.verifyCredential(credential, app);
 });
 
 test("should issue GitHub ownership credential with bitcoin did-pkh", async () => {
@@ -248,7 +251,7 @@ test("should issue GitHub ownership credential with bitcoin did-pkh", async () =
 
   const { fastify } = app.context.resolve("httpServer");
 
-  const { issueChallenge, sessionId } = await preIssue({publicId: bitcoinAddress});
+  const { issueChallenge, sessionId } = await preIssue({ publicId: bitcoinAddress });
   const signature = await bitcoinSupport.sing(issueChallenge);
 
   const issueResp = await fastify.inject({
@@ -316,7 +319,7 @@ test("should issue credential with custom property", async () => {
   const { fastify } = app.context.resolve("httpServer");
   const { sessionId, issueChallenge } = await preIssue({
     publicId: address,
-    custom:custom
+    custom: custom
   });
   const signature = await ethereumSupport.sign(issueChallenge);
   const vcResp = await fastify.inject({
@@ -401,7 +404,7 @@ test("issue github account credential with expiration date", async () => {
   const expirationDate = new Date();
   const { sessionId, issueChallenge } = await preIssue({
     publicId: ethAddress,
-    expirationDate:expirationDate
+    expirationDate: expirationDate
   });
   const signature = await ethereumSupport.sign(issueChallenge);
   const issueResp = await fastify.inject({
@@ -424,7 +427,59 @@ test("issue github account credential with expiration date", async () => {
     "credential expiration date is not matched"
   );
   await delay(20);
-  await api.verifyCredential(credential, app, false)
+  await api.verifyCredential(credential, app, false);
 });
+
+test("should issue github account credential without props", async () => {
+  const fastify = app.context.resolve("httpServer").fastify;
+  const { address, signType } = ethereumSupport.info.ethereum;
+  const { sessionId, issueChallenge } = await preIssue({ publicId: address, props: [] });
+  const signature = await ethereumSupport.sign(issueChallenge);
+  const issueResp = await fastify.inject({
+    method: "POST",
+    url: issueEP("GitHubAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
+    payload: {
+      sessionId: sessionId,
+      signature: signature,
+      signType: signType
+    }
+  });
+  a.is(issueResp.statusCode, 200, `issue resp fail. error: ${issueResp.body}`);
+  const credential = JSON.parse(issueResp.body) as GitHubAccountVC;
+  const github = credential.credentialSubject.github;
+  a.ok(github, `subject github field is undefined`);
+  a.not.ok(github.id, `subject github field must be empty`);
+  a.not.ok(github.userPage, `subject github field must be empty`);
+  a.not.ok(github.username, `subject github field must be empty`);
+});
+
+test("should issue github account credential with only one prop", async () => {
+  const fastify = app.context.resolve("httpServer").fastify;
+  const {address, signType} = ethereumSupport.info.ethereum;
+  const { sessionId, issueChallenge } = await preIssue({ publicId: address, props: ["username"] });
+  const signature = await ethereumSupport.sign(issueChallenge);
+  const issueResp = await fastify.inject({
+    method: "POST",
+    url: issueEP("GitHubAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
+    payload: {
+      sessionId: sessionId,
+      signature: signature,
+      signType: signType
+    }
+  });
+  a.is(issueResp.statusCode, 200, `issue resp fail. error: ${issueResp.body}`);
+  const credential = JSON.parse(issueResp.body) as GitHubAccountVC;
+  const github = credential.credentialSubject.github;
+  a.ok(github, `subject github field is undefined`);
+  a.is(github.username, username, `subject github.username is not matched`);
+  a.not.ok(github.userPage, `subject github.userPage field must be empty`);
+  a.not.ok(github.id, `subject github.id field must be empty`);
+})
 
 test.run();

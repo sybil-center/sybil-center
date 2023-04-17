@@ -34,6 +34,7 @@ export class DiscordAccountIssuer
       redirectUrl: opt?.redirectUrl,
       custom: opt?.custom,
       expirationDate: opt?.expirationDate,
+      props: opt?.props,
       publicId: publicId,
     });
     const popup = window.open(

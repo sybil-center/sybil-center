@@ -9,7 +9,7 @@ import { LightMyRequestResponse } from "fastify";
 import { ethereumSupport } from "../../test-support/chain/ethereum.js";
 import { bitcoinSupport } from "../../test-support/chain/bitcoin.js";
 import { solanaSupport } from "../../test-support/chain/solana.js";
-import { CanIssueResp, DiscordAccountChallenge, DiscordAccountVC } from "@sybil-center/sdk/types";
+import { CanIssueResp, DiscordAccountChallenge, DiscordAccountProps, DiscordAccountVC } from "@sybil-center/sdk/types";
 import { AnyObj } from "../../../src/util/model.util.js";
 import { oauthCallbackEP } from "../../../src/util/route.util.js";
 import { api } from "../../test-support/api/index.js";
@@ -55,6 +55,7 @@ type PreIssueEntry = {
   custom?: AnyObj;
   expirationDate?: Date;
   publicId: string;
+  props?: DiscordAccountProps[]
 }
 
 const preIssue = async (
@@ -75,7 +76,8 @@ const preIssue = async (
       redirectUrl: redirectUrl,
       custom: args.custom,
       expirationDate: args.expirationDate,
-      publicId: args.publicId
+      publicId: args.publicId,
+      props: args.props
     }
   });
   a.is(challengeResp.statusCode, 200,
@@ -445,6 +447,65 @@ test("not valid date-time format for expiration date", async () => {
   });
   a.is(errResp.statusCode, 400,
     `invalid expiration date is ok. error: ${errResp.body}`);
+});
+
+test("should issue eth account credential without props", async () => {
+  const fastify = app.context.resolve("httpServer").fastify;
+  const { address, signType } = ethereumSupport.info.ethereum;
+  const {
+    sessionId,
+    issueChallenge
+  } = await preIssue({ publicId: address, props: [] });
+  const signature = await ethereumSupport.sign(issueChallenge);
+  const issueResp = await fastify.inject({
+    method: "POST",
+    url: issueEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
+    payload: {
+      sessionId: sessionId,
+      signature: signature,
+      signType: signType,
+    }
+  });
+  a.is(issueResp.statusCode, 200, `issue resp fail. error: ${issueResp.body}`);
+  const credential = JSON.parse(issueResp.body) as DiscordAccountVC;
+  a.ok(credential.credentialSubject.discord, `subject discord field is empty`);
+  a.not.ok(credential.credentialSubject.discord.id);
+  a.not.ok(credential.credentialSubject.discord.username);
+  a.not.ok(credential.credentialSubject.discord.discriminator);
+});
+
+test("should issue eth account credential with only one prop", async () => {
+  const fastify = app.context.resolve("httpServer").fastify;
+  const { address, signType } = ethereumSupport.info.ethereum;
+  const {
+    sessionId,
+    issueChallenge
+  } = await preIssue({ publicId: address, props: ["username"] });
+  const signature = await ethereumSupport.sign(issueChallenge);
+  const issueResp = await fastify.inject({
+    method: "POST",
+    url: issueEP("DiscordAccount"),
+    headers: {
+      Authorization: `Bearer ${apiKey}`
+    },
+    payload: {
+      sessionId: sessionId,
+      signature: signature,
+      signType: signType
+    }
+  });
+  a.is(issueResp.statusCode, 200, `issue resp fail. error: ${issueResp.body}`);
+  const credential = JSON.parse(issueResp.body) as DiscordAccountVC;
+  a.ok(credential.credentialSubject.discord, `subject discord field is empty`);
+  a.is(
+    credential.credentialSubject.discord.username, discordUser.username,
+    `subject discord user nate is not matched`
+  );
+  a.not.ok(credential.credentialSubject.discord.id, `discord field contains id prop`);
+  a.not.ok(credential.credentialSubject.discord.discriminator, `discord field contains discriminator`);
 });
 
 test.run();

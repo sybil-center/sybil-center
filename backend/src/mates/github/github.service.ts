@@ -1,23 +1,69 @@
 import { ServerError } from "../../backbone/errors.js";
 import * as t from "io-ts";
-import { fetchDecode } from "../../util/fetch.util.js";
+import { rest }  from "../../util/fetch.util.js";
 import { AccessTokenResponse, type IOAuthService, OAuthState, } from "../../base/types/oauth.js";
 import { credentialOAuthCallbackURL } from "../../util/route.util.js";
 import { makeURL } from "../../util/make-url.util.js";
 import { CredentialType } from "@sybil-center/sdk/types";
 
-const GitHubUser = t.exact(
+const OutGitHubUser = t.exact(
   t.type({
     login: t.string,
     id: t.number,
     // Provide to use page
     html_url: t.string,
-    name: t.string,
+    name: t.union([t.string, t.undefined]),
     // It is not url to user page. This url provide to user info JSON object
-    url: t.string,
+    url: t.union([t.string, t.undefined]),
   })
 );
-export type GitHubUser = t.TypeOf<typeof GitHubUser>;
+
+type OutGitHubUser = t.TypeOf<typeof OutGitHubUser>
+
+const InGitHubUser = t.exact(
+  t.type({
+    id: t.number,
+    username: t.string,
+    userPage: t.string
+  })
+);
+
+type InGitHubUser = t.TypeOf<typeof InGitHubUser>
+
+const OutGithubUserAsInGithubUser = new t.Type <InGitHubUser, OutGitHubUser, OutGitHubUser>(
+  "OutGithubUser-as-InGithubUser",
+  (input: any): input is InGitHubUser => {
+    return typeof input.id === "number" &&
+      typeof input.username === "string" &&
+      typeof input.userPage === "string"
+  },
+  (input, context) => {
+    try {
+      const githubUser: InGitHubUser = {
+        id: input.id,
+        username: input.login,
+        userPage: input.html_url
+      }
+      return t.success(githubUser)
+    } catch (e: any) {
+      return t.failure(input, context, String(e))
+    }
+  },
+  (gitHubUser) => {
+    const outGithubUser: OutGitHubUser = {
+      id: gitHubUser.id,
+      login: gitHubUser.username,
+      html_url: gitHubUser.userPage,
+      name: undefined,
+      url: undefined
+    }
+    return outGithubUser
+  }
+)
+
+export const GitHubUser = OutGitHubUser.pipe(OutGithubUserAsInGithubUser);
+
+export type GitHubUser = t.TypeOf<typeof GitHubUser>
 
 type LinkReq = {
   sessionId: string;
@@ -49,7 +95,7 @@ export class GitHubService implements IOAuthService<LinkReq, URL, string> {
    */
   async getUser(accessToken: string): Promise<GitHubUser> {
     try {
-      return await fetchDecode<GitHubUser>(
+      return await rest.fetchDecode<GitHubUser>(
         "https://api.github.com/user",
         GitHubUser,
         { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -75,7 +121,7 @@ export class GitHubService implements IOAuthService<LinkReq, URL, string> {
 
   async getAccessToken(code: string): Promise<string> {
     try {
-      const response = await fetchDecode(
+      const response = await rest.fetchDecode(
         "https://github.com/login/oauth/access_token",
         AccessTokenResponse,
         {

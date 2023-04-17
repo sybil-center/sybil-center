@@ -34,7 +34,8 @@ export class TwitterAccountIssuer
       redirectUrl: opt?.redirectUrl,
       custom: opt?.custom,
       expirationDate: opt?.expirationDate,
-      publicId: publicId
+      publicId: publicId,
+      props: opt?.props
     });
     const popup = window.open(
       challenge.authUrl,
