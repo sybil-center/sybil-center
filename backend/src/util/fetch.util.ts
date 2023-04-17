@@ -8,7 +8,7 @@ export type FetchOpts = {
   signal: AbortSignal;
 };
 
-export async function fetchJson(
+async function fetchJson(
   url: URL | string,
   opts: Partial<FetchOpts> = {}
 ): Promise<unknown> {
@@ -32,11 +32,16 @@ export async function fetchJson(
   return res.json();
 }
 
-export async function fetchDecode<A>(
+async function fetchDecode<A>(
   url: URL | string,
   decoder: Decoder<unknown, A>,
   opts: Partial<FetchOpts> = {}
 ): Promise<A> {
-  const json = await fetchJson(url, opts);
+  const json = await rest.fetchJson(url, opts);
   return ThrowDecoder.decode(decoder, json);
+}
+
+export const rest = {
+  fetchJson: fetchJson,
+  fetchDecode: fetchDecode
 }
