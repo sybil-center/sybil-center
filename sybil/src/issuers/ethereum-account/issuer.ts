@@ -30,6 +30,7 @@ export class EthAccountIssuer
       custom: opt?.custom,
       expirationDate: opt?.expirationDate,
       publicId: publicId,
+      props: opt?.props
     });
     const {
       signature,

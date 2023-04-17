@@ -1,11 +1,5 @@
-import type {
-  ICredentialIssuer,
-  IOAuthCallback,
-} from "../../../../base/service/credentials.js";
-import {
-  DEFAULT_CREDENTIAL_CONTEXT,
-  DEFAULT_CREDENTIAL_TYPE
-} from "../../../../base/service/credentials.js";
+import type { ICredentialIssuer, IOAuthCallback, } from "../../../../base/service/credentials.js";
+import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../../base/service/credentials.js";
 import { type Disposable, tokens } from "typed-inject";
 import { GitHubService, type GitHubUser } from "../../github.service.js";
 import { ProofService } from "../../../../base/service/proof.service.js";
@@ -17,17 +11,18 @@ import { TimedCache } from "../../../../base/service/timed-cache.js";
 import { absoluteId } from "../../../../util/id.util.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/types/oauth.js";
-import { AnyObj } from "../../../../util/model.util.js";
+import { AnyObj, extractProps } from "../../../../util/model.util.js";
 import {
-  CanIssueResp,
-  CredentialType,
   CanIssueReq,
+  CanIssueResp,
   Credential,
+  CredentialType,
   GitHubAccountChallenge,
   GitHubAccountChallengeReq,
-  GitHubAccountVC,
   GitHubAccountIssueReq,
-} from "@sybil-center/sdk/types"
+  githubAccountProps,
+  GitHubAccountVC,
+} from "@sybil-center/sdk/types";
 
 export type GitHubOAuthSession = {
   redirectUrl?: URL;
@@ -41,12 +36,14 @@ type GetGitHubAccountVC = {
   gitHubUser: GitHubUser;
   custom?: AnyObj;
   expirationDate?: Date;
+  props?: string[];
 }
 
 async function getGitHubAccountVC(
   args: GetGitHubAccountVC
 ): Promise<GitHubAccountVC> {
-  const gitHubUser = args.gitHubUser;
+  const gitHubUser = extractProps(args.gitHubUser, args.props);
+
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
@@ -55,9 +52,7 @@ async function getGitHubAccountVC(
       credentialSubject: {
         id: args.subjectDID,
         github: {
-          id: gitHubUser.id,
-          username: gitHubUser.login,
-          userPage: gitHubUser.html_url
+          ...gitHubUser
         },
         custom: args.custom
       },
@@ -108,11 +103,12 @@ export class GitHubAccountIssuer
       ? new URL(req.redirectUrl)
       : undefined;
 
-    const issueChallenge = toIssueChallenge({
+    const issueChallenge = toIssueChallenge<GitHubAccountVC, "github">({
       publicId: req.publicId,
       type: this.providedCredential,
       custom: req.custom,
-      expirationDate: req.expirationDate
+      expirationDate: req.expirationDate,
+      subProps: { name: "github", props: req.props, allProps: githubAccountProps }
     });
     this.sessionCache.set(sessionId, {
       redirectUrl: redirectUrl,
@@ -156,7 +152,7 @@ export class GitHubAccountIssuer
     if (!code) {
       throw new ClientError("GitHub processing your authorization. Wait!");
     }
-    const { custom, expirationDate, publicId } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate, publicId, props } = fromIssueChallenge(issueChallenge);
     const subjectDID = await this.multiSignService
       .signAlg(signType)
       .did(signature, issueChallenge, publicId);
@@ -168,7 +164,8 @@ export class GitHubAccountIssuer
       subjectDID: subjectDID,
       gitHubUser: gitHubUser,
       custom: custom,
-      expirationDate: expirationDate
+      expirationDate: expirationDate,
+      props: props
     });
     return this.proofService.sign("JsonWebSignature2020", vc);
   }

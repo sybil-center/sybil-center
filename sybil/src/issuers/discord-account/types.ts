@@ -2,6 +2,7 @@ import { ChallengeReq, Credential, IssueReq, Options, Challenge } from "../../ba
 
 export type DiscordAccountChallengeReq = ChallengeReq & {
   redirectUrl?: string;
+  props?: DiscordAccountProps[]
 }
 
 export type DiscordAccountChallenge = Challenge & {
@@ -14,15 +15,20 @@ export type DiscordAccountVC = Credential & {
   credentialSubject: {
     id: string;
     discord: {
-      id: string;
-      username: string;
-      discriminator: string;
+      id?: string;
+      username?: string;
+      discriminator?: string;
     };
     custom?: { [key: string]: any }
   };
 }
 
+export type DiscordAccountProps = keyof DiscordAccountVC["credentialSubject"]["discord"]
+
+export const discordAccountProps: DiscordAccountProps[] = ["id", "username", "discriminator"]
+
 export type DiscordAccountOptions = Options & {
   redirectUrl?: string;
   windowFeature?: string;
+  props?: DiscordAccountProps[]
 }

@@ -2,6 +2,7 @@ import { Challenge, ChallengeReq, Credential, IssueReq, Options } from "../../ba
 
 export type TwitterAccountChallengeReq = ChallengeReq & {
   redirectUrl?: string;
+  props?: TwitterAccountProps[]
 }
 
 export type TwitterAccountChallenge = Challenge & {
@@ -14,14 +15,19 @@ export type TwitterAccountVC = Credential & {
   credentialSubject: {
     id: string;
     twitter: {
-      id: string;
-      username: string;
+      id?: string;
+      username?: string;
     }
     custom?: { [key: string]: any }
   };
 }
 
+export type TwitterAccountProps = keyof TwitterAccountVC["credentialSubject"]["twitter"];
+
+export const twitterAccountProps: TwitterAccountProps[] = ["id", "username"]
+
 export type TwitterAccountOptions = Options & {
   redirectUrl?: string;
   windowFeatures?: string;
+  props?: TwitterAccountProps[]
 }

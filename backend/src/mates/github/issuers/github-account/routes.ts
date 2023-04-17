@@ -1,5 +1,6 @@
 import { CredentialRoutes } from "../../../../base/types/route.js";
 import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
+import { githubAccountProps } from "@sybil-center/sdk/types";
 
 const tags = ["GitHub account ownership verifiable credential"];
 export const githubAccountRoutes: CredentialRoutes = {
@@ -66,6 +67,13 @@ export const githubAccountRoutes: CredentialRoutes = {
           expirationDate: {
             type: "string",
             format: "date-time",
+            nullable: true
+          },
+          props: {
+            type: "array",
+            items: {
+              "enum": githubAccountProps
+            },
             nullable: true
           }
         }

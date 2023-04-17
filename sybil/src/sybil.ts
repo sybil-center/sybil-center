@@ -57,6 +57,7 @@ export class Sybil {
     options?: CredentialKinds[TName]["options"]
   ): Promise<CredentialKinds[TName]["kind"]> {
     const issuer = this.issuer(name);
+    // @ts-ignore
     return issuer.issueCredential(subjectProof, options);
   }
 

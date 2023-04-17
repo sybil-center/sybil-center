@@ -1,5 +1,6 @@
 import { CredentialRoutes } from "../../../../base/types/route.js";
 import { challengeEP, issueEP } from "@sybil-center/sdk/util";
+import { ethAccountProps } from "@sybil-center/sdk/types";
 
 const tags = ["Ethereum account ownership verifiable credential"];
 export const ethereumAccountRoutes: CredentialRoutes = {
@@ -39,6 +40,13 @@ export const ethereumAccountRoutes: CredentialRoutes = {
           expirationDate: {
             type: "string",
             format: "date-time",
+            nullable: true
+          },
+          props: {
+            type: "array",
+            items: {
+              "enum": ethAccountProps
+            },
             nullable: true
           }
         }

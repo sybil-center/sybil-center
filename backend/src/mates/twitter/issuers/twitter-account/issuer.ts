@@ -11,7 +11,7 @@ import { fromIssueChallenge, toIssueChallenge } from "../../../../base/service/c
 import { TimedCache } from "../../../../base/service/timed-cache.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/types/oauth.js";
-import { AnyObj } from "../../../../util/model.util.js";
+import { AnyObj, extractProps } from "../../../../util/model.util.js";
 import {
   CanIssueReq,
   CanIssueResp,
@@ -20,7 +20,8 @@ import {
   TwitterAccountChallengeReq,
   TwitterAccountIssueReq,
   TwitterAccountVC,
-  CredentialType
+  CredentialType,
+  twitterAccountProps
 } from "@sybil-center/sdk/types";
 
 type GetTwitterAccountArgs = {
@@ -29,6 +30,7 @@ type GetTwitterAccountArgs = {
   twitterUser: TwitterUser;
   custom?: AnyObj;
   expirationDate?: Date;
+  props?: string[]
 }
 
 type TwitterOAuthSession = {
@@ -42,7 +44,7 @@ type TwitterOAuthSession = {
 async function getTwitterAccountVC(
   args: GetTwitterAccountArgs
 ): Promise<TwitterAccountVC> {
-  const twitterUser = args.twitterUser;
+  const twitterUser = extractProps(args.twitterUser, args.props);
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
@@ -51,8 +53,7 @@ async function getTwitterAccountVC(
       credentialSubject: {
         id: args.subjectDID,
         twitter: {
-          id: twitterUser.id,
-          username: twitterUser.username
+          ...twitterUser
         },
         custom: args.custom
       },
@@ -103,11 +104,12 @@ export class TwitterAccountIssuer
     const userRedirectUrl = req?.redirectUrl
       ? new URL(req?.redirectUrl)
       : undefined;
-    const issueChallenge = toIssueChallenge({
+    const issueChallenge = toIssueChallenge<TwitterAccountVC, "twitter">({
       publicId: req.publicId,
       type: this.providedCredential,
       custom: req.custom,
-      expirationDate: req.expirationDate
+      expirationDate: req.expirationDate,
+      subProps: { name: "twitter", props: req.props, allProps: twitterAccountProps}
     });
     const { authUrl, codeVerifier } = this.twitterService.getOAuthLink({
       sessionId: sessionId,
@@ -149,7 +151,7 @@ export class TwitterAccountIssuer
     if (!code) {
       throw new ClientError("Twitter processing your authorization. Wait!");
     }
-    const { custom, expirationDate, publicId } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate, publicId, props } = fromIssueChallenge(issueChallenge);
     const subjectDID = await this.multiSignService
       .signAlg(signType)
       .did(signature, issueChallenge, publicId);
@@ -164,7 +166,8 @@ export class TwitterAccountIssuer
       subjectDID: subjectDID,
       twitterUser: twitterUser,
       custom: custom,
-      expirationDate: expirationDate
+      expirationDate: expirationDate,
+      props: props
     });
     return this.proofService.sign("JsonWebSignature2020", vc);
   }

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { ClientError } from "../../backbone/errors.js";
 import { AnyObj } from "../../util/model.util.js";
-import { CredentialType } from "@sybil-center/sdk/types";
+import { Credential, CredentialType } from "@sybil-center/sdk/types";
 import * as t from "io-ts";
 import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 
@@ -11,6 +11,7 @@ type RawFromChallenge = {
   nonce: string;
   custom?: object;
   expirationDate?: Date;
+  props?: string[]
 }
 
 const stringAsFromChallenge = new t.Type<
@@ -22,7 +23,7 @@ const stringAsFromChallenge = new t.Type<
   (input: any): input is RawFromChallenge => {
     return typeof input.description === "string"
       && typeof input.publicId === "string"
-      && typeof input.nonce === "string"
+      && typeof input.nonce === "string";
   },
   (input: string, context) => {
     try {
@@ -30,39 +31,53 @@ const stringAsFromChallenge = new t.Type<
       const expirationDate = fromChallenge.expirationDate;
       fromChallenge.expirationDate = expirationDate
         ? new Date(expirationDate)
-        : undefined
-      return t.success(fromChallenge as RawFromChallenge)
+        : undefined;
+      return t.success(fromChallenge as RawFromChallenge);
     } catch (e) {
-      return t.failure(input, context, String(e))
+      return t.failure(input, context, String(e));
     }
   },
   (fromChallenge) => fromChallenge
 );
 
-export const FromChallenge = stringAsFromChallenge
+export const FromChallenge = stringAsFromChallenge;
 
 export type FromChallenge = t.TypeOf<typeof FromChallenge>
 
 
-export type IssueChallengeOpt = {
+export type IssueChallengeOpt<
+  TCredential extends Credential = Credential,
+  TSubjectKey extends keyof TCredential["credentialSubject"] = keyof Credential["credentialSubject"],
+  TProps = keyof TCredential["credentialSubject"][TSubjectKey]
+> = {
+  publicId: string;
   type: CredentialType;
   custom?: AnyObj;
   expirationDate?: Date;
-  publicId: string;
+  subProps: { name: TSubjectKey, props?: TProps[], allProps: TProps[] }
 }
 
-export type ChallengeEntry = {
+export type ChallengeEntry<
+  TCredential extends Credential,
+  TSubjectKey extends keyof TCredential["credentialSubject"],
+  TProps = keyof TCredential["credentialSubject"][TSubjectKey]
+> = {
   description: string;
   publicId: string;
   nonce: string;
   custom?: AnyObj;
   expirationDate?: Date;
+  props?: TProps[];
 }
 
 /**
  * @param opt - options for issue challenge
  */
-export function toIssueChallenge(opt: IssueChallengeOpt): string {
+export function toIssueChallenge<
+  TCredential extends Credential = Credential,
+  TSubjectKey extends keyof TCredential["credentialSubject"] = keyof Credential["credentialSubject"],
+  TProps = keyof TCredential["credentialSubject"][TSubjectKey]
+>(opt: IssueChallengeOpt<TCredential, TSubjectKey, TProps>): string {
   const description = [
     `Sign this message to issue '${opt.type}' credential.`,
     `Credential subject identifier will be associated with '${opt.publicId}'.`
@@ -77,6 +92,20 @@ export function toIssueChallenge(opt: IssueChallengeOpt): string {
     );
   }
 
+  let props: TProps[] | undefined = undefined;
+  if (opt.subProps.props?.length === 0) {
+    description.push(
+      `Credential subject ${String(opt.subProps.name)} field will not contain any properties.`
+    );
+  } else {
+    if (!opt.subProps.props) props = opt.subProps.allProps;
+    else props = opt.subProps.props;
+    description.push(
+      `Credential subject ${String(opt.subProps.name)} field`,
+      `will contain properties represented in 'props' field of this message.`
+    );
+  }
+
   let custom: AnyObj | undefined = undefined;
   if (opt.custom) {
     custom = opt.custom;
@@ -85,12 +114,13 @@ export function toIssueChallenge(opt: IssueChallengeOpt): string {
     );
   }
 
-  const challenge: ChallengeEntry = {
+  const challenge: ChallengeEntry<TCredential, TSubjectKey, TProps> = {
     description: description.join(" "),
     publicId: opt.publicId,
     expirationDate: expirationDate,
     custom: custom,
-    nonce: nonce
+    nonce: nonce,
+    props: props
   };
 
   try {

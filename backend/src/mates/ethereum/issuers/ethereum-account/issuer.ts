@@ -11,7 +11,7 @@ import { fromIssueChallenge, toIssueChallenge } from "../../../../base/service/c
 import { absoluteId } from "../../../../util/id.util.js";
 import { TimedCache } from "../../../../base/service/timed-cache.js";
 import sortKeys from "sort-keys";
-import { AnyObj } from "../../../../util/model.util.js";
+import { AnyObj, extractProps } from "../../../../util/model.util.js";
 import {
   CanIssueResp,
   Credential,
@@ -19,6 +19,7 @@ import {
   EthAccountChallenge,
   EthAccountChallengeReq,
   EthAccountIssueReq,
+  ethAccountProps,
   EthAccountVC
 } from "@sybil-center/sdk/types";
 
@@ -37,9 +38,15 @@ export interface GetEthAccountVC {
   ethAddress: string;
   expirationDate?: Date;
   custom?: AnyObj;
+  props?: string[]
 }
 
 function getEthAccountVC(args: GetEthAccountVC): EthAccountVC {
+  const origin = {
+    chainId: "eip155:1",
+    address: args.ethAddress
+  }
+  const ethereum = extractProps(origin, args.props);
   return sortKeys(
     {
       "@context": [DEFAULT_CREDENTIAL_CONTEXT],
@@ -49,8 +56,7 @@ function getEthAccountVC(args: GetEthAccountVC): EthAccountVC {
       credentialSubject: {
         id: args.subjectDID,
         ethereum: {
-          chainId: "eip155:1",
-          address: args.ethAddress
+          ...ethereum
         },
         custom: args.custom
       },
@@ -89,11 +95,12 @@ export class EthereumAccountIssuer
     const custom = req?.custom;
     const expirationDate = req?.expirationDate;
     const sessionId = absoluteId();
-    const issueChallenge = toIssueChallenge({
+    const issueChallenge = toIssueChallenge<EthAccountVC, "ethereum">({
       type: this.providedCredential,
       custom: custom,
       expirationDate: expirationDate,
-      publicId: req.publicId
+      publicId: req.publicId,
+      subProps: { name: "ethereum", props: req.props, allProps: ethAccountProps }
     });
     this.sessionCache.set(sessionId, { issueChallenge });
     return {
@@ -111,7 +118,7 @@ export class EthereumAccountIssuer
     signature,
   }: EthAccountIssueReq): Promise<Credential> {
     const { issueChallenge } = this.sessionCache.get(sessionId);
-    const { custom, expirationDate, publicId } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate, publicId, props } = fromIssueChallenge(issueChallenge);
     const ethAddress = await this.multiSignService
       .ethereum
       .verifySign(signature, issueChallenge, publicId);
@@ -121,7 +128,8 @@ export class EthereumAccountIssuer
       subjectDID: `${this.multiSignService.ethereum.didPrefix}:${ethAddress}`,
       ethAddress: ethAddress,
       custom: custom,
-      expirationDate: expirationDate
+      expirationDate: expirationDate,
+      props: props
     });
     return this.proofService.sign("JsonWebSignature2020", vc);
   }

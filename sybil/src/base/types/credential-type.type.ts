@@ -4,8 +4,6 @@
  */
 export const credentialTypes = [
   "VerifiableCredential",
-  "Empty",
-  "EthereumAddressExists",
   "EthereumAccount",
   "TwitterAccount",
   "GitHubAccount",

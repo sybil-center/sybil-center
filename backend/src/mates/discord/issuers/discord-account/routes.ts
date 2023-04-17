@@ -1,5 +1,6 @@
 import { CredentialRoutes } from "../../../../base/types/route.js";
 import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
+import { discordAccountProps } from "@sybil-center/sdk/types"
 
 
 const tags = ["Discord account ownership verifiable credential"];
@@ -71,6 +72,13 @@ export const discordAccountRoutes: CredentialRoutes = {
           expirationDate: {
             type: "string",
             format: "date-time",
+            nullable: true
+          },
+          props: {
+            type: "array",
+            items: {
+              "enum": discordAccountProps
+            },
             nullable: true
           }
         },

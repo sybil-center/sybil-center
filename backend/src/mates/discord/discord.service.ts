@@ -3,7 +3,7 @@ import { ServerError } from "../../backbone/errors.js";
 import type { IOAuthService } from "../../base/types/oauth.js";
 import { credentialOAuthCallbackURL } from "../../util/route.util.js";
 import { AccessTokenResponse, OAuthState } from "../../base/types/oauth.js";
-import { fetchDecode } from "../../util/fetch.util.js";
+import { rest } from "../../util/fetch.util.js";
 import { makeURL } from "../../util/make-url.util.js";
 import { CredentialType } from "@sybil-center/sdk/types"
 
@@ -46,7 +46,7 @@ export class DiscordService implements IOAuthService<LinkReq, URL, string> {
    */
   async getUser(accessToken: string): Promise<DiscordUser> {
     try {
-      return await fetchDecode(
+      return await rest.fetchDecode(
         "https://discord.com/api/v10/users/@me",
         DiscordUser,
         {
@@ -81,7 +81,7 @@ export class DiscordService implements IOAuthService<LinkReq, URL, string> {
 
   async getAccessToken(code: string): Promise<string> {
     try {
-      const response = await fetchDecode(
+      const response = await rest.fetchDecode(
         "https://discord.com/api/v10/oauth2/token",
         AccessTokenResponse,
         {

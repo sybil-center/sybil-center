@@ -24,7 +24,6 @@ type UnknownCredentialIssuer = ICredentialIssuer<
 
 // Mapping between types and runtime
 const ISSUERS = {
-  emptyIssuer: undefined,
   ethereumAccountIssuer: undefined,
   discordAccountIssuer: undefined,
   twitterAccountIssuer: undefined,

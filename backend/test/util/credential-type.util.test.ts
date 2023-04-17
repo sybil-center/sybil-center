@@ -6,9 +6,9 @@ import { toCredentialType, urlCredentialType } from "@sybil-center/sdk/util";
 const test = suite("VC Type test");
 
 test("should convert url vc type to VCType enum", async () => {
-  const emptyUrlVCType = "empty";
+  const emptyUrlVCType = "ethereum-account";
   const vcType = toCredentialType(emptyUrlVCType);
-  a.equal("Empty", vcType);
+  a.equal("EthereumAccount", vcType);
 });
 
 test("should throw exception because invalid url vc type from", async () => {
@@ -17,8 +17,8 @@ test("should throw exception because invalid url vc type from", async () => {
 });
 
 test("should convert VCType enum to vc type url form", async () => {
-  const expVCTypeUrlForm = "empty";
-  const actVCTypeUrlForm = urlCredentialType("Empty");
+  const expVCTypeUrlForm = "ethereum-account";
+  const actVCTypeUrlForm = urlCredentialType("EthereumAccount");
   a.is(actVCTypeUrlForm, expVCTypeUrlForm);
 
   const expEthUrlVCType = "ethereum-account";

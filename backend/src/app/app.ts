@@ -1,5 +1,4 @@
 import { ProofService } from "../base/service/proof.service.js";
-import { EmptyIssuer } from "../mates/etc/issuers/empty/index.js";
 import { createInjector, Injector } from "typed-inject";
 import { IssuerContainer } from "../base/service/issuer-container.js";
 import { Logger, type ILogger } from "../backbone/logger.js";
@@ -24,7 +23,6 @@ type DI = {
   didService: DIDService;
   issuerContainer: IssuerContainer;
   multiSignService: MultiSignService;
-  emptyIssuer: EmptyIssuer;
   ethereumAccountIssuer: EthereumAccountIssuer;
   discordAccountIssuer: DiscordAccountIssuer;
   twitterAccountIssuer: TwitterAccountIssuer;
@@ -48,7 +46,6 @@ export class App {
       .provideClass("apiKeyService", ApiKeyService)
 
       // Issuers
-      .provideClass("emptyIssuer", EmptyIssuer)
       .provideClass("ethereumAccountIssuer", EthereumAccountIssuer)
       .provideClass("twitterAccountIssuer", TwitterAccountIssuer)
       .provideClass("gitHubAccountIssuer", GitHubAccountIssuer)
