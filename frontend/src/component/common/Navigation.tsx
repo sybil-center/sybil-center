@@ -33,13 +33,13 @@ export function Navigation() {
                 </div>
               </a>
             </li>
-            <li>
-              <a href={`${process.env.PUBLIC_URL}/`}>
-                <div className={credentialsClass}>
-                  Credentials
-                </div>
-              </a>
-            </li>
+            {/*<li>*/}
+            {/*  <a href={`${process.env.PUBLIC_URL}/`}>*/}
+            {/*    <div className={credentialsClass}>*/}
+            {/*      Credentials*/}
+            {/*    </div>*/}
+            {/*  </a>*/}
+            {/*</li>*/}
           </ul>
         </div>
       </div>
