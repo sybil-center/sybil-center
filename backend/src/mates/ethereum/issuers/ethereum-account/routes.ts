@@ -1,6 +1,7 @@
 import { CredentialRoutes } from "../../../../base/types/route.js";
 import { challengeEP, issueEP } from "@sybil-center/sdk/util";
 import { ethAccountProps } from "@sybil-center/sdk/types";
+import { subjectIdRegExp } from "../../../../util/route.util.js";
 
 const tags = ["Ethereum account ownership verifiable credential"];
 export const ethereumAccountRoutes: CredentialRoutes = {
@@ -16,9 +17,8 @@ export const ethereumAccountRoutes: CredentialRoutes = {
         properties: {
           sessionId: { type: "string" },
           signature: { type: "string" },
-          signType: { type: "string" }
         },
-        required: ["sessionId", "signature", "signType"]
+        required: ["sessionId", "signature"]
       },
     }
   },
@@ -30,9 +30,12 @@ export const ethereumAccountRoutes: CredentialRoutes = {
       tags: tags,
       body: {
         type: "object",
-        required: ["publicId"],
+        required: ["subjectId"],
         properties: {
-          publicId: { type: "string", },
+          subjectId: {
+            type: "string",
+            pattern: subjectIdRegExp(["did:pkh:eip155:1", "eip155:1", "ethereum"])
+          },
           custom: {
             type: "object",
             nullable: true

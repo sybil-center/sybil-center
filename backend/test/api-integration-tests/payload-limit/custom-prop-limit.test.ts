@@ -29,7 +29,7 @@ test.after(async () => {
 test("should throw client error because custom property is too large", async () => {
   const { fastify } = app.context.resolve("httpServer");
   const config = app.context.resolve("config");
-  const publicId = ethereumSupport.info.ethereum.address;
+  const didPkh = ethereumSupport.info.ethereum.didPkh;
   const errResp = await fastify.inject({
     method: "POST",
     url: challengeEP("EthereumAccount"),
@@ -38,7 +38,7 @@ test("should throw client error because custom property is too large", async () 
     },
     payload: {
       custom: { message: "tests are good, no tests are bugs" },
-      publicId: publicId
+      subjectId: didPkh
     },
   });
   a.is(errResp.statusCode, 400, "err resp status code is not 400");

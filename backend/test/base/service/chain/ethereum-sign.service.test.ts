@@ -11,7 +11,7 @@ const message = "test";
 const signature = await ethereumSupport.sign(message);
 
 test("should verify signature", async () => {
-  await ethereumChain.verifySign(signature, message, address);
+  await ethereumChain.verify(signature, message, address);
 });
 
 test("should correct get did-pkh", async () => {

@@ -12,7 +12,7 @@ import { useAccount } from "wagmi";
 export function DiscordAccOwnerIssuer() {
   const cls = useStyles();
   const { isConnected: isWalletConnected } = useAccount();
-  const { address, signMessage } = useSubjectProof();
+  const { subjectId, signMessage } = useSubjectProof();
   const [state, setState] = useState<{
     loading: boolean;
     error?: string;
@@ -23,7 +23,7 @@ export function DiscordAccOwnerIssuer() {
     setState({ loading: true });
     sybil
       .credential("discord-account", {
-        publicId: address,
+        subjectId: subjectId,
         signFn: signMessage
       }, {
         expirationDate: new Date(),

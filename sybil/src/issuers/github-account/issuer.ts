@@ -26,14 +26,14 @@ export class GithubAccountIssuer
   ) {}
 
   async issueCredential(
-    { publicId, signFn }: SubjectProof,
+    { subjectId, signFn }: SubjectProof,
     opt?: GitHubAccountOptions
   ): Promise<GitHubAccountVC> {
     const challenge = await this.getChallenge({
       redirectUrl: opt?.redirectUrl,
       custom: opt?.custom,
       expirationDate: opt?.expirationDate,
-      publicId: publicId,
+      subjectId: subjectId,
       props: opt?.props
     });
     const popup = window.open(
@@ -48,14 +48,10 @@ export class GithubAccountIssuer
       () => this.canIssue(challenge.sessionId)
     );
     if (result instanceof Error) throw result;
-    const {
-      signature,
-      signType
-    } = await signFn({ message: challenge.issueChallenge });
+    const signature = await signFn({ message: challenge.issueChallenge });
     return this.issue({
       sessionId: challenge.sessionId,
       signature: signature,
-      signType: signType
     });
   }
 

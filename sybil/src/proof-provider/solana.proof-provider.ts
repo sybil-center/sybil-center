@@ -1,5 +1,5 @@
 import { SubjectProofProvider } from "./subject-proof-provider.type.js";
-import { SignResult, SubjectProof } from "../base/types/index.js";
+import { SubjectProof } from "../base/types/index.js";
 import * as u8a from "uint8arrays";
 
 type DisplayEncoding = "utf8" | "hex";
@@ -62,7 +62,7 @@ export class SolanaProofProvider implements SubjectProofProvider {
     this.getAddress = this.getAddress.bind(this);
   }
 
-  async sign(args: { message: string }): Promise<SignResult> {
+  async sign(args: { message: string }): Promise<string> {
     const encodedMessage = new TextEncoder().encode(args.message);
     const { signature } = await this.provider.request({
       method: "signMessage",
@@ -71,10 +71,8 @@ export class SolanaProofProvider implements SubjectProofProvider {
         display: "utf8"
       }
     });
-    return {
-      signature: u8a.toString(u8a.fromString(signature, "base58btc"), "base64"),
-      signType: "solana"
-    };
+    return u8a.toString(u8a.fromString(signature, "base58btc"), "base64");
+
   }
 
   async getAddress(): Promise<string> {
@@ -86,9 +84,9 @@ export class SolanaProofProvider implements SubjectProofProvider {
   }
 
   async proof(): Promise<SubjectProof> {
-    const publicId = await this.getAddress();
+    const address = await this.getAddress();
     return {
-      publicId: publicId,
+      subjectId: `did:pkh:solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ:${address}`,
       signFn: this.sign
     };
   }

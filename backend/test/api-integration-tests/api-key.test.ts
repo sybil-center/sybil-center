@@ -24,14 +24,14 @@ test.after(async () => {
 });
 
 test("should generate and verify api key and secret", async () => {
-  const { address: publicId } = ethereumSupport.info.ethereum;
+  const { didPkh, address } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
   const frontendDomain = app.context.resolve("config").frontendOrigin;
   const apiKeyService = app.context.resolve("apiKeyService");
   const expirationDate = new Date();
   expirationDate.setMinutes(expirationDate.getMinutes() + 3);
   const ethAccountVC = await api.issueEthAccountVC(
-    publicId,
+    didPkh,
     ethereumSupport.sign,
     app,
     { expirationDate: expirationDate }
@@ -53,18 +53,18 @@ test("should generate and verify api key and secret", async () => {
   const { apiKey, secretKey } = JSON.parse(apiKeyResp.body) as APIKeys;
   const { key: fromApiKey, isSecret: notSecret } = await apiKeyService.verify(apiKey);
   a.is(notSecret, false, "api key verification fail");
-  a.is(fromApiKey, `eip155:1:${publicId}`);
+  a.is(fromApiKey, `eip155:1:${address}`);
   const { key: fromSecret, isSecret } = await apiKeyService.verify(secretKey);
   a.is(isSecret, true, "secret key verification fail");
-  a.is(fromSecret, `eip155:1:${publicId}:secret`);
+  a.is(fromSecret, `eip155:1:${address}:secret`);
 });
 
 test("should not generate api keys because expiration date undefined", async () => {
-  const { address: publicId } = ethereumSupport.info.ethereum;
+  const { didPkh } = ethereumSupport.info.ethereum;
   const frontendDomain = app.context.resolve("config").frontendOrigin
   const fastify = app.context.resolve("httpServer").fastify;
   const ethAccountVC = await api.issueEthAccountVC(
-    publicId,
+    didPkh,
     ethereumSupport.sign,
     app,
   );
@@ -82,13 +82,13 @@ test("should not generate api keys because expiration date undefined", async () 
 });
 
 test("should not generate api keys because expiration date is too large", async () => {
-  const { address: publicId } = ethereumSupport.info.ethereum;
+  const { didPkh } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
   const frontendDomain = app.context.resolve("config").frontendOrigin
   const expirationDate = new Date();
   expirationDate.setMinutes(expirationDate.getMinutes() + 5);
   const ethAccountVC = await api.issueEthAccountVC(
-    publicId,
+    didPkh,
     ethereumSupport.sign,
     app,
     { expirationDate: expirationDate }
@@ -109,12 +109,12 @@ test("should not generate api keys because expiration date is too large", async 
 });
 
 test("should reject api keys generation because incorrect Referer header", async () => {
-  const { address: publicId } = ethereumSupport.info.ethereum;
+  const { didPkh } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
   const expirationDate = new Date();
   expirationDate.setMinutes(expirationDate.getMinutes() + 5);
   const ethAccountVC = await api.issueEthAccountVC(
-    publicId,
+    didPkh,
     ethereumSupport.sign,
     app,
     { expirationDate: expirationDate }

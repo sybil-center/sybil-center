@@ -24,16 +24,14 @@ export abstract class SignService {
    * @return address if signature verified
    * @throws ClientError if signature is not verified
    */
-  async verifySign(
+  async verify(
     signature: string,
     message: string,
     publicId: string
   ): Promise<string> {
     const sign = new Uint8Array(Buffer.from(signature, "base64"));
     const verified = await this.verifyFun(sign, message, publicId);
-    if (verified) {
-      return publicId;
-    }
+    if (verified) return publicId;
     throw new ClientError(`Can not verify signature`);
   }
 
@@ -50,7 +48,7 @@ export abstract class SignService {
     message: string,
     publicId: string
   ): Promise<string> {
-    const adr = await this.verifySign(signature, message, publicId);
+    const adr = await this.verify(signature, message, publicId);
     return `${this.didPrefix}:${adr}`;
   }
 }

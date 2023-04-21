@@ -38,14 +38,14 @@ export interface GetEthAccountVC {
   ethAddress: string;
   expirationDate?: Date;
   custom?: AnyObj;
-  props?: string[]
+  props?: string[];
 }
 
 function getEthAccountVC(args: GetEthAccountVC): EthAccountVC {
   const origin = {
     chainId: "eip155:1",
     address: args.ethAddress
-  }
+  };
   const ethereum = extractProps(origin, args.props);
   return sortKeys(
     {
@@ -99,7 +99,7 @@ export class EthereumAccountIssuer
       type: this.providedCredential,
       custom: custom,
       expirationDate: expirationDate,
-      publicId: req.publicId,
+      subjectId: req.subjectId,
       subProps: { name: "ethereum", props: req.props, allProps: ethAccountProps }
     });
     this.sessionCache.set(sessionId, { issueChallenge });
@@ -118,10 +118,12 @@ export class EthereumAccountIssuer
     signature,
   }: EthAccountIssueReq): Promise<Credential> {
     const { issueChallenge } = this.sessionCache.get(sessionId);
-    const { custom, expirationDate, publicId, props } = fromIssueChallenge(issueChallenge);
-    const ethAddress = await this.multiSignService
-      .ethereum
-      .verifySign(signature, issueChallenge, publicId);
+    const { custom, expirationDate, subjectId, props } = fromIssueChallenge(issueChallenge);
+    const ethAddress = await this.multiSignService.ethereum.verify(
+      signature,
+      issueChallenge,
+      subjectId.split(":").pop()!
+    );
     this.sessionCache.delete(sessionId);
     const vc = getEthAccountVC({
       issuerDID: this.didService.id,

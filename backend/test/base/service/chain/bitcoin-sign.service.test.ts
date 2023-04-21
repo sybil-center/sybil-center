@@ -12,7 +12,7 @@ const message = "test";
 const signature = await bitcoinSupport.sing(message);
 
 test("should correct verify signature", async () => {
-  await bitcoinChain.verifySign(signature, message, address);
+  await bitcoinChain.verify(signature, message, address);
 });
 
 test("should correct get did-pkh", async () => {

@@ -11,7 +11,7 @@ import { useSubjectProof } from "../../hooks/subject-proof";
 
 export function TwitterAccOwnerIssuer() {
   const { isConnected: isWalletConnected } = useAccount();
-  const { address, signMessage } = useSubjectProof();
+  const { subjectId, signMessage } = useSubjectProof();
 
   const [state, setState] = useState<{
     loading: boolean;
@@ -25,7 +25,7 @@ export function TwitterAccOwnerIssuer() {
     setState({ loading: true });
     sybil
       .credential("twitter-account", {
-        publicId: address,
+        subjectId: subjectId,
         signFn: signMessage
       })
       .then((vc) => {

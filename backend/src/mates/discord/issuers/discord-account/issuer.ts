@@ -20,8 +20,8 @@ import {
   DiscordAccountChallenge,
   DiscordAccountChallengeReq,
   DiscordAccountIssueReq,
-  DiscordAccountVC,
-  discordAccountProps
+  discordAccountProps,
+  DiscordAccountVC
 } from "@sybil-center/sdk/types";
 
 export type DiscordOAuthSession = {
@@ -107,7 +107,7 @@ export class DiscordAccountIssuer
       type: this.providedCredential,
       custom: custom,
       expirationDate: expirationDate,
-      publicId: req.publicId,
+      subjectId: req.subjectId,
       subProps: {
         name: "discord",
         props: req.props,
@@ -150,7 +150,6 @@ export class DiscordAccountIssuer
 
   async issue({
     sessionId,
-    signType,
     signature
   }: DiscordAccountIssueReq): Promise<Credential> {
     const session = this.sessionCache.get(sessionId);
@@ -158,10 +157,12 @@ export class DiscordAccountIssuer
     if (!code) {
       throw new ClientError("Discord processing your authorization. Wait!");
     }
-    const { custom, expirationDate, publicId, props } = fromIssueChallenge(issueChallenge);
-    const subjectDID = await this.multiSignService
-      .signAlg(signType)
-      .did(signature, issueChallenge, publicId);
+    const { custom, expirationDate, subjectId, props } = fromIssueChallenge(issueChallenge);
+    const subjectDID = await this.multiSignService.verify({
+      subjectId: subjectId,
+      message: issueChallenge,
+      signature: signature
+    });
     const accessToken = await this.discordService.getAccessToken(code);
     const discordUser = await this.discordService.getUser(accessToken);
     this.sessionCache.delete(sessionId);

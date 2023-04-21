@@ -4,7 +4,7 @@ import { Challenge, EthAccountVC } from "@sybil-center/sdk/types";
 import * as a from "uvu/assert";
 
 export async function issueEthAccountVC(
-  publicId: string,
+  subjectId: string,
   signFn: (msg: string) => Promise<string>,
   app: App,
   opt?: {expirationDate?: Date}
@@ -18,7 +18,7 @@ export async function issueEthAccountVC(
       "Referer": frontendOrigin
     },
     payload: {
-      publicId: publicId,
+      subjectId: subjectId,
       expirationDate: opt?.expirationDate
     }
   });
@@ -37,7 +37,6 @@ export async function issueEthAccountVC(
     payload: {
       sessionId: sessionId,
       signature: signature,
-      signType: "eip155:1"
     }
   });
   a.is(

@@ -12,7 +12,7 @@ const message = "test";
 const signature = await solanaSupport.sign(message);
 
 test("should correct verify signature and get did pkh", async () => {
-  await solanaChain.verifySign(signature, message, address);
+  await solanaChain.verify(signature, message, address);
 });
 
 test("should correct get did-pkh", async () => {

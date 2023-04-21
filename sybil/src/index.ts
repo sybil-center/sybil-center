@@ -10,8 +10,7 @@ export {
   EthAccountVC,
   GitHubAccountVC,
   SignFn,
-  SignResult,
-  SignType,
+  Prefix,
   CredentialType
 } from "./types/index.js"
 

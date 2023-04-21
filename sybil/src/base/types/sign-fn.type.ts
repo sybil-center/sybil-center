@@ -1,16 +1,2 @@
-import { SignType } from "./sign-type.type.js";
-
-/** Result object of signing by {@link SignFn} */
-export type SignResult = {
-  /** As base64 string */
-  signature: string;
-
-  /**
-   * Blockchain id according to
-   * {@see https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md}
-   * it also can be used with "did:pkh:" prefix
-   */
-  signType: SignType;
-}
-
-export type SignFn = (args: { message: string }) => Promise<SignResult>;
+/** Sign func take message as input, returns base64 encoded signature */
+export type SignFn = (args: { message: string }) => Promise<string>;

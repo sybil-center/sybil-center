@@ -12,7 +12,7 @@ const message = "test";
 const signature = await ethereumSupport.sign(message);
 
 test("should correct verify message", async () => {
-  await polygonChain.verifySign(signature, message, address);
+  await polygonChain.verify(signature, message, address);
 });
 
 test("should correct get did-pkh", async () => {
