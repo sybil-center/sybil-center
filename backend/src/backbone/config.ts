@@ -29,6 +29,9 @@ export class Config {
 
   readonly frontendOrigin: URL;
 
+  /** Credential TTL (issuing date - expiration date) for generate API keys  */
+  readonly apiKeysCredentialTTL: number
+
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -60,6 +63,7 @@ export class Config {
     this.twitterClientSecret = getStrOrThrow("TWITTER_CLIENT_SECRET");
 
     this.frontendOrigin = new URL(getStrOrThrow("FRONTEND_ORIGIN"))
+    this.apiKeysCredentialTTL = getNumOrThrow("API_KEYS_CREDENTIAL_TTL")
   }
 }
 

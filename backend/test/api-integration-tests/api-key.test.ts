@@ -84,9 +84,12 @@ test("should not generate api keys because expiration date undefined", async () 
 test("should not generate api keys because expiration date is too large", async () => {
   const { didPkh } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
-  const frontendDomain = app.context.resolve("config").frontendOrigin
+  const {
+    frontendOrigin: frontendDomain,
+    apiKeysCredentialTTL
+  } = app.context.resolve("config");
   const expirationDate = new Date();
-  expirationDate.setMinutes(expirationDate.getMinutes() + 5);
+  expirationDate.setMinutes(expirationDate.getMinutes() + apiKeysCredentialTTL + 1);
   const ethAccountVC = await api.issueEthAccountVC(
     didPkh,
     ethereumSupport.sign,
@@ -105,7 +108,7 @@ test("should not generate api keys because expiration date is too large", async 
   });
   a.is(resp.statusCode, 400, `${resp.body}`);
   const errMsg = JSON.parse(resp.body).message;
-  a.is(errMsg, "Credential expirationDate must be bigger issuanceDate under 3 min")
+  a.is(errMsg, `Credential TTL must be less then ${apiKeysCredentialTTL} MS`)
 });
 
 test("should reject api keys generation because incorrect Referer header", async () => {

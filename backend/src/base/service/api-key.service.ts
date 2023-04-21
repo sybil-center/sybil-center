@@ -26,17 +26,17 @@ export class ApiKeyService {
     "credentialVerifier"
   );
   constructor(
-    config: { secret: string },
+    private readonly config: { secret: string, apiKeysCredentialTTL: number },
     private readonly verifier: CredentialVerifier
   ) {
-    const secretBytes = u8a.fromString(config.secret, "utf-8");
-    const forIV = u8a.fromString(`for iv: ${config.secret}`, "utf-8");
+    const secretBytes = u8a.fromString(this.config.secret, "utf-8");
+    const forIV = u8a.fromString(`for iv: ${this.config.secret}`, "utf-8");
     this.password = hash(secretBytes);
     this.iv = Buffer.from(u8a.toString(hash(forIV), "hex").substring(0, 32), "hex");
   }
 
   async generate(credential: EthAccountVC): Promise<APIKeys> {
-    this.#validate(credential)
+    this.#validate(credential);
     const { isVerified } = await this.verifier.verify(credential);
     if (!isVerified) throw new ClientError("Credential is not verified");
     const { chainId, address } = credential.credentialSubject.ethereum;
@@ -55,14 +55,14 @@ export class ApiKeyService {
     if (credential.type[1] !== ethAccountVCType) {
       throw new ClientError(`Credential must have '${ethAccountVCType}' type`);
     }
-    const threeMinMS = 60 * 3 * 1000;
+    const ttlRange = this.config.apiKeysCredentialTTL;
     const expirationDate = credential.expirationDate?.getTime();
-    const issuanceDate = credential.issuanceDate.getTime()
+    const issuanceDate = credential.issuanceDate.getTime();
     if (!expirationDate) {
       throw new ClientError(`Credential must has 'expirationDate'`);
     }
-    if (expirationDate - issuanceDate > threeMinMS) {
-      throw new ClientError(`Credential expirationDate must be bigger issuanceDate under 3 min`);
+    if (expirationDate - issuanceDate > ttlRange) {
+      throw new ClientError(`Credential TTL must be less then ${ttlRange} MS`);
     }
   }
 
