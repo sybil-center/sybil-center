@@ -1,5 +1,6 @@
 import * as t from "io-ts";
 import { ChallengeReq as OriginChallengeReq } from "@sybil-center/sdk/types";
+import { subjectid } from "@sybil-center/sdk/util";
 
 export const rawChallengeReqAsChallengeReq = new t.Type<
   OriginChallengeReq,
@@ -15,6 +16,7 @@ export const rawChallengeReqAsChallengeReq = new t.Type<
   },
   (rawChallengeReq: any, context) => {
     try {
+      rawChallengeReq.subjectId = subjectid.normalize(rawChallengeReq.subjectId)
       const expirationDate = rawChallengeReq.expirationDate;
       rawChallengeReq.expirationDate = expirationDate
         ? new Date(expirationDate)

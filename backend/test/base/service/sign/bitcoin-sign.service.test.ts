@@ -12,11 +12,11 @@ const message = "test";
 const signature = await bitcoinSupport.sing(message);
 
 test("should correct verify signature", async () => {
-  await bitcoinChain.verify(signature, message, address);
+  await bitcoinChain.verify({ signature, message, address });
 });
 
 test("should correct get did-pkh", async () => {
-  const didPkh = await bitcoinChain.did(signature, message, address);
+  const didPkh = await bitcoinChain.did({ signature, message, address });
   assert.is(didPkh, `${didPkhPrefix}:${address}`, "did-pkh is not matched");
 });
 

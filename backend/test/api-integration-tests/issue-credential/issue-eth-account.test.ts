@@ -104,7 +104,7 @@ const assertIssueResp = async ({
   );
   a.is(
     credential.credentialSubject.ethereum.chainId, "eip155:1",
-    "credential subject ethereum chain id is not matched"
+    "credential subject ethereum sign id is not matched"
   );
 };
 

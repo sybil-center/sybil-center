@@ -32,7 +32,7 @@ export type GitHubOAuthSession = {
 
 type GetGitHubAccountVC = {
   issuer: string;
-  subjectDID: string;
+  subjectId: string;
   gitHubUser: GitHubUser;
   custom?: AnyObj;
   expirationDate?: Date;
@@ -50,7 +50,7 @@ async function getGitHubAccountVC(
       type: [DEFAULT_CREDENTIAL_TYPE, "GitHubAccount"],
       issuer: { id: args.issuer },
       credentialSubject: {
-        id: args.subjectDID,
+        id: args.subjectId,
         github: {
           ...gitHubUser
         },
@@ -152,7 +152,7 @@ export class GitHubAccountIssuer
       throw new ClientError("GitHub processing your authorization. Wait!");
     }
     const { custom, expirationDate, subjectId, props } = fromIssueChallenge(issueChallenge);
-    const subjectDID = await this.multiSignService.verify({
+    await this.multiSignService.verify({
       signature: signature,
       message: issueChallenge,
       subjectId: subjectId
@@ -162,7 +162,7 @@ export class GitHubAccountIssuer
     this.sessionCache.delete(sessionId);
     const vc = await getGitHubAccountVC({
       issuer: this.didService.id,
-      subjectDID: subjectDID,
+      subjectId: subjectId,
       gitHubUser: gitHubUser,
       custom: custom,
       expirationDate: expirationDate,

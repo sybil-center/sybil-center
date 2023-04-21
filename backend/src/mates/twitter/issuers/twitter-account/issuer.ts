@@ -26,7 +26,7 @@ import {
 
 type GetTwitterAccountArgs = {
   issuer: string;
-  subjectDID: string;
+  subjectId: string;
   twitterUser: TwitterUser;
   custom?: AnyObj;
   expirationDate?: Date;
@@ -51,7 +51,7 @@ async function getTwitterAccountVC(
       type: [DEFAULT_CREDENTIAL_TYPE, "TwitterAccount"],
       issuer: { id: args.issuer },
       credentialSubject: {
-        id: args.subjectDID,
+        id: args.subjectId,
         twitter: {
           ...twitterUser
         },
@@ -151,7 +151,7 @@ export class TwitterAccountIssuer
       throw new ClientError("Twitter processing your authorization. Wait!");
     }
     const { custom, expirationDate, subjectId, props } = fromIssueChallenge(issueChallenge);
-    const subjectDID = await this.multiSignService.verify({
+    await this.multiSignService.verify({
       subjectId: subjectId,
       signature: signature,
       message: issueChallenge
@@ -164,7 +164,7 @@ export class TwitterAccountIssuer
     this.sessionCache.delete(sessionId);
     const vc = await getTwitterAccountVC({
       issuer: this.didService.id,
-      subjectDID: subjectDID,
+      subjectId: subjectId,
       twitterUser: twitterUser,
       custom: custom,
       expirationDate: expirationDate,

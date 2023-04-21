@@ -34,7 +34,7 @@ export interface EthProofResult {
 
 export interface GetEthAccountVC {
   issuerDID: string;
-  subjectDID: string;
+  subjectId: string;
   ethAddress: string;
   expirationDate?: Date;
   custom?: AnyObj;
@@ -54,7 +54,7 @@ function getEthAccountVC(args: GetEthAccountVC): EthAccountVC {
       issuer: { id: args.issuerDID },
       issuanceDate: new Date(),
       credentialSubject: {
-        id: args.subjectDID,
+        id: args.subjectId,
         ethereum: {
           ...ethereum
         },
@@ -119,15 +119,15 @@ export class EthereumAccountIssuer
   }: EthAccountIssueReq): Promise<Credential> {
     const { issueChallenge } = this.sessionCache.get(sessionId);
     const { custom, expirationDate, subjectId, props } = fromIssueChallenge(issueChallenge);
-    const ethAddress = await this.multiSignService.ethereum.verify(
-      signature,
-      issueChallenge,
-      subjectId.split(":").pop()!
-    );
+    const ethAddress = await this.multiSignService.ethereum.verify({
+        signature: signature,
+        message: issueChallenge,
+        address: subjectId.split(":").pop()!
+    });
     this.sessionCache.delete(sessionId);
     const vc = getEthAccountVC({
       issuerDID: this.didService.id,
-      subjectDID: `${this.multiSignService.ethereum.didPrefix}:${ethAddress}`,
+      subjectId: subjectId,
       ethAddress: ethAddress,
       custom: custom,
       expirationDate: expirationDate,

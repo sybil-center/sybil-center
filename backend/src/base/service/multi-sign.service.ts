@@ -21,7 +21,7 @@ export interface IMultiSignService {
    *  Take subjectId, message, signature as input,
    *  returns subject did if verified, else throw error
    */
-  verify(args: MultiVerify): Promise<string>
+  verify(args: MultiVerify): Promise<string>;
 }
 
 export class MultiSignService implements IMultiSignService {
@@ -38,24 +38,10 @@ export class MultiSignService implements IMultiSignService {
     this.ethereum = ethereum;
     const polygon = new PolygonSignService();
     this.signServices = new Map<Prefix, SignService>([
-      ["bitcoin", bitcoin],
-      ["bip122:000000000019d6689c085ae165831e93", bitcoin],
       ["did:pkh:bip122:000000000019d6689c085ae165831e93", bitcoin],
-
-      ["celo", celo],
-      ["eip155:42220", celo],
       ["did:pkh:eip155:42220", celo],
-
-      ["ethereum", ethereum],
-      ["eip155:1", ethereum],
       ["did:pkh:eip155:1", ethereum],
-
-      ["polygon", polygon],
-      ["eip155:137", polygon],
       ["did:pkh:eip155:137", polygon],
-
-      ["solana", solana],
-      ["solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ", solana],
       ["did:pkh:solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ", solana]
     ]);
   }
@@ -63,9 +49,9 @@ export class MultiSignService implements IMultiSignService {
   async verify({ subjectId, message, signature }: MultiVerify): Promise<string> {
     const idEntry = subjectId.split(":");
     const address = idEntry.pop();
-    if (!address) throw new ClientError("Address is undefined")
+    if (!address) throw new ClientError("Address is undefined");
     const prefix = idEntry.join(":") as Prefix;
-    return await this.signService(prefix).did(signature, message, address);
+    return await this.signService(prefix).did({ signature, message, address });
   }
 
   /**

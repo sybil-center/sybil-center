@@ -32,7 +32,7 @@ export type DiscordOAuthSession = {
 
 export type GetDiscordAccountVC = {
   issuer: string;
-  subjectDID: string;
+  subjectId: string;
   discordUser: DiscordUser;
   custom?: AnyObj;
   expirationDate?: Date;
@@ -47,7 +47,7 @@ export function getDiscordAccountVC(args: GetDiscordAccountVC): DiscordAccountVC
       type: [DEFAULT_CREDENTIAL_TYPE, "DiscordAccount"],
       issuer: { id: args.issuer },
       credentialSubject: {
-        id: args.subjectDID,
+        id: args.subjectId,
         discord: {
           ...discordUser
         },
@@ -158,7 +158,7 @@ export class DiscordAccountIssuer
       throw new ClientError("Discord processing your authorization. Wait!");
     }
     const { custom, expirationDate, subjectId, props } = fromIssueChallenge(issueChallenge);
-    const subjectDID = await this.multiSignService.verify({
+    await this.multiSignService.verify({
       subjectId: subjectId,
       message: issueChallenge,
       signature: signature
@@ -168,7 +168,7 @@ export class DiscordAccountIssuer
     this.sessionCache.delete(sessionId);
     const credential = getDiscordAccountVC({
       issuer: this.didService.id,
-      subjectDID: subjectDID,
+      subjectId: subjectId,
       discordUser: discordUser,
       custom: custom,
       expirationDate: expirationDate,
