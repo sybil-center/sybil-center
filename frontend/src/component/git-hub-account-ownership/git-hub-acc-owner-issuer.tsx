@@ -12,7 +12,7 @@ import { useSubjectProof } from "../../hooks/subject-proof";
 export function GitHubAccOwnerIssuer() {
   const cls = useStyles();
   const { isConnected: isWalletConnected } = useAccount();
-  const { address, signMessage } = useSubjectProof()
+  const { subjectId, signMessage } = useSubjectProof()
 
   const [vcState, setVcState] = useState<{ loading: boolean; error?: string; data?: GitHubAccountVC }>({
     loading: false,
@@ -22,7 +22,7 @@ export function GitHubAccOwnerIssuer() {
     setVcState({ loading: true });
     sybil
       .credential("github-account", {
-        publicId: address,
+        subjectId: subjectId,
         signFn: signMessage
       })
       .then((vc) => {

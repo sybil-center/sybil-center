@@ -7,7 +7,7 @@ import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 
 type RawFromChallenge = {
   description: string;
-  publicId: string;
+  subjectId: string;
   nonce: string;
   custom?: object;
   expirationDate?: Date;
@@ -50,7 +50,7 @@ export type IssueChallengeOpt<
   TSubjectKey extends keyof TCredential["credentialSubject"] = keyof Credential["credentialSubject"],
   TProps = keyof TCredential["credentialSubject"][TSubjectKey]
 > = {
-  publicId: string;
+  subjectId: string;
   type: CredentialType;
   custom?: AnyObj;
   expirationDate?: Date;
@@ -63,7 +63,7 @@ export type ChallengeEntry<
   TProps = keyof TCredential["credentialSubject"][TSubjectKey]
 > = {
   description: string;
-  publicId: string;
+  subjectId: string;
   nonce: string;
   custom?: AnyObj;
   expirationDate?: Date;
@@ -80,7 +80,7 @@ export function toIssueChallenge<
 >(opt: IssueChallengeOpt<TCredential, TSubjectKey, TProps>): string {
   const description = [
     `Sign this message to issue '${opt.type}' credential.`,
-    `Credential subject identifier will be associated with '${opt.publicId}'.`
+    `Credential subject identifier will be associated with '${opt.subjectId}'.`
   ];
   const nonce = randomUUID();
 
@@ -116,7 +116,7 @@ export function toIssueChallenge<
 
   const challenge: ChallengeEntry<TCredential, TSubjectKey, TProps> = {
     description: description.join(" "),
-    publicId: opt.publicId,
+    subjectId: opt.subjectId,
     expirationDate: expirationDate,
     custom: custom,
     nonce: nonce,

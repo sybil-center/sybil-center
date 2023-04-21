@@ -6,20 +6,19 @@ import { ethereumSupport } from "../chain/ethereum.js";
 export async function apiKeys(
   app: App
 ): Promise<APIKeys> {
-  const { address: publicId } = ethereumSupport.info.ethereum;
+  const { didPkh } = ethereumSupport.info.ethereum;
   const apiKeyService = app.context.resolve("apiKeyService");
   const expirationDate = new Date();
   expirationDate.setMinutes(expirationDate.getMinutes() + 3);
   const issuer = app.context.resolve("ethereumAccountIssuer");
   const {sessionId, issueChallenge} = await issuer.getChallenge({
-    publicId: publicId,
+    subjectId: didPkh,
     expirationDate: expirationDate
   });
   const signature = await ethereumSupport.sign(issueChallenge);
   const credential = await issuer.issue({
     sessionId: sessionId,
     signature: signature,
-    signType: "eip155:1"
   }) as EthAccountVC;
   return await apiKeyService.generate(credential);;
 

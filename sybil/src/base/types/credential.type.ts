@@ -1,7 +1,6 @@
 import { ProofType } from "./proof-type.type.js";
 import { CredentialType } from "./credential-type.type.js";
 import { AnyObj } from "../../util/types.util.js";
-import { SignType } from "./sign-type.type.js";
 import { SignFn } from "./sign-fn.type.js";
 
 /** Base type of VC and its components */
@@ -58,7 +57,6 @@ export type CredentialStatus = {
 export type IssueReq = {
   sessionId: string;
   signature: string;
-  signType: SignType;
 }
 
 /** For check is credential ready for issue */
@@ -87,7 +85,7 @@ export type ChallengeReq = {
   /** Verifiable credential id */
   credentialId?: string;
   /** Chain address refer to credential subject */
-  publicId: string;
+  subjectId: string;
 }
 
 export type Options = {
@@ -97,7 +95,7 @@ export type Options = {
 }
 
 export type SubjectProof = {
-  publicId: string;
+  subjectId: string;
   signFn: SignFn;
 }
 

@@ -1,7 +1,6 @@
 import { SubjectProofProvider } from "./subject-proof-provider.type.js";
-import type { SignResult, SubjectProof } from "../types/index.js";
+import type { SubjectProof } from "../types/index.js";
 import * as uint8arrays from "uint8arrays";
-import { SignType } from "../types/index.js";
 
 export interface RequestArguments {
   readonly method: string;
@@ -19,22 +18,19 @@ export class EthProofProvider implements SubjectProofProvider {
     this.getAddress = this.getAddress.bind(this);
   }
   async proof(): Promise<SubjectProof> {
+    const chainId = await this.getChainId();
+    const address = await this.getAddress();
     return {
-      publicId: await this.getAddress(),
+      subjectId: `did:pkh:eip155:${chainId}:${address}`,
       signFn: this.sign
     }
   }
 
-  async sign(args: { message: string }): Promise<SignResult> {
+  async sign(args: { message: string }): Promise<string> {
     const message = args.message;
     const address = await this.getAddress();
     const hex = uint8arrays.toString(uint8arrays.fromString(message), "hex");
-    const signature = await this.#signMessage(address, hex);
-    const chainId = await this.getChainId();
-    return {
-      signature: signature,
-      signType: `eip155:${chainId}` as SignType
-    };
+    return await this.#signMessage(address, hex)
   }
 
   async getAddress(): Promise<string> {

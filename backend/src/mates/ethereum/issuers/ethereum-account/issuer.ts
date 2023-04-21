@@ -34,18 +34,18 @@ export interface EthProofResult {
 
 export interface GetEthAccountVC {
   issuerDID: string;
-  subjectDID: string;
+  subjectId: string;
   ethAddress: string;
   expirationDate?: Date;
   custom?: AnyObj;
-  props?: string[]
+  props?: string[];
 }
 
 function getEthAccountVC(args: GetEthAccountVC): EthAccountVC {
   const origin = {
     chainId: "eip155:1",
     address: args.ethAddress
-  }
+  };
   const ethereum = extractProps(origin, args.props);
   return sortKeys(
     {
@@ -54,7 +54,7 @@ function getEthAccountVC(args: GetEthAccountVC): EthAccountVC {
       issuer: { id: args.issuerDID },
       issuanceDate: new Date(),
       credentialSubject: {
-        id: args.subjectDID,
+        id: args.subjectId,
         ethereum: {
           ...ethereum
         },
@@ -99,7 +99,7 @@ export class EthereumAccountIssuer
       type: this.providedCredential,
       custom: custom,
       expirationDate: expirationDate,
-      publicId: req.publicId,
+      subjectId: req.subjectId,
       subProps: { name: "ethereum", props: req.props, allProps: ethAccountProps }
     });
     this.sessionCache.set(sessionId, { issueChallenge });
@@ -118,14 +118,16 @@ export class EthereumAccountIssuer
     signature,
   }: EthAccountIssueReq): Promise<Credential> {
     const { issueChallenge } = this.sessionCache.get(sessionId);
-    const { custom, expirationDate, publicId, props } = fromIssueChallenge(issueChallenge);
-    const ethAddress = await this.multiSignService
-      .ethereum
-      .verifySign(signature, issueChallenge, publicId);
+    const { custom, expirationDate, subjectId, props } = fromIssueChallenge(issueChallenge);
+    const ethAddress = await this.multiSignService.ethereum.verify({
+        signature: signature,
+        message: issueChallenge,
+        address: subjectId.split(":").pop()!
+    });
     this.sessionCache.delete(sessionId);
     const vc = getEthAccountVC({
       issuerDID: this.didService.id,
-      subjectDID: `${this.multiSignService.ethereum.didPrefix}:${ethAddress}`,
+      subjectId: subjectId,
       ethAddress: ethAddress,
       custom: custom,
       expirationDate: expirationDate,

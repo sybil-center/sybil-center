@@ -16,17 +16,17 @@ import {
   CanIssueReq,
   CanIssueResp,
   Credential,
+  CredentialType,
   TwitterAccountChallenge,
   TwitterAccountChallengeReq,
   TwitterAccountIssueReq,
-  TwitterAccountVC,
-  CredentialType,
-  twitterAccountProps
+  twitterAccountProps,
+  TwitterAccountVC
 } from "@sybil-center/sdk/types";
 
 type GetTwitterAccountArgs = {
   issuer: string;
-  subjectDID: string;
+  subjectId: string;
   twitterUser: TwitterUser;
   custom?: AnyObj;
   expirationDate?: Date;
@@ -51,7 +51,7 @@ async function getTwitterAccountVC(
       type: [DEFAULT_CREDENTIAL_TYPE, "TwitterAccount"],
       issuer: { id: args.issuer },
       credentialSubject: {
-        id: args.subjectDID,
+        id: args.subjectId,
         twitter: {
           ...twitterUser
         },
@@ -105,11 +105,11 @@ export class TwitterAccountIssuer
       ? new URL(req?.redirectUrl)
       : undefined;
     const issueChallenge = toIssueChallenge<TwitterAccountVC, "twitter">({
-      publicId: req.publicId,
+      subjectId: req.subjectId,
       type: this.providedCredential,
       custom: req.custom,
       expirationDate: req.expirationDate,
-      subProps: { name: "twitter", props: req.props, allProps: twitterAccountProps}
+      subProps: { name: "twitter", props: req.props, allProps: twitterAccountProps }
     });
     const { authUrl, codeVerifier } = this.twitterService.getOAuthLink({
       sessionId: sessionId,
@@ -143,7 +143,6 @@ export class TwitterAccountIssuer
 
   async issue({
     sessionId,
-    signType,
     signature
   }: TwitterAccountIssueReq): Promise<Credential> {
     const session = this.sessionCache.get(sessionId);
@@ -151,10 +150,12 @@ export class TwitterAccountIssuer
     if (!code) {
       throw new ClientError("Twitter processing your authorization. Wait!");
     }
-    const { custom, expirationDate, publicId, props } = fromIssueChallenge(issueChallenge);
-    const subjectDID = await this.multiSignService
-      .signAlg(signType)
-      .did(signature, issueChallenge, publicId);
+    const { custom, expirationDate, subjectId, props } = fromIssueChallenge(issueChallenge);
+    await this.multiSignService.verify({
+      subjectId: subjectId,
+      signature: signature,
+      message: issueChallenge
+    });
     const accessToken = await this.twitterService.getAccessToken({
       code: code,
       codeVerifier: codeVerifier
@@ -163,7 +164,7 @@ export class TwitterAccountIssuer
     this.sessionCache.delete(sessionId);
     const vc = await getTwitterAccountVC({
       issuer: this.didService.id,
-      subjectDID: subjectDID,
+      subjectId: subjectId,
       twitterUser: twitterUser,
       custom: custom,
       expirationDate: expirationDate,

@@ -32,7 +32,7 @@ export type GitHubOAuthSession = {
 
 type GetGitHubAccountVC = {
   issuer: string;
-  subjectDID: string;
+  subjectId: string;
   gitHubUser: GitHubUser;
   custom?: AnyObj;
   expirationDate?: Date;
@@ -50,7 +50,7 @@ async function getGitHubAccountVC(
       type: [DEFAULT_CREDENTIAL_TYPE, "GitHubAccount"],
       issuer: { id: args.issuer },
       credentialSubject: {
-        id: args.subjectDID,
+        id: args.subjectId,
         github: {
           ...gitHubUser
         },
@@ -104,7 +104,7 @@ export class GitHubAccountIssuer
       : undefined;
 
     const issueChallenge = toIssueChallenge<GitHubAccountVC, "github">({
-      publicId: req.publicId,
+      subjectId: req.subjectId,
       type: this.providedCredential,
       custom: req.custom,
       expirationDate: req.expirationDate,
@@ -144,7 +144,6 @@ export class GitHubAccountIssuer
 
   async issue({
     sessionId,
-    signType,
     signature
   }: GitHubAccountIssueReq): Promise<Credential> {
     const session = this.sessionCache.get(sessionId);
@@ -152,16 +151,18 @@ export class GitHubAccountIssuer
     if (!code) {
       throw new ClientError("GitHub processing your authorization. Wait!");
     }
-    const { custom, expirationDate, publicId, props } = fromIssueChallenge(issueChallenge);
-    const subjectDID = await this.multiSignService
-      .signAlg(signType)
-      .did(signature, issueChallenge, publicId);
+    const { custom, expirationDate, subjectId, props } = fromIssueChallenge(issueChallenge);
+    await this.multiSignService.verify({
+      signature: signature,
+      message: issueChallenge,
+      subjectId: subjectId
+    });
     const accessToken = await this.gitHubService.getAccessToken(code);
     const gitHubUser = await this.gitHubService.getUser(accessToken);
     this.sessionCache.delete(sessionId);
     const vc = await getGitHubAccountVC({
       issuer: this.didService.id,
-      subjectDID: subjectDID,
+      subjectId: subjectId,
       gitHubUser: gitHubUser,
       custom: custom,
       expirationDate: expirationDate,

@@ -1,5 +1,5 @@
 import bitcoin from "bitcoinjs-message";
-import { SignType } from "@sybil-center/sdk"
+import { Prefix } from "@sybil-center/sdk"
 
 const didPkhPrefix = "did:pkh:bip122:000000000019d6689c085ae165831e93";
 const privateKey =
@@ -8,7 +8,7 @@ const publicKey =
   "049c98b3c98030a12954b7e2bd6079f2a0f4142139a4d324f85d9144e87f73f170a6f78c36f231336543d4f79e21367028d944e75f150198b7a24729b7912e7649";
 const address = "1NMNYSLhjdAufei5iiVFVPvt1tJt44hVw2";
 
-const signType: SignType = "bip122:000000000019d6689c085ae165831e93"
+const signType: Prefix = "bip122:000000000019d6689c085ae165831e93"
 export const bitcoinSupport = {
   info: {
     didPkhPrefix: didPkhPrefix,

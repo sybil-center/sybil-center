@@ -14,11 +14,11 @@ const message = "test";
 const signature = await ethereumSupport.sign(message);
 
 test("should correct verify message", async () => {
-  await celoChain.verifySign(signature, message, address);
+  await celoChain.verify({ signature, message, address });
 });
 
 test("should correct get did pkh", async () => {
-  const didPkh = await celoChain.did(signature, message, address);
+  const didPkh = await celoChain.did({ signature, message, address });
   assert.is(didPkh, `${didPkhPrefix}:${address}`, "did-pkh is not matched");
 });
 

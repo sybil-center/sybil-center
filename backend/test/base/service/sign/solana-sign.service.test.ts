@@ -12,11 +12,11 @@ const message = "test";
 const signature = await solanaSupport.sign(message);
 
 test("should correct verify signature and get did pkh", async () => {
-  await solanaChain.verifySign(signature, message, address);
+  await solanaChain.verify({ signature, message, address });
 });
 
 test("should correct get did-pkh", async () => {
-  const didPkh = await solanaChain.did(signature, message, address);
+  const didPkh = await solanaChain.did({ signature, message, address });
   assert.is(didPkh, `${didPkhPrefix}:${address}`, "did-pkh is not matched");
 });
 

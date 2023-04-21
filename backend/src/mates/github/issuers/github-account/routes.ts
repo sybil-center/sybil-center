@@ -1,6 +1,7 @@
 import { CredentialRoutes } from "../../../../base/types/route.js";
 import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
-import { githubAccountProps } from "@sybil-center/sdk/types";
+import { githubAccountProps, prefixList } from "@sybil-center/sdk/types";
+import { subjectIdRegExp } from "../../../../util/route.util.js";
 
 const tags = ["GitHub account ownership verifiable credential"];
 export const githubAccountRoutes: CredentialRoutes = {
@@ -15,10 +16,9 @@ export const githubAccountRoutes: CredentialRoutes = {
         type: "object",
         properties: {
           sessionId: { type: "string" },
-          signType: { type: "string" },
           signature: { type: "string" }
         },
-        required: ["sessionId", "signature", "signType"]
+        required: ["sessionId", "signature"]
       }
     }
   },
@@ -52,9 +52,12 @@ export const githubAccountRoutes: CredentialRoutes = {
       tags: tags,
       body: {
         type: "object",
-        required: ["publicId"],
+        required: ["subjectId"],
         properties: {
-          publicId: { type: "string" },
+          subjectId: {
+            type: "string",
+            pattern: subjectIdRegExp(prefixList.concat())
+          },
           redirectUrl: {
             type: "string",
             format: "uri",

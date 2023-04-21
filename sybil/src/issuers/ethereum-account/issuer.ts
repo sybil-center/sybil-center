@@ -23,23 +23,19 @@ export class EthAccountIssuer
   }
 
   async issueCredential(
-    { publicId, signFn }: SubjectProof,
+    { subjectId, signFn }: SubjectProof,
     opt?: EthAccountOptions
   ): Promise<EthAccountVC> {
     const challenge = await this.getChallenge({
       custom: opt?.custom,
       expirationDate: opt?.expirationDate,
-      publicId: publicId,
+      subjectId: subjectId,
       props: opt?.props
     });
-    const {
-      signature,
-      signType
-    } = await signFn({ message: challenge.issueChallenge });
+    const signature = await signFn({ message: challenge.issueChallenge });
     return await this.issue({
       sessionId: challenge.sessionId,
       signature: signature,
-      signType: signType
     });
   }
 

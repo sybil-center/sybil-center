@@ -192,7 +192,7 @@ function useSign() {
     );
     return {
       signature: signature,
-      address: address!,
+      subjectId: address!,
       chain: `did:pkh:eip155:${chain?.id!}` as ChainAlias
     }
   }
@@ -201,6 +201,7 @@ function useSign() {
 ```
 
 #### Example with JS:
+
 ```typescript
 import * as uint8arrays from "uint8arrays";
 
@@ -208,7 +209,7 @@ class EthRequestSigner implements ISigner {
   constructor(private readonly provider: IEIP1193Provider) {
     this.sign = this.sign.bind(this);
   }
-  
+
   // sign function implementaiton
   async sign(args: { message: string }): Promise<SignResult> {
     const message = args.message;
@@ -217,7 +218,7 @@ class EthRequestSigner implements ISigner {
     const signature = await this.#signMessage(address, hex);
     const chainId = await this.getChainId();
     return {
-      address: address,
+      subjectId: address,
       signature: signature,
       chain: `did:pkh:eip155:${chainId}` as ChainAlias
     };

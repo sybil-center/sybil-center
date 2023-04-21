@@ -27,7 +27,7 @@ export class DiscordAccountIssuer
   ) {}
 
   async issueCredential(
-    { publicId, signFn }: SubjectProof,
+    { subjectId, signFn }: SubjectProof,
     opt?: DiscordAccountOptions
   ): Promise<DiscordAccountVC> {
     const challenge = await this.getChallenge({
@@ -35,7 +35,7 @@ export class DiscordAccountIssuer
       custom: opt?.custom,
       expirationDate: opt?.expirationDate,
       props: opt?.props,
-      publicId: publicId,
+      subjectId: subjectId,
     });
     const popup = window.open(
       challenge.authUrl,
@@ -49,14 +49,10 @@ export class DiscordAccountIssuer
       () => this.canIssue(challenge.sessionId)
     );
     if (result instanceof Error) throw result;
-    const {
-      signature,
-      signType
-    } = await signFn({ message: challenge.issueChallenge });
+    const signature = await signFn({ message: challenge.issueChallenge });
     return this.issue({
       sessionId: challenge.sessionId,
       signature: signature,
-      signType: signType
     });
   }
 

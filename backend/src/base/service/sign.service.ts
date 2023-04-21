@@ -7,6 +7,12 @@ export type VerifySignFun = (
   address: string
 ) => Promise<boolean>;
 
+type VerifyArgs = {
+  address: string,
+  message: string,
+  signature: string
+}
+
 /**
  * Responsible for interaction with blockchain
  */
@@ -24,16 +30,14 @@ export abstract class SignService {
    * @return address if signature verified
    * @throws ClientError if signature is not verified
    */
-  async verifySign(
-    signature: string,
-    message: string,
-    publicId: string
-  ): Promise<string> {
+  async verify({
+    address,
+    signature,
+    message,
+    }: VerifyArgs): Promise<string> {
     const sign = new Uint8Array(Buffer.from(signature, "base64"));
-    const verified = await this.verifyFun(sign, message, publicId);
-    if (verified) {
-      return publicId;
-    }
+    const verified = await this.verifyFun(sign, message, address);
+    if (verified) return address;
     throw new ClientError(`Can not verify signature`);
   }
 
@@ -41,16 +45,10 @@ export abstract class SignService {
    * Verify signature and return did:pkh.
    * If verified return did:pkh representation of address,
    * else throw {@link ClientError}
-   * @param signature - base64 string
-   * @param message as utf-8 string
-   * @param publicId - have to be blockchain address or public key as base64
+   * @param verifyArgs object which contains signature, message, address
    */
-  async did(
-    signature: string,
-    message: string,
-    publicId: string
-  ): Promise<string> {
-    const adr = await this.verifySign(signature, message, publicId);
+  async did(verifyArgs: VerifyArgs): Promise<string> {
+    const adr = await this.verify(verifyArgs);
     return `${this.didPrefix}:${adr}`;
   }
 }
