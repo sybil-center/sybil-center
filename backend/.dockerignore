@@ -7,7 +7,4 @@ project
 .idea
 .git
 test
-node_modules/
 types/
-.env
-dist/

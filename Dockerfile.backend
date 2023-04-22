@@ -1,0 +1,5 @@
+FROM sybil-center
+
+RUN rm -r ./frontend
+
+CMD ["node", "./backend/dist/main.js"]

@@ -1,0 +1,5 @@
+FROM sybil-center
+
+RUN rm -r ./backend
+
+CMD npm start --prefix ./frontend
