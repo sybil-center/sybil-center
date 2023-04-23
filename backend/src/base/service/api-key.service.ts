@@ -15,6 +15,7 @@ export type KeyVerifyResult = {
   isSecret: boolean;
 }
 
+/** Service for generating and validating API KEYS*/
 export class ApiKeyService {
 
   private readonly aes256cbc = "aes-256-cbc";
@@ -50,6 +51,7 @@ export class ApiKeyService {
     };
   }
 
+  /** Validate credential properties before API KEYS generating */
   #validate(credential: EthAccountVC) {
     const ethAccountVCType: CredentialType = "EthereumAccount";
     if (credential.type[1] !== ethAccountVCType) {
@@ -66,6 +68,7 @@ export class ApiKeyService {
     }
   }
 
+  /** Verify API KEY, returns object with key and 'is secret' flag */
   async verify(key: string): Promise<KeyVerifyResult> {
     try {
       const originKey = this.#verifyAES(key);

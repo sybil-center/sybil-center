@@ -7,6 +7,7 @@ import { ClientError } from "../../backbone/errors.js";
 import { EthAccountVC } from "@sybil-center/sdk";
 import { Config } from "../../backbone/config.js";
 
+/** Controller for generating API KEYS */
 export function apiKeyController(
   fastify: FastifyInstance,
   apiKeyService: ApiKeyService,
