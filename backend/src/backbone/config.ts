@@ -29,7 +29,7 @@ export class Config {
 
   readonly frontendOrigin: URL;
 
-  /** Credential TTL (issuing date - expiration date) for generate API keys  */
+  /** Credential TTL (expiration date - issuing date) for generate API keys  */
   readonly apiKeysCredentialTTL: number
 
   constructor(envFilepath?: URL) {

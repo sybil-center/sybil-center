@@ -1,0 +1,22 @@
+FROM node:18-alpine AS builder
+
+ARG REACT_APP_VC_PROVIDER_URL_API
+ARG REACT_APP_INFURA_API_KEY
+ARG REACT_APP_WALLET_CONNECT_PROJECT_ID
+ARG REACT_APP_WALLET_APP_NAME=vc-provider
+
+WORKDIR /app
+
+COPY . .
+
+RUN rm -r ./backend
+RUN npm install -g pnpm
+RUN pnpm install
+RUN pnpm run build
+RUN rm -r ./sybil/src
+RUN rm -r ./frontend/src
+
+FROM nginx:alpine-slim
+
+COPY --from=builder /app/frontend/build /usr/share/nginx/html
+COPY /frontend/deployment/default.conf.template /etc/nginx/templates/default.conf.template
