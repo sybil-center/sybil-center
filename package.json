@@ -5,8 +5,7 @@
   "description": "Monorepo for SybilCenter",
   "scripts": {
     "build": "pnpm run -r build",
-    "docker:build": "npm run docker:sybil-center && npm run docker:backend && npm run docker:fronend",
-    "docker:sybil-center": "docker build -t sybil-center -f Dockerfile.sybil-center .",
+    "docker:build": "npm run docker:backend && npm run docker:fronend",
     "docker:backend": "docker build -t backend -f Dockerfile.backend .",
     "docker:frontend": "docker build -t frontend -f Dockerfile.frontend ."
   }

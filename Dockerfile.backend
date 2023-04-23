@@ -1,5 +1,14 @@
-FROM sybil-center
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY . .
 
 RUN rm -r ./frontend
+RUN npm install -g pnpm
+RUN pnpm install
+RUN pnpm run build
+RUN rm -r ./backend/src
+RUN rm -r ./sybil/src
 
 CMD ["node", "./backend/dist/main.js"]

@@ -8,3 +8,5 @@ project
 .git
 test
 types/
+node_modules
+dist
