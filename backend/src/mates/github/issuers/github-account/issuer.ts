@@ -103,12 +103,15 @@ export class GitHubAccountIssuer
       ? new URL(req.redirectUrl)
       : undefined;
 
-    const issueChallenge = toIssueChallenge<GitHubAccountVC, "github">({
+    const issueChallenge = toIssueChallenge({
       subjectId: req.subjectId,
       type: this.providedCredential,
       custom: req.custom,
       expirationDate: req.expirationDate,
-      subProps: { name: "github", props: req.props, allProps: githubAccountProps }
+      githubProps: {
+        value: req.props,
+        default: githubAccountProps
+      }
     });
     this.sessionCache.set(sessionId, {
       redirectUrl: redirectUrl,
@@ -151,7 +154,7 @@ export class GitHubAccountIssuer
     if (!code) {
       throw new ClientError("GitHub processing your authorization. Wait!");
     }
-    const { custom, expirationDate, subjectId, props } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate, subjectId, githubProps } = fromIssueChallenge(issueChallenge);
     await this.multiSignService.verify({
       signature: signature,
       message: issueChallenge,
@@ -166,7 +169,7 @@ export class GitHubAccountIssuer
       gitHubUser: gitHubUser,
       custom: custom,
       expirationDate: expirationDate,
-      props: props
+      props: githubProps
     });
     return this.proofService.sign("JsonWebSignature2020", vc);
   }

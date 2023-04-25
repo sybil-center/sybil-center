@@ -1,135 +1,178 @@
 import { randomUUID } from "node:crypto";
 import { ClientError } from "../../backbone/errors.js";
 import { AnyObj } from "../../util/model.util.js";
-import { Credential, CredentialType } from "@sybil-center/sdk/types";
+import { CredentialType } from "@sybil-center/sdk/types";
 import * as t from "io-ts";
 import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 
-type RawFromChallenge = {
+export type IssueChallengeOpt = {
+  subjectId: string;
+  type: CredentialType;
+  custom?: AnyObj;
+  expirationDate?: Date;
+  ethereumProps?: { value?: string[], default: string[] };
+  githubProps?: { value?: string[], default: string[] };
+  discordProps?: { value?: string[], default: string[] };
+  twitterProps?: { value?: string[], default: string[] };
+}
+
+export type ChallengeEntry = {
   description: string;
   subjectId: string;
   nonce: string;
-  custom?: object;
+  type?: string;
+  custom?: AnyObj;
   expirationDate?: Date;
-  props?: string[]
+
+  ethereumProps?: string[];
+  githubProps?: string[];
+  twitterProps?: string[];
+  discordProps?: string[];
 }
 
-const stringAsFromChallenge = new t.Type<
-  RawFromChallenge,
-  RawFromChallenge,
+/** JSON object containing Message key => JSON key mapping and vice versa */
+const createMsgJsonTable = (): { [key: string]: string } => {
+  const obj: { [key: string]: keyof ChallengeEntry} = {
+    "Description:": "description",
+    "Subject id:": "subjectId",
+    "nonce:": "nonce",
+    "Subject custom property:": "custom",
+    "Credential expiration date:": "expirationDate",
+    "Credential type:": "type",
+    "Subject ethereum properties:": "ethereumProps",
+    "Subject discord properties:": "discordProps",
+    "Subject github properties:" : "githubProps",
+    "Subject twitter properties:" : "twitterProps",
+  };
+  const keys = Object.keys(obj);
+  keys.forEach((key) => {
+    const value = obj[key]! as string;
+    (obj as any)[value] = key;
+  });
+  return obj;
+};
+
+const MsgJsonTable = createMsgJsonTable();
+
+/** For transforming JSON challenge representation to message representation */
+const jsonChallengeAsMessage = new t.Type<
+  string,
+  string,
+  ChallengeEntry
+>(
+  "JsonChallenge-As-Message",
+  (input: any): input is string => typeof input === "string",
+  (input: any, context) => {
+    try {
+      const custom = input.custom;
+      input.custom = custom ? JSON.stringify(custom, null, 1) : undefined;
+      const expirationDate = input.expirationDate;
+      input.expirationDate = expirationDate ? expirationDate.toISOString() : undefined;
+      input.ethereumProps = JSON.stringify(input.ethereumProps, null, 2);
+      input.discordProps = JSON.stringify(input.discordProps, null, 2);
+      input.githubProps = JSON.stringify(input.githubProps, null, 2);
+      input.twitterProps = JSON.stringify(input.twitterProps, null, 2);
+
+      const msg: string[] = [];
+      const keys = Object
+        .keys(input)
+        .filter((key) => input[key] !== undefined);
+      keys.forEach((jsonKey) => {
+        let value = (input as any)[jsonKey]!;
+        const msgKey = MsgJsonTable[jsonKey];
+        if (!msgKey) throw new Error("Incorrect challenge object");
+        msg.push([msgKey, value].join("\n"));
+      });
+      return t.success(msg.join("\n\n"));
+    } catch (e) {
+      return t.failure(input, context, String(e));
+    }
+  },
+  (msg) => msg
+);
+
+/** For transforming message representation to JSON challenge representation */
+const messageAsJsonChallenge = new t.Type<
+  ChallengeEntry,
+  ChallengeEntry,
   string
 >(
-  "String-as-FromChallenge",
-  (input: any): input is RawFromChallenge => {
+  "Message-as-JsonChallenge",
+  (input: any): input is ChallengeEntry => {
     return typeof input.description === "string"
       && typeof input.publicId === "string"
       && typeof input.nonce === "string";
   },
   (input: string, context) => {
     try {
-      const fromChallenge = JSON.parse(input);
-      const expirationDate = fromChallenge.expirationDate;
-      fromChallenge.expirationDate = expirationDate
-        ? new Date(expirationDate)
-        : undefined;
-      return t.success(fromChallenge as RawFromChallenge);
+      const sections = input.split("\n\n");
+      const json: AnyObj = {};
+      sections.forEach((section) => {
+        const split = section.split("\n");
+        const msgKey = split[0];
+        const value = split.slice(1).join("\n");
+        if (!msgKey || !value) throw new Error(`Message is incorrect`);
+        const key = MsgJsonTable[msgKey];
+        if (!key) throw new Error(`Message is incorrect`);
+        json[key] = value;
+      });
+      const expirationDate = json.expirationDate;
+      json.expirationDate = expirationDate ? new Date(expirationDate) : undefined;
+      json.custom = json.custom ? JSON.parse(json.custom) : undefined;
+      json.ethereumProps = json.ethereumProps ? JSON.parse(json.ethereumProps) : undefined
+      json.discordProps = json.discordProps ? JSON.parse(json.discordProps) : undefined;
+      json.githubProps = json.githubProps ? JSON.parse(json.githubProps) : undefined;
+      json.twitterProps = json.twitterProps ? JSON.parse(json.twitterProps) : undefined;
+      return t.success(json as ChallengeEntry);
     } catch (e) {
       return t.failure(input, context, String(e));
     }
   },
-  (fromChallenge) => fromChallenge
+  (challenge) => challenge
 );
-
-export const FromChallenge = stringAsFromChallenge;
-
-export type FromChallenge = t.TypeOf<typeof FromChallenge>
-
-
-export type IssueChallengeOpt<
-  TCredential extends Credential = Credential,
-  TSubjectKey extends keyof TCredential["credentialSubject"] = keyof Credential["credentialSubject"],
-  TProps = keyof TCredential["credentialSubject"][TSubjectKey]
-> = {
-  subjectId: string;
-  type: CredentialType;
-  custom?: AnyObj;
-  expirationDate?: Date;
-  subProps: { name: TSubjectKey, props?: TProps[], allProps: TProps[] }
-}
-
-export type ChallengeEntry<
-  TCredential extends Credential,
-  TSubjectKey extends keyof TCredential["credentialSubject"],
-  TProps = keyof TCredential["credentialSubject"][TSubjectKey]
-> = {
-  description: string;
-  subjectId: string;
-  nonce: string;
-  custom?: AnyObj;
-  expirationDate?: Date;
-  props?: TProps[];
-}
 
 /**
  * @param opt - options for issue challenge
  */
-export function toIssueChallenge<
-  TCredential extends Credential = Credential,
-  TSubjectKey extends keyof TCredential["credentialSubject"] = keyof Credential["credentialSubject"],
-  TProps = keyof TCredential["credentialSubject"][TSubjectKey]
->(opt: IssueChallengeOpt<TCredential, TSubjectKey, TProps>): string {
-  const description = [
-    `Sign this message to issue '${opt.type}' credential.`,
-    `Credential subject identifier will be associated with '${opt.subjectId}'.`
-  ];
+export function toIssueChallenge(opt: IssueChallengeOpt): string {
   const nonce = randomUUID();
+  const description = `Sign the message to issue '${opt.type}' verifiable credential`;
+  const expirationDate = opt.expirationDate ? opt.expirationDate : undefined;
+  const custom = opt.custom ? opt.custom : undefined;
+  const ethereumProps = opt.ethereumProps?.value
+    ? opt.ethereumProps?.value
+    : opt.ethereumProps?.default;
+  const discordProps = opt.discordProps?.value
+    ? opt.discordProps?.value
+    : opt.discordProps?.default;
+  const githubProps = opt.githubProps?.value
+    ? opt.githubProps?.value
+    : opt.githubProps?.default;
+  const twitterProps = opt.twitterProps?.value
+    ? opt.twitterProps.value
+    : opt.twitterProps?.default
 
-  let expirationDate: Date | undefined = undefined;
-  if (opt.expirationDate) {
-    expirationDate = opt.expirationDate;
-    description.push(
-      `Credential expiration date is ${expirationDate.toUTCString()}.`
-    );
-  }
-
-  let props: TProps[] | undefined = undefined;
-  if (opt.subProps.props?.length === 0) {
-    description.push(
-      `Credential subject ${String(opt.subProps.name)} field will not contain any properties.`
-    );
-  } else {
-    if (!opt.subProps.props) props = opt.subProps.allProps;
-    else props = opt.subProps.props;
-    description.push(
-      `Credential subject ${String(opt.subProps.name)} field`,
-      `will contain properties represented in 'props' field of this message.`
-    );
-  }
-
-  let custom: AnyObj | undefined = undefined;
-  if (opt.custom) {
-    custom = opt.custom;
-    description.push(
-      `In 'custom' field you can see additional fields which will be in credential.`
-    );
-  }
-
-  const challenge: ChallengeEntry<TCredential, TSubjectKey, TProps> = {
-    description: description.join(" "),
+  const challenge: ChallengeEntry = {
+    description: description,
+    type: opt.type,
     subjectId: opt.subjectId,
     expirationDate: expirationDate,
+    ethereumProps: ethereumProps,
+    discordProps: discordProps,
+    githubProps: githubProps,
+    twitterProps: twitterProps,
     custom: custom,
     nonce: nonce,
-    props: props
   };
 
-  try {
-    return JSON.stringify(challenge, null, 2);
-  } catch (e) {
-    throw new ClientError(`Incorrect "custom" properties`);
-  }
+  return ThrowDecoder.decode(
+    jsonChallengeAsMessage,
+    challenge,
+    new ClientError("Incorrect properties")
+  );
 }
 
-export function fromIssueChallenge(challenge: string): FromChallenge {
-  return ThrowDecoder.decode(FromChallenge, challenge);
+/** Transform issue challenge message to JSON representation */
+export function fromIssueChallenge(challenge: string): ChallengeEntry {
+  return ThrowDecoder.decode(messageAsJsonChallenge, challenge);
 }
