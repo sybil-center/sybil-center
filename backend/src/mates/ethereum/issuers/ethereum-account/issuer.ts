@@ -95,12 +95,15 @@ export class EthereumAccountIssuer
     const custom = req?.custom;
     const expirationDate = req?.expirationDate;
     const sessionId = absoluteId();
-    const issueChallenge = toIssueChallenge<EthAccountVC, "ethereum">({
+    const issueChallenge = toIssueChallenge({
       type: this.providedCredential,
       custom: custom,
       expirationDate: expirationDate,
       subjectId: req.subjectId,
-      subProps: { name: "ethereum", props: req.props, allProps: ethAccountProps }
+      ethereumProps: {
+        value: req.props,
+        default: ethAccountProps
+      }
     });
     this.sessionCache.set(sessionId, { issueChallenge });
     return {
@@ -118,11 +121,11 @@ export class EthereumAccountIssuer
     signature,
   }: EthAccountIssueReq): Promise<Credential> {
     const { issueChallenge } = this.sessionCache.get(sessionId);
-    const { custom, expirationDate, subjectId, props } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate, subjectId, ethereumProps } = fromIssueChallenge(issueChallenge);
     const ethAddress = await this.multiSignService.ethereum.verify({
-        signature: signature,
-        message: issueChallenge,
-        address: subjectId.split(":").pop()!
+      signature: signature,
+      message: issueChallenge,
+      address: subjectId.split(":").pop()!
     });
     this.sessionCache.delete(sessionId);
     const vc = getEthAccountVC({
@@ -131,7 +134,7 @@ export class EthereumAccountIssuer
       ethAddress: ethAddress,
       custom: custom,
       expirationDate: expirationDate,
-      props: props
+      props: ethereumProps
     });
     return this.proofService.sign("JsonWebSignature2020", vc);
   }

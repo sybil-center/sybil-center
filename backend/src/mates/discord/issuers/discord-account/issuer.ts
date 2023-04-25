@@ -103,15 +103,14 @@ export class DiscordAccountIssuer
       ? new URL(req.redirectUrl)
       : undefined;
 
-    const issueChallenge = toIssueChallenge<DiscordAccountVC, "discord">({
+    const issueChallenge = toIssueChallenge({
       type: this.providedCredential,
       custom: custom,
       expirationDate: expirationDate,
       subjectId: req.subjectId,
-      subProps: {
-        name: "discord",
-        props: req.props,
-        allProps: discordAccountProps
+      discordProps: {
+        value: req.props,
+        default: discordAccountProps
       }
     });
     const sessionId = absoluteId();
@@ -157,7 +156,7 @@ export class DiscordAccountIssuer
     if (!code) {
       throw new ClientError("Discord processing your authorization. Wait!");
     }
-    const { custom, expirationDate, subjectId, props } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate, subjectId, discordProps } = fromIssueChallenge(issueChallenge);
     await this.multiSignService.verify({
       subjectId: subjectId,
       message: issueChallenge,
@@ -172,7 +171,7 @@ export class DiscordAccountIssuer
       discordUser: discordUser,
       custom: custom,
       expirationDate: expirationDate,
-      props: props
+      props: discordProps
     });
     return this.proofService.sign("JsonWebSignature2020", credential);
   }

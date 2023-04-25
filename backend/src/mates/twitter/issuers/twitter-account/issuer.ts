@@ -104,12 +104,15 @@ export class TwitterAccountIssuer
     const userRedirectUrl = req?.redirectUrl
       ? new URL(req?.redirectUrl)
       : undefined;
-    const issueChallenge = toIssueChallenge<TwitterAccountVC, "twitter">({
+    const issueChallenge = toIssueChallenge({
       subjectId: req.subjectId,
       type: this.providedCredential,
       custom: req.custom,
       expirationDate: req.expirationDate,
-      subProps: { name: "twitter", props: req.props, allProps: twitterAccountProps }
+      twitterProps: {
+        value: req.props,
+        default: twitterAccountProps
+      }
     });
     const { authUrl, codeVerifier } = this.twitterService.getOAuthLink({
       sessionId: sessionId,
@@ -150,7 +153,7 @@ export class TwitterAccountIssuer
     if (!code) {
       throw new ClientError("Twitter processing your authorization. Wait!");
     }
-    const { custom, expirationDate, subjectId, props } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate, subjectId, twitterProps } = fromIssueChallenge(issueChallenge);
     await this.multiSignService.verify({
       subjectId: subjectId,
       signature: signature,
@@ -168,7 +171,7 @@ export class TwitterAccountIssuer
       twitterUser: twitterUser,
       custom: custom,
       expirationDate: expirationDate,
-      props: props
+      props: twitterProps
     });
     return this.proofService.sign("JsonWebSignature2020", vc);
   }
