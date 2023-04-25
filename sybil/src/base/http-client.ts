@@ -7,10 +7,14 @@ const DEFAULT_ENDPOINT = new URL("https://api.sybil.center");
 
 export class HttpClient {
 
+  private readonly mainAPIKey: string;
+
   constructor(
-    private readonly apiKeys: Optionals<APIKeys, "secretKey">,
+    readonly apiKeys: Optionals<APIKeys, "secretKey">,
     readonly issuerDomain: URL = DEFAULT_ENDPOINT,
-  ) {}
+  ) {
+    this.mainAPIKey = apiKeys.secretKey ? apiKeys.secretKey : apiKeys.apiKey
+  }
 
   async challenge<
     TResponse, // TODO It should be unknown
@@ -22,7 +26,7 @@ export class HttpClient {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiKeys.apiKey}`
+        Authorization: `Bearer ${this.mainAPIKey}`
       },
       body: JSON.stringify(params)
     });
@@ -49,7 +53,7 @@ export class HttpClient {
     const resp = await fetch(endpoint, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${this.apiKeys.apiKey}`
+        Authorization: `Bearer ${this.mainAPIKey}`
       }
     });
     const body = await resp.json();
@@ -68,7 +72,7 @@ export class HttpClient {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiKeys.apiKey}`
+        Authorization: `Bearer ${this.mainAPIKey}`
       },
       body: JSON.stringify(params)
     });
@@ -92,7 +96,7 @@ export class HttpClient {
       body: JSON.stringify(credential)
     });
     const body = await resp.json();
-    if (resp.status === 200) return body
-    throw new Error(body.message)
+    if (resp.status === 200) return body;
+    throw new Error(body.message);
   }
 }
