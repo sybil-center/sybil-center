@@ -26,7 +26,6 @@ test("should correct receive github user entity", async () => {
     gitHubClientSecret: ""
   });
   const githubUser = await gitHubService.getUser(accessToken);
-  console.log(githubUser);
   a.is(githubUser.username, username, "Github username is not matched");
   a.is(githubUser.id, id, "Github user id is not matched");
   a.is(githubUser.userPage, userPage, "Github user page is not matched");

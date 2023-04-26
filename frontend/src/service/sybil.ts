@@ -3,5 +3,5 @@ import { Sybil } from "@sybil-center/sdk";
 
 export const sybil = new Sybil(
   {
-    apiKey: "4O19Qku9DSjx8aNQMXq1RMVieeEAS4j-ZonRs5KLNMOu4TesKX6zo4bnC26G8JYSuLz7Eda6YrxuNFHaTE4ouA"
+    apiKey: "ak_uC4OLPfHiOm8nNxEhUT-m9tAZBv6VwGL4NCDe3wP0SNJzwBiF-uyHoiNHhLYo-Enfk-DoZ13NeCkck6N7-Eouw"
   }, appConfig.vcIssuerDomain);

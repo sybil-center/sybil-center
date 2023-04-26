@@ -1,5 +1,5 @@
 import { tokens } from "typed-inject";
-import { hash } from "@stablelib/sha256";
+import { hash as sha256 } from "@stablelib/sha256";
 import * as u8a from "uint8arrays";
 import crypto from "node:crypto";
 import { ClientError } from "../../backbone/errors.js";
@@ -19,8 +19,11 @@ export type KeyVerifyResult = {
 export class ApiKeyService {
 
   private readonly aes256cbc = "aes-256-cbc";
-  private readonly password: Uint8Array;
-  private readonly iv: Buffer;
+  private readonly apikeyPassword: Uint8Array;
+  private readonly apikeyIV: Buffer;
+
+  private readonly secretkeyPassword: Uint8Array;
+  private readonly secretkeyIV: Buffer;
 
   static inject = tokens(
     "config",
@@ -32,8 +35,16 @@ export class ApiKeyService {
   ) {
     const secretBytes = u8a.fromString(this.config.secret, "utf-8");
     const forIV = u8a.fromString(`for iv: ${this.config.secret}`, "utf-8");
-    this.password = hash(secretBytes);
-    this.iv = Buffer.from(u8a.toString(hash(forIV), "hex").substring(0, 32), "hex");
+    this.apikeyPassword = sha256(secretBytes);
+    this.secretkeyPassword = sha256(this.apikeyPassword);
+
+    const apikeyHMAC = crypto.createHmac("sha256", this.apikeyPassword);
+    apikeyHMAC.update(forIV);
+    const secretkeyHMAC = crypto.createHmac("sha256", this.secretkeyPassword);
+    secretkeyHMAC.update(forIV);
+
+    this.apikeyIV = Buffer.from(apikeyHMAC.digest("hex").substring(0, 32), "hex");
+    this.secretkeyIV = Buffer.from(secretkeyHMAC.digest("hex").substring(0, 32), "hex");
   }
 
   async generate(credential: EthAccountVC): Promise<APIKeys> {
@@ -41,13 +52,12 @@ export class ApiKeyService {
     const { isVerified } = await this.verifier.verify(credential);
     if (!isVerified) throw new ClientError("Credential is not verified");
     const { chainId, address } = credential.credentialSubject.ethereum;
-    const forApiKey = `${chainId}:${address}`;
-    const forSecret = `${forApiKey}:secret`;
-    const apiKey = this.#signAES(forApiKey);
-    const secretKey = this.#signAES(forSecret);
+    const forKeys = `${chainId}:${address}`;
+    const apikeySign = this.#signAES(forKeys, "apikey");
+    const secretkeySign = this.#signAES(forKeys, "secretkey");
     return {
-      apiKey: apiKey,
-      secretKey: secretKey
+      apiKey: `ak_${apikeySign}`,
+      secretKey: `sk_${secretkeySign}`
     };
   }
 
@@ -71,26 +81,33 @@ export class ApiKeyService {
   /** Verify API KEY, returns object with key and 'is secret' flag */
   async verify(key: string): Promise<KeyVerifyResult> {
     try {
-      const originKey = this.#verifyAES(key);
-      const isSecret = originKey.split(":")[3];
+      const kind = key.startsWith("ak_") ? "apikey" : "secretkey";
+      const signature = key.substring(3);
+      const originKey = this.#verifyAES(signature, kind);
       return {
         key: originKey,
-        isSecret: Boolean(isSecret)
+        isSecret: kind === "secretkey"
       };
     } catch (e) {
       throw new ClientError("API key or secret key is not valid", 403);
     }
   }
 
-  #signAES(msg: string): string {
-    const cipher = crypto.createCipheriv(this.aes256cbc, this.password, this.iv);
+  #signAES(msg: string, kind: "apikey" | "secretkey"): string {
+    const password = kind === "apikey" ? this.apikeyPassword : this.secretkeyPassword;
+    const iv = kind === "apikey" ? this.apikeyIV : this.secretkeyIV;
+    const cipher = crypto.createCipheriv(this.aes256cbc, password, iv);
+
     let signature = cipher.update(msg, "utf-8", "base64url");
     signature += cipher.final("base64url");
+
     return signature;
   }
 
-  #verifyAES(signature: string) {
-    const decipher = crypto.createDecipheriv(this.aes256cbc, this.password, this.iv);
+  #verifyAES(signature: string, kind: "apikey" | "secretkey") {
+    const password = kind === "apikey" ? this.apikeyPassword : this.secretkeyPassword;
+    const iv = kind === "apikey" ? this.apikeyIV : this.secretkeyIV;
+    const decipher = crypto.createDecipheriv(this.aes256cbc, password, iv);
     let origin = decipher.update(signature, "base64url", "utf-8");
     origin += decipher.final("utf-8");
     return origin;
