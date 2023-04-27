@@ -87,7 +87,7 @@ export const githubAccountRoutes: CredentialRoutes = {
           properties: {
             authUrl: { type: "string" },
             sessionId: { type: "string" },
-            issueChallenge: { type: "string" }
+            issueMessage: { type: "string" }
           }
         }
       }

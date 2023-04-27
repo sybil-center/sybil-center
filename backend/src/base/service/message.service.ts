@@ -5,7 +5,7 @@ import { CredentialType } from "@sybil-center/sdk/types";
 import * as t from "io-ts";
 import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 
-export type IssueChallengeOpt = {
+export type IssueMessageOpt = {
   subjectId: string;
   type: CredentialType;
   custom?: AnyObj;
@@ -16,7 +16,7 @@ export type IssueChallengeOpt = {
   twitterProps?: { value?: string[], default: string[] };
 }
 
-export type ChallengeEntry = {
+export type IssueMessageObj = {
   description: string;
   subjectId: string;
   nonce: string;
@@ -32,7 +32,7 @@ export type ChallengeEntry = {
 
 /** JSON object containing Message key => JSON key mapping and vice versa */
 const createMsgJsonTable = (): { [key: string]: string } => {
-  const obj: { [key: string]: keyof ChallengeEntry} = {
+  const obj: { [key: string]: keyof IssueMessageObj} = {
     "Description:": "description",
     "Subject id:": "subjectId",
     "nonce:": "nonce",
@@ -55,12 +55,12 @@ const createMsgJsonTable = (): { [key: string]: string } => {
 const MsgJsonTable = createMsgJsonTable();
 
 /** For transforming JSON challenge representation to message representation */
-const jsonChallengeAsMessage = new t.Type<
+const ObjectAsMessage = new t.Type<
   string,
   string,
-  ChallengeEntry
+  IssueMessageObj
 >(
-  "JsonChallenge-As-Message",
+  "Object-As-Message",
   (input: any): input is string => typeof input === "string",
   (input: any, context) => {
     try {
@@ -92,13 +92,13 @@ const jsonChallengeAsMessage = new t.Type<
 );
 
 /** For transforming message representation to JSON challenge representation */
-const messageAsJsonChallenge = new t.Type<
-  ChallengeEntry,
-  ChallengeEntry,
+const messageAsObject = new t.Type<
+  IssueMessageObj,
+  IssueMessageObj,
   string
 >(
-  "Message-as-JsonChallenge",
-  (input: any): input is ChallengeEntry => {
+  "Message-as-Object",
+  (input: any): input is IssueMessageObj => {
     return typeof input.description === "string"
       && typeof input.publicId === "string"
       && typeof input.nonce === "string";
@@ -123,7 +123,7 @@ const messageAsJsonChallenge = new t.Type<
       json.discordProps = json.discordProps ? JSON.parse(json.discordProps) : undefined;
       json.githubProps = json.githubProps ? JSON.parse(json.githubProps) : undefined;
       json.twitterProps = json.twitterProps ? JSON.parse(json.twitterProps) : undefined;
-      return t.success(json as ChallengeEntry);
+      return t.success(json as IssueMessageObj);
     } catch (e) {
       return t.failure(input, context, String(e));
     }
@@ -134,7 +134,7 @@ const messageAsJsonChallenge = new t.Type<
 /**
  * @param opt - options for issue challenge
  */
-export function toIssueChallenge(opt: IssueChallengeOpt): string {
+export function toIssueMessage(opt: IssueMessageOpt): string {
   const nonce = randomUUID();
   const description = `Sign the message to issue '${opt.type}' verifiable credential`;
   const expirationDate = opt.expirationDate ? opt.expirationDate : undefined;
@@ -152,7 +152,7 @@ export function toIssueChallenge(opt: IssueChallengeOpt): string {
     ? opt.twitterProps.value
     : opt.twitterProps?.default
 
-  const challenge: ChallengeEntry = {
+  const msgObj: IssueMessageObj = {
     description: description,
     type: opt.type,
     subjectId: opt.subjectId,
@@ -166,13 +166,13 @@ export function toIssueChallenge(opt: IssueChallengeOpt): string {
   };
 
   return ThrowDecoder.decode(
-    jsonChallengeAsMessage,
-    challenge,
+    ObjectAsMessage,
+    msgObj,
     new ClientError("Incorrect properties")
   );
 }
 
 /** Transform issue challenge message to JSON representation */
-export function fromIssueChallenge(challenge: string): ChallengeEntry {
-  return ThrowDecoder.decode(messageAsJsonChallenge, challenge);
+export function fromIssueMessage(challenge: string): IssueMessageObj {
+  return ThrowDecoder.decode(messageAsObject, challenge);
 }

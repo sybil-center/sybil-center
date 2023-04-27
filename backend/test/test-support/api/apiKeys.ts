@@ -11,11 +11,11 @@ export async function apiKeys(
   const expirationDate = new Date();
   expirationDate.setMinutes(expirationDate.getMinutes() + 3);
   const issuer = app.context.resolve("ethereumAccountIssuer");
-  const {sessionId, issueChallenge} = await issuer.getChallenge({
+  const {sessionId, issueMessage} = await issuer.getChallenge({
     subjectId: didPkh,
     expirationDate: expirationDate
   });
-  const signature = await ethereumSupport.sign(issueChallenge);
+  const signature = await ethereumSupport.sign(issueMessage);
   const credential = await issuer.issue({
     sessionId: sessionId,
     signature: signature,

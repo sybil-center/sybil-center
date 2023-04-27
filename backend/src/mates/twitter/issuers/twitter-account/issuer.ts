@@ -7,7 +7,7 @@ import { DIDService } from "../../../../base/service/did.service.js";
 import { absoluteId } from "../../../../util/id.util.js";
 import { ClientError } from "../../../../backbone/errors.js";
 import type { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
-import { fromIssueChallenge, toIssueChallenge } from "../../../../base/service/challenge.service.js";
+import { fromIssueMessage, toIssueMessage } from "../../../../base/service/message.service.js";
 import { TimedCache } from "../../../../base/service/timed-cache.js";
 import sortKeys from "sort-keys";
 import { OAuthState } from "../../../../base/types/oauth.js";
@@ -35,7 +35,7 @@ type GetTwitterAccountArgs = {
 
 type TwitterOAuthSession = {
   redirectUrl?: URL;
-  issueChallenge: string;
+  issueMessage: string;
   code?: string;
   codeVerifier: string;
 };
@@ -104,7 +104,7 @@ export class TwitterAccountIssuer
     const userRedirectUrl = req?.redirectUrl
       ? new URL(req?.redirectUrl)
       : undefined;
-    const issueChallenge = toIssueChallenge({
+    const issueMessage = toIssueMessage({
       subjectId: req.subjectId,
       type: this.providedCredential,
       custom: req.custom,
@@ -122,12 +122,12 @@ export class TwitterAccountIssuer
     this.sessionCache.set(sessionId, {
       codeVerifier: codeVerifier,
       redirectUrl: userRedirectUrl,
-      issueChallenge: issueChallenge
+      issueMessage: issueMessage
     });
     return {
       authUrl: authUrl,
       sessionId: sessionId,
-      issueChallenge: issueChallenge
+      issueMessage: issueMessage
     };
   }
 
@@ -149,15 +149,15 @@ export class TwitterAccountIssuer
     signature
   }: TwitterAccountIssueReq): Promise<Credential> {
     const session = this.sessionCache.get(sessionId);
-    const { code, codeVerifier, issueChallenge } = session;
+    const { code, codeVerifier, issueMessage } = session;
     if (!code) {
       throw new ClientError("Twitter processing your authorization. Wait!");
     }
-    const { custom, expirationDate, subjectId, twitterProps } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate, subjectId, twitterProps } = fromIssueMessage(issueMessage);
     await this.multiSignService.verify({
       subjectId: subjectId,
       signature: signature,
-      message: issueChallenge
+      message: issueMessage
     });
     const accessToken = await this.twitterService.getAccessToken({
       code: code,

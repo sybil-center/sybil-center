@@ -21,10 +21,10 @@ test("should verify ethereum account credential", async () => {
   const verifier = app.context.resolve("credentialVerifier");
   const { didPkh } = ethereumSupport.info.ethereum;
   const {
-    issueChallenge,
+    issueMessage,
     sessionId
   } = await issuer.getChallenge({ subjectId: didPkh });
-  const signature = await ethereumSupport.sign(issueChallenge);
+  const signature = await ethereumSupport.sign(issueMessage);
   const credential = await issuer.issue({
     sessionId: sessionId,
     signature: signature,
@@ -42,11 +42,11 @@ test("should not verify expired credential", async () => {
   const { didPkh } = ethereumSupport.info.ethereum;
   const date = new Date();
   date.setDate(date.getDate() - 5);
-  const { issueChallenge, sessionId } = await issuer.getChallenge({
+  const { issueMessage, sessionId } = await issuer.getChallenge({
     subjectId: didPkh,
     expirationDate: date
   });
-  const signature = await ethereumSupport.sign(issueChallenge);
+  const signature = await ethereumSupport.sign(issueMessage);
   const credential = await issuer.issue({
     sessionId: sessionId,
     signature: signature,

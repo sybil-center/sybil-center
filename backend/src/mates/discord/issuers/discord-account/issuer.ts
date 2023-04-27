@@ -6,7 +6,7 @@ import { ProofService } from "../../../../base/service/proof.service.js";
 import { DIDService } from "../../../../base/service/did.service.js";
 import { ClientError } from "../../../../backbone/errors.js";
 import type { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
-import { fromIssueChallenge, toIssueChallenge } from "../../../../base/service/challenge.service.js";
+import { fromIssueMessage, toIssueMessage } from "../../../../base/service/message.service.js";
 import { TimedCache } from "../../../../base/service/timed-cache.js";
 import { absoluteId } from "../../../../util/id.util.js";
 import sortKeys from "sort-keys";
@@ -26,7 +26,7 @@ import {
 
 export type DiscordOAuthSession = {
   redirectUrl?: URL;
-  issueChallenge: string;
+  issueMessage: string;
   code?: string;
 };
 
@@ -103,7 +103,7 @@ export class DiscordAccountIssuer
       ? new URL(req.redirectUrl)
       : undefined;
 
-    const issueChallenge = toIssueChallenge({
+    const issueMessage = toIssueMessage({
       type: this.providedCredential,
       custom: custom,
       expirationDate: expirationDate,
@@ -116,7 +116,7 @@ export class DiscordAccountIssuer
     const sessionId = absoluteId();
     this.sessionCache.set(sessionId, {
       redirectUrl: redirectUrl,
-      issueChallenge: issueChallenge
+      issueMessage: issueMessage
     });
     const authUrl = this.discordService.getOAuthLink({
       sessionId: sessionId,
@@ -126,7 +126,7 @@ export class DiscordAccountIssuer
     return {
       sessionId: sessionId,
       authUrl: authUrl.href,
-      issueChallenge: issueChallenge
+      issueMessage: issueMessage
     };
   }
 
@@ -152,14 +152,14 @@ export class DiscordAccountIssuer
     signature
   }: DiscordAccountIssueReq): Promise<Credential> {
     const session = this.sessionCache.get(sessionId);
-    const { code, issueChallenge } = session;
+    const { code, issueMessage } = session;
     if (!code) {
       throw new ClientError("Discord processing your authorization. Wait!");
     }
-    const { custom, expirationDate, subjectId, discordProps } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate, subjectId, discordProps } = fromIssueMessage(issueMessage);
     await this.multiSignService.verify({
       subjectId: subjectId,
-      message: issueChallenge,
+      message: issueMessage,
       signature: signature
     });
     const accessToken = await this.discordService.getAccessToken(code);

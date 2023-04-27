@@ -49,7 +49,7 @@ export class TwitterAccountIssuer
       () => this.canIssue(challenge.sessionId)
     );
     if (result instanceof Error) throw result;
-    const signature = await signFn({ message: challenge.issueChallenge });
+    const signature = await signFn({ message: challenge.issueMessage });
     return this.issue({
       sessionId: challenge.sessionId,
       signature: signature,

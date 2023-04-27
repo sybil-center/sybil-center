@@ -6,7 +6,7 @@ import { ProofService } from "../../../../base/service/proof.service.js";
 import { DIDService } from "../../../../base/service/did.service.js";
 import { ClientError } from "../../../../backbone/errors.js";
 import type { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
-import { fromIssueChallenge, toIssueChallenge } from "../../../../base/service/challenge.service.js";
+import { fromIssueMessage, toIssueMessage } from "../../../../base/service/message.service.js";
 import { TimedCache } from "../../../../base/service/timed-cache.js";
 import { absoluteId } from "../../../../util/id.util.js";
 import sortKeys from "sort-keys";
@@ -26,7 +26,7 @@ import {
 
 export type GitHubOAuthSession = {
   redirectUrl?: URL;
-  issueChallenge: string;
+  issueMessage: string;
   code?: string;
 };
 
@@ -103,7 +103,7 @@ export class GitHubAccountIssuer
       ? new URL(req.redirectUrl)
       : undefined;
 
-    const issueChallenge = toIssueChallenge({
+    const issueMessage = toIssueMessage({
       subjectId: req.subjectId,
       type: this.providedCredential,
       custom: req.custom,
@@ -115,7 +115,7 @@ export class GitHubAccountIssuer
     });
     this.sessionCache.set(sessionId, {
       redirectUrl: redirectUrl,
-      issueChallenge: issueChallenge
+      issueMessage: issueMessage
     });
     const authUrl = this.gitHubService.getOAuthLink({
       sessionId: sessionId,
@@ -125,7 +125,7 @@ export class GitHubAccountIssuer
     return {
       authUrl: authUrl.href,
       sessionId: sessionId,
-      issueChallenge: issueChallenge
+      issueMessage: issueMessage
     };
   }
 
@@ -150,14 +150,14 @@ export class GitHubAccountIssuer
     signature
   }: GitHubAccountIssueReq): Promise<Credential> {
     const session = this.sessionCache.get(sessionId);
-    const { issueChallenge, code } = session;
+    const { issueMessage, code } = session;
     if (!code) {
       throw new ClientError("GitHub processing your authorization. Wait!");
     }
-    const { custom, expirationDate, subjectId, githubProps } = fromIssueChallenge(issueChallenge);
+    const { custom, expirationDate, subjectId, githubProps } = fromIssueMessage(issueMessage);
     await this.multiSignService.verify({
       signature: signature,
-      message: issueChallenge,
+      message: issueMessage,
       subjectId: subjectId
     });
     const accessToken = await this.gitHubService.getAccessToken(code);
