@@ -81,7 +81,7 @@ export const twitterAccountRoutes: CredentialRoutes = {
           properties: {
             authUrl: { type: "string", format: "uri" },
             sessionId: { type: "string" },
-            issueChallenge: { type: "string" }
+            issueMessage: { type: "string" }
           }
         }
       }
