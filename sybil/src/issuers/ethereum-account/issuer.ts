@@ -32,7 +32,7 @@ export class EthAccountIssuer
       subjectId: subjectId,
       props: opt?.props
     });
-    const signature = await signFn({ message: challenge.issueChallenge });
+    const signature = await signFn({ message: challenge.issueMessage });
     return await this.issue({
       sessionId: challenge.sessionId,
       signature: signature,

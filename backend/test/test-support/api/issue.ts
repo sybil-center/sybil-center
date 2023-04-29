@@ -26,8 +26,8 @@ export async function issueEthAccountVC(
     challengeResp.statusCode, 200,
     `challenge response fail. error: ${challengeResp.body}`
   );
-  const { sessionId, issueChallenge} = JSON.parse(challengeResp.body) as Challenge;
-  const signature = await signFn(issueChallenge);
+  const { sessionId, issueMessage} = JSON.parse(challengeResp.body) as Challenge;
+  const signature = await signFn(issueMessage);
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("EthereumAccount"),

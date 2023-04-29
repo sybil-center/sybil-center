@@ -7,7 +7,7 @@ import { type Disposable, tokens } from "typed-inject";
 import { ProofService } from "../../../../base/service/proof.service.js";
 import { DIDService } from "../../../../base/service/did.service.js";
 import { MultiSignService } from "../../../../base/service/multi-sign.service.js";
-import { fromIssueChallenge, toIssueChallenge } from "../../../../base/service/challenge.service.js";
+import { fromIssueMessage, toIssueMessage } from "../../../../base/service/message.service.js";
 import { absoluteId } from "../../../../util/id.util.js";
 import { TimedCache } from "../../../../base/service/timed-cache.js";
 import sortKeys from "sort-keys";
@@ -24,7 +24,7 @@ import {
 } from "@sybil-center/sdk/types";
 
 export interface EthAccountSession {
-  issueChallenge: string;
+  issueMessage: string;
 }
 
 export interface EthProofResult {
@@ -95,7 +95,7 @@ export class EthereumAccountIssuer
     const custom = req?.custom;
     const expirationDate = req?.expirationDate;
     const sessionId = absoluteId();
-    const issueChallenge = toIssueChallenge({
+    const issueMessage = toIssueMessage({
       type: this.providedCredential,
       custom: custom,
       expirationDate: expirationDate,
@@ -105,10 +105,10 @@ export class EthereumAccountIssuer
         default: ethAccountProps
       }
     });
-    this.sessionCache.set(sessionId, { issueChallenge });
+    this.sessionCache.set(sessionId, { issueMessage: issueMessage });
     return {
       sessionId: sessionId,
-      issueChallenge: issueChallenge,
+      issueMessage: issueMessage,
     };
   }
 
@@ -120,11 +120,11 @@ export class EthereumAccountIssuer
     sessionId,
     signature,
   }: EthAccountIssueReq): Promise<Credential> {
-    const { issueChallenge } = this.sessionCache.get(sessionId);
-    const { custom, expirationDate, subjectId, ethereumProps } = fromIssueChallenge(issueChallenge);
+    const { issueMessage } = this.sessionCache.get(sessionId);
+    const { custom, expirationDate, subjectId, ethereumProps } = fromIssueMessage(issueMessage);
     const ethAddress = await this.multiSignService.ethereum.verify({
       signature: signature,
-      message: issueChallenge,
+      message: issueMessage,
       address: subjectId.split(":").pop()!
     });
     this.sessionCache.delete(sessionId);

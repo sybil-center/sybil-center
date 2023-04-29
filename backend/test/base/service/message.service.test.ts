@@ -1,7 +1,7 @@
 import { suite } from "uvu";
 import * as a from "uvu/assert";
 import { ethereumSupport } from "../../test-support/chain/ethereum.js";
-import { fromIssueChallenge, toIssueChallenge } from "../../../src/base/service/challenge.service.js";
+import { fromIssueMessage, toIssueMessage } from "../../../src/base/service/message.service.js";
 import { CredentialType } from "@sybil-center/sdk";
 
 const test = suite("Challenge service test");
@@ -10,11 +10,11 @@ const subjectId = ethereumSupport.info.ethereum.didPkh;
 
 test("issue challenge message create and parse without props", () => {
   const type: CredentialType = "DiscordAccount";
-  const msg = toIssueChallenge({
+  const msg = toIssueMessage({
     subjectId: subjectId,
     type: "DiscordAccount",
   });
-  const challenge = fromIssueChallenge(msg);
+  const challenge = fromIssueMessage(msg);
   a.is(
     challenge.description, `Sign the message to issue '${type}' verifiable credential`,
     "incorrect description"
@@ -28,7 +28,7 @@ test("issue challenge message create and parse without props", () => {
 });
 
 test("issue challenge message create and parse with empty props", () => {
-  const msg = toIssueChallenge({
+  const msg = toIssueMessage({
     subjectId: subjectId,
     type: "DiscordAccount",
     discordProps: { value: [], default: ["empty"] },
@@ -36,7 +36,7 @@ test("issue challenge message create and parse with empty props", () => {
     githubProps: { value: [], default: ["empty"] },
     twitterProps: { value: [], default: ["empty"] }
   });
-  const { discordProps, ethereumProps, githubProps, twitterProps } = fromIssueChallenge(msg);
+  const { discordProps, ethereumProps, githubProps, twitterProps } = fromIssueMessage(msg);
   a.is(discordProps?.length, 0, "discord props is not empty");
   a.is(ethereumProps?.length, 0, "ethereum props is not empty");
   a.is(githubProps?.length, 0, "github props is not empty");
@@ -44,7 +44,7 @@ test("issue challenge message create and parse with empty props", () => {
 });
 
 test("issue challenge message create and parse with default props", () => {
-  const msg = toIssueChallenge({
+  const msg = toIssueMessage({
     subjectId: subjectId,
     type: "GitHubAccount",
     discordProps: { default: ["discordAccount"] },
@@ -52,7 +52,7 @@ test("issue challenge message create and parse with default props", () => {
     twitterProps: { default: ["twitterAccount"] },
     ethereumProps: { default: ["ethereumAccount"] }
   });
-  const { githubProps, discordProps, ethereumProps, twitterProps } = fromIssueChallenge(msg);
+  const { githubProps, discordProps, ethereumProps, twitterProps } = fromIssueMessage(msg);
   a.ok(githubProps);
   a.ok(discordProps);
   a.ok(ethereumProps);
@@ -77,13 +77,13 @@ test("issue challenge create and parse with custom property", () => {
     },
     test: "this is test"
   };
-  const msg = toIssueChallenge({
+  const msg = toIssueMessage({
     subjectId: subjectId,
     type: "TwitterAccount",
     custom: customOrigin
   });
 
-  const { custom } = fromIssueChallenge(msg);
+  const { custom } = fromIssueMessage(msg);
   a.is(custom?.hello?.from, customOrigin.hello.from, "custom property is not matched");
   a.is(custom?.hello?.list[0], customOrigin.hello.list[0], "custom property is not matched");
   a.is(custom?.hello?.list[1], customOrigin.hello.list[1], "custom property is not matched");
@@ -95,12 +95,12 @@ test("issue challenge create and parse with custom property", () => {
 
 test("issue challenge message create and parse with expiration date", () => {
   const date = new Date();
-  const msg = toIssueChallenge({
+  const msg = toIssueMessage({
     subjectId: subjectId,
     type: "EthereumAccount",
     expirationDate: date
   });
-  const challenge = fromIssueChallenge(msg);
+  const challenge = fromIssueMessage(msg);
   a.is(
     challenge.expirationDate?.toISOString(), date.toISOString(),
     "challenge expiration date is not matched"

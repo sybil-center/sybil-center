@@ -73,7 +73,7 @@ export type CanIssueResp = {
 
 export type Challenge = {
   sessionId: string;
-  issueChallenge: string;
+  issueMessage: string;
 }
 
 /** Request entity for getting challenge */

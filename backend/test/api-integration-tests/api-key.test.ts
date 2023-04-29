@@ -51,8 +51,6 @@ test("should generate and verify api key and secret", async () => {
     `api key response fail. error: ${apiKeyResp.body}`
   );
   const { apiKey, secretKey } = JSON.parse(apiKeyResp.body) as APIKeys;
-  console.log("apikey: ", apiKey);
-  console.log("secretkey: ", secretKey);
   const { key: fromApiKey, isSecret: notSecret } = await apiKeyService.verify(apiKey);
   a.is(notSecret, false, "api key verification fail");
   a.is(fromApiKey, `eip155:1:${address}`);
@@ -64,7 +62,6 @@ test("should generate and verify api key and secret", async () => {
   apikeyChars[apikeyChars.length - 2] = "w";
   apikeyChars[apikeyChars.length - 3] = "w";
   apikeyChars[apikeyChars.length - 4] = "w";
-  console.log("api key: ", apiKey);
   const failApikey = apikeyChars.join("");
 
   let throwFailApikey = false;
