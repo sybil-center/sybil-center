@@ -66,9 +66,6 @@ const useStyles = createUseStyles((theme: HeaderTheme) => ({
     height: '45px',
     left: '50%',
     width: '45px',
-    background: '#E6E6E6',
-    borderRadius: '50%',
-    boxShadow: `0px 0px 6px black`,
     transition: 'all 0.2s',
     '&:hover': {
       boxShadow: `0px 0px 6px ${ theme.backgroundColor }`

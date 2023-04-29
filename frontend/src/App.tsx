@@ -44,7 +44,7 @@ function App() {
                  <WagmiConfig client={wagmiClient}>
                    <Web3Modal projectId={appConfig.walletConnectProjectId} ethereumClient={web3modalClient}/>
                    <Header title={"VC ISSUER"}
-                           logo={process.env.PUBLIC_URL + "/icon.ico"}
+                           logo={process.env.PUBLIC_URL + "/icon.png"}
                            theme={{ backgroundColor: "#3D529C" }}/>
 
                    <div className={cls.app}>
