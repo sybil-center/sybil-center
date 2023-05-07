@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { ClientError } from "../../backbone/errors.js";
+import { ClientError, ServerError } from "../../backbone/errors.js";
 import { AnyObj } from "../../util/model.util.js";
 import { CredentialType } from "@sybil-center/sdk/types";
 import * as t from "io-ts";
@@ -30,9 +30,39 @@ export type IssueMessageObj = {
   discordProps?: string[];
 }
 
+const credentialTypeDescription = new Map<CredentialType, string>([
+  [
+    "DiscordAccount",
+    "Sign the message to prove your Discord account ownership and issue appropriate verifiable credential"
+  ],
+  [
+    "EthereumAccount",
+    "Sign the message to prove your Ethereum account ownership and issue appropriate verifiable credential"
+  ],
+  [
+    "GitHubAccount",
+    "Sign the message to prove your Github account ownership and issue appropriate verifiable credential"
+  ],
+  [
+    "TwitterAccount",
+    "Sign the message to prove your Twitter account ownership and issue appropriate verifiable credential"
+  ],
+]);
+
+const toDescription = (credentialType: CredentialType): string => {
+  const description = credentialTypeDescription.get(credentialType);
+  if (!description) throw new ServerError("Internal server error", {
+    props: {
+      _place: toDescription.name,
+      _log: `No equivalent description to credential type - ${credentialType}`
+    }
+  });
+  return description;
+};
+
 /** JSON object containing Message key => JSON key mapping and vice versa */
 const createMsgJsonTable = (): { [key: string]: string } => {
-  const obj: { [key: string]: keyof IssueMessageObj} = {
+  const obj: { [key: string]: keyof IssueMessageObj } = {
     "Description:": "description",
     "Subject id:": "subjectId",
     "nonce:": "nonce",
@@ -41,8 +71,8 @@ const createMsgJsonTable = (): { [key: string]: string } => {
     "Credential type:": "type",
     "Subject ethereum properties:": "ethereumProps",
     "Subject discord properties:": "discordProps",
-    "Subject github properties:" : "githubProps",
-    "Subject twitter properties:" : "twitterProps",
+    "Subject github properties:": "githubProps",
+    "Subject twitter properties:": "twitterProps",
   };
   const keys = Object.keys(obj);
   keys.forEach((key) => {
@@ -119,7 +149,7 @@ const messageAsObject = new t.Type<
       const expirationDate = json.expirationDate;
       json.expirationDate = expirationDate ? new Date(expirationDate) : undefined;
       json.custom = json.custom ? JSON.parse(json.custom) : undefined;
-      json.ethereumProps = json.ethereumProps ? JSON.parse(json.ethereumProps) : undefined
+      json.ethereumProps = json.ethereumProps ? JSON.parse(json.ethereumProps) : undefined;
       json.discordProps = json.discordProps ? JSON.parse(json.discordProps) : undefined;
       json.githubProps = json.githubProps ? JSON.parse(json.githubProps) : undefined;
       json.twitterProps = json.twitterProps ? JSON.parse(json.twitterProps) : undefined;
@@ -136,7 +166,7 @@ const messageAsObject = new t.Type<
  */
 export function toIssueMessage(opt: IssueMessageOpt): string {
   const nonce = randomUUID();
-  const description = `Sign the message to issue '${opt.type}' verifiable credential`;
+  const description = toDescription(opt.type);
   const expirationDate = opt.expirationDate ? opt.expirationDate : undefined;
   const custom = opt.custom ? opt.custom : undefined;
   const ethereumProps = opt.ethereumProps?.value
@@ -150,7 +180,7 @@ export function toIssueMessage(opt: IssueMessageOpt): string {
     : opt.githubProps?.default;
   const twitterProps = opt.twitterProps?.value
     ? opt.twitterProps.value
-    : opt.twitterProps?.default
+    : opt.twitterProps?.default;
 
   const msgObj: IssueMessageObj = {
     description: description,
