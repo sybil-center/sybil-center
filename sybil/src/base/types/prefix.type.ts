@@ -38,4 +38,4 @@ export const mapPrefix = new Map<Prefix, Prefix>([
   ["solana", "did:pkh:solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ"],
   ["solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ", "did:pkh:solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ"],
   ["did:pkh:solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ", "did:pkh:solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ"]
-])
+]);
