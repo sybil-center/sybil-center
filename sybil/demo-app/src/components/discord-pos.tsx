@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { DiscordAccountVC, Sybil, SolanaProofProvider, SolanaProvider} from "@sybil-center/sdk";
+import { DiscordAccountVC, SolanaProofProvider, SolanaProvider, Sybil } from "@sybil-center/sdk";
 import styles from "@/styles/twitter-pos.module.css";
 
 export const sybil = new Sybil(
@@ -16,11 +16,11 @@ export function DiscordPos() {
   });
 
   const proofProvider = (): SolanaProofProvider => {
-    const injected = "phantom" in window && (window.phantom as any)
+    const injected = "phantom" in window && (window.phantom as any);
     if (injected) {
-      return  new SolanaProofProvider(injected.solana as SolanaProvider)
+      return new SolanaProofProvider(injected.solana as SolanaProvider);
     }
-    window.open('https://phantom.app/', '_blank');
+    window.open("https://phantom.app/", "_blank");
     throw new Error(`Only injected provider is supported`);
   };
 
@@ -29,8 +29,10 @@ export function DiscordPos() {
     if (state.loading) return;
     setState({ loading: true, vc: null });
     sybil
-      .credential("discord-account", await proofProvider().proof(), {
-        custom: { helloFrom: "@sybil-center/sdk" }
+      .credential("github-account", await proofProvider().proof(), {
+        custom: { helloFrom: "@sybil-center/sdk" },
+        expirationDate: new Date(2015, 7, 30, 12, 0, 0),
+        props: ["id"]
       })
       .then((credential) => {
         console.log("Credential:", credential);
