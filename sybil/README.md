@@ -35,6 +35,7 @@ npm install @sybil-center/sdk # Feel free to use pnpm or yarn
 - [Set credential expiration date](#set-credential-expiration-date)
 - [Choose subject props](#choose-subject-props)
 - [Your custom property](#your-custom-property)
+- [Verify credential](#verify-credential)
 - [What is ProofProvider?](#what-is-proofprovider-)
 - [What is subjectId?](#what-is-subjectid-)
 - [What is SignFn?](#what-is-signfn-)
@@ -604,6 +605,18 @@ const credential = await issuer.issue({
 have the `Authorization` flag set to `true` value
 in [Supported credentials](#supported-credentials)
 section
+
+---
+
+## Verify credential
+
+You can verify credentials using SDK as shown in the example below:
+
+```typescript
+const { isVerified } = await sybil.verify(credential);
+
+// if credential verified `isVerified` === true
+```
 
 ---
 

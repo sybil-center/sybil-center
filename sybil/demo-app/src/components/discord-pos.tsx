@@ -29,10 +29,8 @@ export function DiscordPos() {
     if (state.loading) return;
     setState({ loading: true, vc: null });
     sybil
-      .credential("github-account", await proofProvider().proof(), {
+      .credential("discord-account", await proofProvider().proof(), {
         custom: { helloFrom: "@sybil-center/sdk" },
-        expirationDate: new Date(2015, 7, 30, 12, 0, 0),
-        props: ["id"]
       })
       .then((credential) => {
         console.log("Credential:", credential);
