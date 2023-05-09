@@ -1,6 +1,7 @@
 # SybilCenter SDK
 
-In one line you can issue a Verifiable Credential proving that your user owns a social media or blockchain account.
+In one line you can issue a [`Verifiable Credential`](https://www.w3.org/TR/vc-data-model/)
+proving that your user owns a social media or blockchain account.
 Supported are Twitter, Discord, GitHub and Ethereum.
 
 ```typescript
@@ -27,7 +28,7 @@ npm install @sybil-center/sdk # Feel free to use pnpm or yarn
 ## Content
 
 - [API keys](#api-keys)
-- [Supported credentials](#supported-credentials)
+- [Supported Verifiable Credentials](#supported-verifiable-credentials)
   - [Discord Account](#u-discord-account-u)
   - [Ethereum Account](#u-ethereum-account-u)
   - [GitHub Account](#u-github-account-u)
@@ -94,7 +95,7 @@ for new ethereum account.
 
 ---
 
-## Supported credentials
+## Supported Verifiable Credentials
 
 ### <u>Discord Account</u>
 
