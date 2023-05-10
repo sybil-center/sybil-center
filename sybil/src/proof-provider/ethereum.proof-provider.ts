@@ -1,6 +1,6 @@
 import { SubjectProofProvider } from "./subject-proof-provider.type.js";
 import type { SubjectProof } from "../types/index.js";
-import * as uint8arrays from "uint8arrays";
+import * as u8a from "uint8arrays";
 
 export interface RequestArguments {
   readonly method: string;
@@ -29,7 +29,7 @@ export class EthProofProvider implements SubjectProofProvider {
   async sign(args: { message: string }): Promise<string> {
     const message = args.message;
     const address = await this.getAddress();
-    const hex = uint8arrays.toString(uint8arrays.fromString(message), "hex");
+    const hex = u8a.toString(u8a.fromString(message), "hex");
     return await this.#signMessage(address, hex)
   }
 
@@ -81,7 +81,7 @@ export class EthProofProvider implements SubjectProofProvider {
 
   #normalizeSignature(signature: string): string {
     const hexSign = signature.substring(2).toLowerCase();
-    const bytesSign = uint8arrays.fromString(hexSign, "hex");
-    return uint8arrays.toString(bytesSign, "base64");
+    const bytesSign = u8a.fromString(hexSign, "hex");
+    return u8a.toString(bytesSign, "base64");
   }
 }

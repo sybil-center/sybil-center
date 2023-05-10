@@ -100,6 +100,8 @@ export function credentialController(
         method: canIssueRoute.method,
         url: canIssueRoute.url,
         schema: canIssueRoute.schema,
+        // FUTURE COMMENT: `Can Issue` endpoint has to be accepted with `apikey`
+        // even if `only secret key` flag set to `true`
         preHandler: async (req) => await authorize(req),
         handler: async (req) => {
           const canIssueEntry = req.query;

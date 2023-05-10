@@ -53,7 +53,7 @@ export class HttpClient {
     const resp = await fetch(endpoint, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${this.mainAPIKey}`
+        Authorization: `Bearer ${this.apiKeys.apiKey}`
       }
     });
     const body = await resp.json();
