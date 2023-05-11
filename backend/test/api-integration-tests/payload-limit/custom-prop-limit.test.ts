@@ -16,8 +16,7 @@ test.before(async () => {
   const localTestConf = new URL("./test.env", import.meta.url);
   configDotEnv({ path: globalTestConf, override: true });
   configDotEnv({ path: localTestConf, override: true });
-  app = new App();
-  await app.init();
+  app = await App.init();
   const keys = await api.apiKeys(app);
   apiKey = keys.apiKey;
 });

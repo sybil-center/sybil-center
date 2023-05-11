@@ -31,7 +31,7 @@ export class HttpServer implements Disposable {
     this.pathToExposeDomain = config.pathToExposeDomain;
   }
 
-  async listen(): Promise<void> {
+  async register(): Promise<void> {
     // register fastify cors
     this.fastify.register(cors, { origin: "*" });
 
@@ -39,13 +39,15 @@ export class HttpServer implements Disposable {
     await this.fastify.register(swagger, {
       swagger: {
         info: {
-          title: "Verifiable Credential Issuer",
-          description: "Verifiable credential issuer api",
+          title: "Sybil Center",
+          description: "Sybil Center - Verifiable Credential Issuer." +
+                       "See https://github.com/sybil-center/sybil",
           version: "1.0.0",
         },
         host: this.pathToExposeDomain.host,
         schemes: [this.protocol],
       },
+      hideUntagged: true,
     });
 
     // register swagger ui
@@ -60,7 +62,7 @@ export class HttpServer implements Disposable {
     });
 
     // Register fastify-static
-    await this.fastify.register(fastifyStatic, {
+    this.fastify.register(fastifyStatic, {
       root: path.join(
         dirname(fileURLToPath(import.meta.url)),
         "..",
@@ -68,6 +70,9 @@ export class HttpServer implements Disposable {
         "public"
       ),
     });
+  }
+
+  async listen(): Promise<void> {
 
     this.fastify.setErrorHandler<Error>((error, _, reply) => {
       if (error instanceof ClientError) {

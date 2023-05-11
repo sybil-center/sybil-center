@@ -30,8 +30,7 @@ const gitHubUserUrl = `https://api.github.com/${username}`;
 test.before(async () => {
   const configUrl = new URL("../../test.env", import.meta.url);
   configDotEnv({ path: configUrl, override: true });
-  app = new App();
-  await app.init();
+  app = await App.init();
   const keys = await api.apiKeys(app);
   apiKey = keys.apiKey;
 

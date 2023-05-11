@@ -1,7 +1,7 @@
 import { ProofService } from "../base/service/proof.service.js";
 import { createInjector, Injector } from "typed-inject";
 import { IssuerContainer } from "../base/service/issuer-container.js";
-import { Logger, type ILogger } from "../backbone/logger.js";
+import { type ILogger, Logger } from "../backbone/logger.js";
 import { HttpServer } from "../backbone/http-server.js";
 import { credentialController } from "../base/controller/credential.controller.js";
 import { Config } from "../backbone/config.js";
@@ -32,10 +32,21 @@ type DI = {
 };
 
 export class App {
-  readonly context: Injector<DI>;
+  #context: Injector<DI> | undefined = undefined;
+  private constructor() {}
 
-  constructor() {
-    this.context = createInjector()
+  get context() {
+    if (!this.#context) throw new Error("Context is undefined");
+    return this.#context;
+  }
+
+  private set context(context) {
+    this.#context = context;
+  }
+
+  static async init(): Promise<App> {
+    const app = new App();
+    app.context = createInjector()
       .provideClass("logger", Logger)
       .provideClass("config", Config)
       .provideClass("httpServer", HttpServer)
@@ -52,31 +63,28 @@ export class App {
       .provideClass("discordAccountIssuer", DiscordAccountIssuer)
 
       .provideClass("issuerContainer", IssuerContainer);
-
-    const fastify = this.context.resolve("httpServer").fastify;
-    const issuerContainer = this.context.resolve("issuerContainer");
-    const config = this.context.resolve("config");
-    const verifier = this.context.resolve("credentialVerifier");
-    const apiKeyService = this.context.resolve("apiKeyService");
-
+    const httpServer = app.context.resolve("httpServer");
+    const issuerContainer = app.context.resolve("issuerContainer");
+    const config = app.context.resolve("config");
+    const verifier = app.context.resolve("credentialVerifier");
+    const apiKeyService = app.context.resolve("apiKeyService");
+    await httpServer.register();
     credentialController(
-      fastify,
+      httpServer.fastify,
       issuerContainer,
       config,
       verifier,
       apiKeyService
     );
-    oauthPageController(fastify);
-    apiKeyController(fastify, apiKeyService, config);
-  }
-
-  async init() {
-    const didService = this.context.resolve("didService");
+    oauthPageController(httpServer.fastify);
+    apiKeyController(httpServer.fastify, apiKeyService, config);
+    const didService = app.context.resolve("didService");
     await didService.init();
+    return app;
   }
 
   async run() {
-    await this.init();
+    if (!this.context) throw new Error("Use App.init method before");
     const httpServer = this.context.resolve("httpServer");
     await httpServer.listen();
     const didService = this.context.resolve("didService");
@@ -84,6 +92,7 @@ export class App {
   }
 
   async close() {
+    if (!this.context) throw new Error("Use App.init method before");
     await this.context.dispose();
   }
 }

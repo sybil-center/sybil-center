@@ -19,8 +19,7 @@ let apiKey: string;
 test.before(async () => {
   const config = new URL("../../test.env", import.meta.url);
   configDotEnv({ path: config, override: true });
-  app = new App();
-  await app.init();
+  app = await App.init()
   const keys = await api.apiKeys(app);
   apiKey = keys.apiKey;
 });

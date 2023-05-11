@@ -6,7 +6,6 @@ export const generateAPIkeysRoute: Route = {
   method: ["POST"],
   url: generateAPIkeysEP(),
   schema: {
-    tags: ["Generate api keys"],
     body: credentialSchema
   }
 }
