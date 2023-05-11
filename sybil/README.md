@@ -28,6 +28,7 @@ npm install @sybil-center/sdk # Feel free to use pnpm or yarn
 ## Content
 
 - [API keys](#api-keys)
+- [Issuer id (did:key)](#issuer-id--didkey-)
 - [Supported Verifiable Credentials](#supported-verifiable-credentials)
   - [Discord Account](#u-discord-account-u)
   - [Ethereum Account](#u-ethereum-account-u)
@@ -44,6 +45,8 @@ npm install @sybil-center/sdk # Feel free to use pnpm or yarn
 - [What is SDK Issuer?](#what-is-sdk-issuer-)
 - [Control under issuing process](#control-under-issuing-process)
 - [Use SDK on Frontend-Backend](#use-sdk-on-frontend---backend)
+- [Raw HTTP API](#raw-http-api)
+- [How to get type and const?](#how-to-get-type-and-const-)
 - [Demo app](#demo-app)
 
 ---
@@ -92,6 +95,14 @@ put `api key` or `api secret` into `Authorization` header as
 Note: `API keys` will be linked to your ethereum address,
 therefore if your `API keys` will be compromised you should create new `API keys`
 for new ethereum account.
+
+---
+
+## Issuer id ([`did:key`](https://w3c-ccg.github.io/did-method-key/))
+
+Sybil center `issuer id`: `did:key:z6MkvHAzbMgT1dCUutMCxaAUTuQUfhWyn9bDBL43nrmsybiL`
+
+This identifier presents in issued credentials in `credential.issuer.id` field.
 
 ---
 
@@ -1104,7 +1115,24 @@ gives you opportunity to use `secretKey` on Backend and do not worry that third 
 can steal your `API key` (see [API keys](#api-keys) section).
 
 Now you can use SDK only on `Node.js`, but we are going 
-to extend our SDK for other programming languages.  
+to extend our SDK for other programming languages. 
+If you really want to use our `issuer` service on other programming language,
+this [`swagger API docs`](https://api.sybil.center/documentation) can help you
+
+---
+
+## Raw HTTP API
+
+You can integrate with our `sybil.centre` service to issue `verifiable credentials` 
+for the programming language you want,
+using these [`swagger API docs`](https://api.sybil.center/documentation)
+
+---
+
+## How to get `type` and `const`?
+
+If you need any `type` or `const` from SDK you can easy 
+to get it from `@sybil-center/sdk/types` module
 
 ---
 
