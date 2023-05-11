@@ -1,6 +1,6 @@
 {
   "name": "@sybil-center/sdk",
-  "version": "0.0.3",
+  "version": "1.0.0",
   "description": "Request a Verifiable Credential from the web",
   "license": "(Apache-2.0 AND MIT)",
   "repository": {
