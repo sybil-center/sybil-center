@@ -27,6 +27,7 @@ export const githubAccountRoutes: CredentialRoutes = {
     method: ["GET"],
     url: canIssueEP("GitHubAccount"),
     schema: {
+      tags: tags,
       querystring: {
         type: "object",
         properties: {

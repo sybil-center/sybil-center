@@ -1,5 +1,5 @@
 import { CredentialRoutes } from "../../../../base/types/route.js";
-import { challengeEP, issueEP } from "@sybil-center/sdk/util";
+import { challengeEP, issueEP, canIssueEP } from "@sybil-center/sdk/util";
 import { ethAccountProps } from "@sybil-center/sdk/types";
 import { subjectIdRegExp } from "../../../../util/route.util.js";
 
@@ -20,6 +20,29 @@ export const ethereumAccountRoutes: CredentialRoutes = {
         },
         required: ["sessionId", "signature"]
       },
+    }
+  },
+
+  canIssue: {
+    method: ["GET"],
+    url: canIssueEP("EthereumAccount"),
+    schema: {
+      tags: tags,
+      querystring: {
+        type: "object",
+        properties: {
+          sessionId: { type: "string" }
+        },
+        required: ["sessionId"]
+      },
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            canIssue: { type: "boolean" }
+          }
+        }
+      }
     }
   },
 

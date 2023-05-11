@@ -8,8 +8,7 @@ const test = suite("Integration: credential verifier");
 let app: App;
 
 test.before(async () => {
-  app = new App();
-  await app.init();
+  app = await App.init()
 });
 
 test.after(async () => {

@@ -59,7 +59,7 @@ export function DevContent() {
   const [state, setState] = useState<State>(initState);
   const [isCopied, setIsCopied] = useState(false);
 
-  const { subjectId, signMessage } = useSubjectProof();
+  const { subjectId, signFn } = useSubjectProof();
   const { address, isConnected: isWalletConnected } = useAccount();
   const onGetKeys = () => {
     const expirationDate = new Date();
@@ -69,7 +69,7 @@ export function DevContent() {
     });
     sybil.credential("ethereum-account", {
       subjectId: subjectId,
-      signFn: signMessage
+      signFn: signFn
     }, {
       expirationDate: expirationDate
     })
