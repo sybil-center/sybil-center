@@ -7,7 +7,7 @@ const test = suite("App instance test");
 test("should correct work", async () => {
   const testConfig = new URL("../test.env", import.meta.url);
   configDotEnv({ path: testConfig, override: true });
-  const app = new App();
+  const app = await App.init();
   await app.close();
 });
 

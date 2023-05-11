@@ -57,19 +57,6 @@ export function credentialController(
   };
 
   genVCRotes.forEach((routes) => {
-    // initialize issuer endpoints
-    const issueRoute = routes.issue;
-    // @ts-ignore
-    fastify.route<{ Body: IssueReq }>({
-      method: issueRoute.method,
-      url: issueRoute.url,
-      schema: issueRoute.schema,
-      preHandler: async (req) => await authorize(req),
-      handler: (req) => {
-        const credentialRequest = req.body;
-        return issuerContainer.issue(routes.credentialType, credentialRequest);
-      }
-    });
 
     // initialize payload endpoints
     const challengeRoute = routes.challenge;
@@ -109,6 +96,20 @@ export function credentialController(
         }
       });
     }
+
+    // initialize issuer endpoints
+    const issueRoute = routes.issue;
+    // @ts-ignore
+    fastify.route<{ Body: IssueReq }>({
+      method: issueRoute.method,
+      url: issueRoute.url,
+      schema: issueRoute.schema,
+      preHandler: async (req) => await authorize(req),
+      handler: (req) => {
+        const credentialRequest = req.body;
+        return issuerContainer.issue(routes.credentialType, credentialRequest);
+      }
+    });
   });
 
   // Init oauth callback endpoint
