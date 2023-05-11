@@ -1,5 +1,5 @@
 import { useAccount, useNetwork, useSignMessage } from "wagmi";
-import * as uint8array from "uint8arrays";
+import * as u8a from "uint8arrays";
 
 export function useSubjectProof() {
   const { address } = useAccount();
@@ -9,9 +9,9 @@ export function useSubjectProof() {
   const signMessage = async (args: { message: string }): Promise<string> => {
     const message = args.message;
     const sign = await signMessageAsync({ message: message });
-    return uint8array.toString(uint8array.fromString(sign.substring(2), "hex"), "base64");
+    return u8a.toString(u8a.fromString(sign.substring(2), "hex"), "base64");
 
   };
 
-  return { subjectId: `eip155:${chain?.id}:${address}` as string ,signMessage };
+  return { subjectId: `eip155:${chain?.id}:${address}`, signFn: signMessage };
 }

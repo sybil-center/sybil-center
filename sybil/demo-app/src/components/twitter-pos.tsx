@@ -14,7 +14,7 @@ export function TwitterPos() {
     vc: null,
   });
 
-  const wallet = () => {
+  const proofProvider = () => {
     const injected = "ethereum" in window && (window.ethereum as IEIP1193Provider);
     if (!injected) throw new Error(`Only injected provider is supported`);
     return new EthProofProvider(injected);
@@ -25,7 +25,7 @@ export function TwitterPos() {
     if (state.loading) return;
     setState({ loading: true, vc: null });
     sybil
-      .credential("twitter-account", await wallet().proof())
+      .credential("twitter-account", await proofProvider().proof())
       .then((credential) => {
         console.log("Credential:", credential);
         setState({ loading: false, vc: credential });

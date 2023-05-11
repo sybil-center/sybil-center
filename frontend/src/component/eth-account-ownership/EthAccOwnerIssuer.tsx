@@ -10,7 +10,7 @@ import { useSubjectProof } from "../../hooks/subject-proof";
 
 export function EthAccOwnerIssuer() {
   const { isConnected: isWalletConnected } = useAccount();
-  const { subjectId, signMessage } = useSubjectProof();
+  const { subjectId, signFn } = useSubjectProof();
   const [state, setState] = useState<{ loading: boolean; error?: string; data?: EthAccountVC }>({
     loading: false
   });
@@ -22,7 +22,7 @@ export function EthAccOwnerIssuer() {
     sybil
       .credential("ethereum-account", {
         subjectId: subjectId,
-        signFn: signMessage
+        signFn: signFn
       })
       .then((vc) => {
         setState({ loading: false, data: vc });
