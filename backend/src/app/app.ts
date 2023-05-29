@@ -15,6 +15,8 @@ import { oauthPageController } from "../base/controller/oauth-page.controller.js
 import { CredentialVerifier } from "../base/service/credential-verifivator.js";
 import { ApiKeyService } from "../base/service/api-key.service.js";
 import { apiKeyController } from "../base/controller/api-key.controller.js";
+import { CaptchaService, ICaptchaService } from "../base/service/captcha.service.js";
+import { configController } from "../base/controller/config.controller.js";
 
 type DI = {
   logger: ILogger;
@@ -29,6 +31,7 @@ type DI = {
   gitHubAccountIssuer: GitHubAccountIssuer;
   credentialVerifier: CredentialVerifier;
   apiKeyService: ApiKeyService;
+  captchaService: ICaptchaService;
 };
 
 export class App {
@@ -54,6 +57,7 @@ export class App {
       .provideClass("multiSignService", MultiSignService)
       .provideClass("proofService", ProofService)
       .provideClass("credentialVerifier", CredentialVerifier)
+      .provideClass("captchaService", CaptchaService)
       .provideClass("apiKeyService", ApiKeyService)
 
       // Issuers
@@ -78,6 +82,7 @@ export class App {
     );
     oauthPageController(httpServer.fastify);
     apiKeyController(httpServer.fastify, apiKeyService, config);
+    configController(httpServer.fastify, config);
     const didService = app.context.resolve("didService");
     await didService.init();
     return app;

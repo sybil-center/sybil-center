@@ -14,6 +14,7 @@ import { PuffLoader } from "react-spinners";
 import { ValueRow } from "../common/ValueRow";
 import { copyTextToClipBoard } from "../../util/copy-value";
 import { Button } from "../common/Button";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 
 type State = {
@@ -30,14 +31,27 @@ const initState: State = {
   apiKeys: null
 };
 
-const fetchAPIkeys = async (credential: Credential): Promise<APIKeys> => {
+const fetchIsCaptchaRequired = async (): Promise<boolean> => {
+  const endpoint = new URL("/api/v1/config/captcha-required", appConfig.vcIssuerDomain);
+  const resp = await fetch(endpoint)
+  if (resp.status !== 200) {
+    throw new Error(`Fetch is captcha required error: ${await resp.json()}`);
+  }
+  const { captchaRequired } = await resp.json();
+  return captchaRequired
+}
+
+const fetchAPIkeys = async (credential: Credential, captchaToken?: string): Promise<APIKeys> => {
   const endpoint = new URL("/api/v1/keys", appConfig.vcIssuerDomain);
   const resp = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(credential)
+    body: JSON.stringify({
+      credential: credential,
+      captchaToken: captchaToken
+    })
   });
   const body = await resp.json();
   if (resp.status === 200) {
@@ -58,47 +72,45 @@ export function DevContent() {
   const cls = useStyles();
   const [state, setState] = useState<State>(initState);
   const [isCopied, setIsCopied] = useState(false);
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const { subjectId, signFn } = useSubjectProof();
   const { address, isConnected: isWalletConnected } = useAccount();
-  const onGetKeys = () => {
+  const onGetKeys = async () => {
     const expirationDate = new Date();
     expirationDate.setMinutes(expirationDate.getMinutes() + 3);
     setState((prev) => {
       return { ...prev, isLoading: true };
     });
-    sybil.credential("ethereum-account", {
-      subjectId: subjectId,
-      signFn: signFn
-    }, {
-      expirationDate: expirationDate
-    })
-      .then((credential) => fetchAPIkeys(credential))
-      .then((keys) => {
-        setState((prev) => {
-          return {
-            ...prev,
-            apiKeys: keys
-          };
-        });
-      })
-      .catch((err) => {
-        setState((prev) => {
-          return {
-            ...prev,
-            isError: true,
-            error: String(err),
-          };
-        });
-        setTimeout(() => {
-          setState(initState);
-        }, 1000);
-      })
-      .finally(() =>
-        setState((prev) => {
-          return { ...prev, isLoading: false };
-        })
-      );
+    try {
+      if (!executeRecaptcha) throw new Error("ReCAPTCHA error");
+      const captchaRequired = await fetchIsCaptchaRequired();
+      const captchaToken = captchaRequired ? await executeRecaptcha("auth") : undefined;
+      const credential = await sybil.credential("ethereum-account", {
+        subjectId: subjectId,
+        signFn: signFn
+      }, { expirationDate: expirationDate });
+      const apiKeys = await fetchAPIkeys(credential, captchaToken);
+      setState((prev) => {
+        return {
+          ...prev,
+          apiKeys: apiKeys
+        };
+      });
+    } catch (e: any) {
+      setState((prev) => {
+        return {
+          ...prev,
+          isError: true,
+          error: String(e),
+        };
+      });
+      setTimeout(() => setState(initState), 1000);
+    } finally {
+      setState((prev) => {
+        return { ...prev, isLoading: false };
+      });
+    }
   };
 
   const copy = async (text: string) => {

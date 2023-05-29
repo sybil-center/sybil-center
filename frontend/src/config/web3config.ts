@@ -1,5 +1,5 @@
 import { configureChains, createClient } from "wagmi";
-import { mainnet, polygon, celo } from "@wagmi/core/chains";
+import { celo, mainnet, polygon } from "@wagmi/core/chains";
 import { EthereumClient, w3mConnectors, w3mProvider } from "@web3modal/ethereum";
 import { appConfig } from "./app-config";
 

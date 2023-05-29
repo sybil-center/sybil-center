@@ -6,6 +6,7 @@ import * as a from "uvu/assert";
 import { ethereumSupport } from "../../support/chain/ethereum.js";
 import { APIKeys } from "@sybil-center/sdk/types";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
+import sinon from "sinon";
 
 const test = suite("INTEGRATION API: app key service test");
 
@@ -14,11 +15,17 @@ let app: App;
 test.before(async () => {
   const config = new URL("../../env-config/test.env", import.meta.url);
   configDotEnv({ path: config, override: true });
-
   app = await App.init();
+  const captchaService = app.context.resolve("captchaService");
+  sinon.stub(captchaService, "isHuman").resolves({
+    isHuman: true,
+    score: 0.9,
+    reasons: []
+  });
 });
 
 test.after(async () => {
+  sinon.restore();
   await app.close();
 });
 
@@ -42,7 +49,8 @@ test("should generate and verify app key and secret", async () => {
       "Referer": frontendDomain.href
     },
     payload: {
-      ...ethAccountVC
+      credential: ethAccountVC,
+      captchaToken: "test"
     }
   });
   a.is(
@@ -97,7 +105,8 @@ test("should not generate app keys because expiration date undefined", async () 
       "Referer": frontendDomain.href
     },
     payload: {
-      ...ethAccountVC
+      credential: ethAccountVC,
+      captchaToken: "test"
     }
   });
   a.is(resp.statusCode, 400, `${resp.body}`);
@@ -127,7 +136,8 @@ test("should not generate app keys because expiration date is too large", async 
       "Referer": frontendDomain.href
     },
     payload: {
-      ...ethAccountVC
+      credential: ethAccountVC,
+      captchaToken: "test"
     }
   });
   a.is(resp.statusCode, 400, `${resp.body}`);
@@ -153,7 +163,8 @@ test("should reject app keys generation because incorrect Referer header", async
       "Referer": "https://example.com"
     },
     payload: {
-      ...ethAccountVC
+      credential: ethAccountVC,
+      captchaToken: "test"
     }
   });
   a.is(resp.statusCode, 403, `${resp.body}`);

@@ -30,7 +30,25 @@ export class Config {
   readonly frontendOrigin: URL;
 
   /** Credential TTL (expiration date - issuing date) for generate API keys  */
-  readonly apiKeysCredentialTTL: number
+  readonly apiKeysCredentialTTL: number;
+
+  /** Google Cloud Project ID */
+  readonly gcProjectId: string;
+
+  /** Captcha site key */
+  readonly captchaSiteKey: string;
+
+  /** Captcha API KEY */
+  readonly captchaApiKey: string;
+
+  /** Configure is CAPTCHA required for application */
+  readonly captchaRequired: boolean;
+
+  /**
+   * Configure humanity validation CAPTCHA score (range from 0 to 1).
+   * The bigger "score", the greater the humanity
+   */
+  readonly captchaValidScore: number;
 
   constructor(envFilepath?: URL) {
     if (envFilepath) {
@@ -62,8 +80,14 @@ export class Config {
     this.twitterClientId = getStrOrThrow("TWITTER_CLIENT_ID");
     this.twitterClientSecret = getStrOrThrow("TWITTER_CLIENT_SECRET");
 
-    this.frontendOrigin = new URL(getStrOrThrow("FRONTEND_ORIGIN"))
-    this.apiKeysCredentialTTL = getNumOrThrow("API_KEYS_CREDENTIAL_TTL")
+    this.frontendOrigin = new URL(getStrOrThrow("FRONTEND_ORIGIN"));
+    this.apiKeysCredentialTTL = getNumOrThrow("API_KEYS_CREDENTIAL_TTL");
+
+    this.gcProjectId = getStrOrThrow("GC_PROJECT_ID");
+    this.captchaApiKey = getStrOrThrow("CAPTCHA_API_KEY");
+    this.captchaSiteKey = getStrOrThrow("CAPTCHA_SITE_KEY");
+    this.captchaRequired = getBoolOrElse("CAPTCHA_REQUIRED", false);
+    this.captchaValidScore = getCaptchaValidScore("CAPTCHA_VALID_SCORE", 0.7);
   }
 }
 
@@ -90,4 +114,20 @@ function getNumOrThrow(envVar: string): number {
 function getNumOrElse(envVar: string, defaultNum: number): number {
   const num = process.env[envVar];
   return num ? Number(num) : defaultNum;
+}
+
+function getBoolOrElse(envVar: string, defaultBool: boolean): boolean {
+  const variable = process.env[envVar];
+  if (!variable) return defaultBool;
+  if (variable === "false") return false;
+  return Boolean(variable);
+}
+
+function getCaptchaValidScore(envVar: string, defaultNum: number): number {
+  const num = process.env[envVar];
+  const score = num ? Number(num) : defaultNum;
+  if (score > 1 || score < 0) {
+    throw new Error(`ENV variable - ${envVar} has to bee less then 1 and greater then 0`);
+  }
+  return score;
 }
