@@ -6,6 +6,18 @@ export const generateAPIkeysRoute: Route = {
   method: ["POST"],
   url: generateAPIkeysEP(),
   schema: {
-    body: credentialSchema
+    body: {
+      type: "object",
+      required: [
+        "credential"
+      ],
+      properties: {
+        credential: credentialSchema,
+        captchaToken: {
+          type: "string",
+          nullable: true
+        }
+      }
+    }
   }
 }

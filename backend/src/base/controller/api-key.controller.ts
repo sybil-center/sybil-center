@@ -7,6 +7,11 @@ import { ClientError } from "../../backbone/errors.js";
 import { EthAccountVC } from "@sybil-center/sdk";
 import { Config } from "../../backbone/config.js";
 
+type ApiKeyReq = {
+  credential: Credential;
+  captchaToken?: string;
+}
+
 /** Controller for generating API KEYS */
 export function apiKeyController(
   fastify: FastifyInstance,
@@ -14,7 +19,7 @@ export function apiKeyController(
   config: Config,
 ): FastifyInstance {
 
-  fastify.route<{ Body: Credential }>({
+  fastify.route<{ Body: ApiKeyReq }>({
     method: generateAPIkeysRoute.method,
     url: generateAPIkeysRoute.url,
     schema: generateAPIkeysRoute.schema,
@@ -26,13 +31,20 @@ export function apiKeyController(
       if (refererDomain !== frontendDomain) {
         throw new ClientError("Forbidden", 403);
       }
-      const credential = req.body;
-      req.body = ThrowDecoder
+      const credential = req.body.credential;
+      req.body.credential = ThrowDecoder
         .decode(Credential, credential, new ClientError("Invalid credential"));
     },
     handler: async (req) => {
-      const credential = req.body as EthAccountVC;
-      return await apiKeyService.generate(credential);
+      const credential = req.body.credential as EthAccountVC;
+      const captchaToken = req.body.captchaToken;
+      if (config.captchaRequired && !captchaToken) {
+        throw new ClientError("CAPTCHA token required");
+      }
+      return await apiKeyService.generate({
+        credential: credential,
+        captchaToken: captchaToken
+      });
     }
   });
 

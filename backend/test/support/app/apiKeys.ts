@@ -11,7 +11,7 @@ export async function apiKeys(
   const expirationDate = new Date();
   expirationDate.setMinutes(expirationDate.getMinutes() + 3);
   const issuer = app.context.resolve("ethereumAccountIssuer");
-  const {sessionId, issueMessage} = await issuer.getChallenge({
+  const { sessionId, issueMessage } = await issuer.getChallenge({
     subjectId: didPkh,
     expirationDate: expirationDate
   });
@@ -20,6 +20,5 @@ export async function apiKeys(
     sessionId: sessionId,
     signature: signature,
   }) as EthAccountVC;
-  return await apiKeyService.generate(credential);;
-
+  return await apiKeyService.generate({ credential });
 }
