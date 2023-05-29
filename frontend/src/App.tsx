@@ -17,7 +17,6 @@ import { GitHubAccOwnerIssuer } from "./component/git-hub-account-ownership/git-
 import { DiscordAccOwnerIssuer } from "./component/discord-accoun-ownership/discord-acc-owner-issuer";
 import { DevPortal } from "./component/dev-portal/DevPortal";
 
-
 function App() {
   const currentIssuer = useAppSelector(state => state.issuer.currentIssuer);
 
@@ -37,37 +36,39 @@ function App() {
   const cls = useStyles();
 
   return (
-    <Routes>
-      <Route path={"/"}
-             element={
-               <>
-                 <WagmiConfig client={wagmiClient}>
-                   <Web3Modal projectId={appConfig.walletConnectProjectId} ethereumClient={web3modalClient}/>
-                   <Header title={"VC ISSUER"}
-                           logo={process.env.PUBLIC_URL + "/icon.png"}
-                           theme={{ backgroundColor: "#3D529C" }}/>
+    <>
+      <Routes>
+        <Route path={"/"}
+               element={
+                 <>
+                   <WagmiConfig client={wagmiClient}>
+                     <Web3Modal projectId={appConfig.walletConnectProjectId} ethereumClient={web3modalClient}/>
+                     <Header title={"VC ISSUER"}
+                             logo={process.env.PUBLIC_URL + "/icon.png"}
+                             theme={{ backgroundColor: "#3D529C" }}/>
 
-                   <div className={cls.app}>
-                     <div className={cls.app__container}>
-                       <div className={cls.app__sideBar}>
-                         <Sidebar title={"Credentials"}/>
+                     <div className={cls.app}>
+                       <div className={cls.app__container}>
+                         <div className={cls.app__sideBar}>
+                           <Sidebar title={"Credentials"}/>
+                         </div>
+
+                         <div className={cls.app__content}>
+                           <Content>
+                             {toIssuerComponent(currentIssuer)}
+                           </Content>
+                         </div>
+
                        </div>
-
-                       <div className={cls.app__content}>
-                         <Content>
-                           {toIssuerComponent(currentIssuer)}
-                         </Content>
-                       </div>
-
                      </div>
-                   </div>
-                 </WagmiConfig>
-               </>
-             }
-      />
-      <Route path={"/popul"} element={<Popul/>}/>
-      <Route path={"/devportal"} element={<DevPortal/>}/>
-    </Routes>
+                   </WagmiConfig>
+                 </>
+               }
+        />
+        <Route path={"/popul"} element={<Popul/>}/>
+        <Route path={"/devportal"} element={<DevPortal/>}/>
+      </Routes>
+    </>
   );
 }
 
