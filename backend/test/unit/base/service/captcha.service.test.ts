@@ -1,19 +1,17 @@
 import { suite } from "uvu";
 import * as a from "uvu/assert";
-import { createInjector } from "typed-inject";
 import { Logger } from "../../../../src/backbone/logger.js";
-import { Config } from "../../../../src/backbone/config.js";
 import { CaptchaService } from "../../../../src/base/service/captcha.service.js";
 import sinon from "sinon";
 
 const test = suite("UNIT: captcha service tests");
 
-const context = createInjector()
-  .provideClass("logger", Logger)
-  .provideClass("config", Config)
-  .provideClass("captchaService", CaptchaService);
-
-const captchaService = context.resolve("captchaService");
+const logger = new Logger();
+const captchaService = new CaptchaService({
+  gcProjectId: "test",
+  captchaApiKey: "test",
+  captchaSiteKey: "test"
+}, logger);
 
 const action = "auth";
 
@@ -58,11 +56,11 @@ test("should detect robot", async () => {
 test("should throw error because action is not match", async () => {
   // @ts-ignore
   sinon.stub(captchaService, "getAssessment").resolves(humanAssessment);
-  let thrown = false
+  let thrown = false;
   try {
     await captchaService.isHuman("test", "incorrect action");
   } catch (e) {
-    thrown = true
+    thrown = true;
   }
   a.is(thrown, true, "captchaService.isHuman method has to throw error");
   sinon.restore();
