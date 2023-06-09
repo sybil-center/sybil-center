@@ -90,6 +90,7 @@ importers:
       '@testing-library/react': ^13.4.0
       '@testing-library/user-event': ^13.5.0
       '@types/jest': ^27.5.2
+      '@types/moment-timezone': ^0.5.30
       '@types/node': ^16.18.11
       '@types/react': ^18.0.26
       '@types/react-dom': ^18.0.10
@@ -103,8 +104,10 @@ importers:
       dotenv: ^16.0.3
       ethers: ^5.7.2
       key-did-resolver: ^2.3.0
+      moment: ^2.29.4
       prettier: ^2.8.3
       react: ^18.2.0
+      react-datetime: ^3.1.1
       react-dom: ^18.2.0
       react-google-recaptcha-v3: ^1.10.1
       react-jss: ^10.9.2
@@ -126,6 +129,7 @@ importers:
       '@testing-library/react': 13.4.0_biqbaboplfbrettd7655fr4n2y
       '@testing-library/user-event': 13.5.0
       '@types/jest': 27.5.2
+      '@types/moment-timezone': 0.5.30
       '@types/node': 16.18.23
       '@types/react': 18.0.31
       '@types/react-dom': 18.0.11
@@ -138,7 +142,9 @@ importers:
       dids: 4.0.0
       ethers: 5.7.2
       key-did-resolver: 2.3.0
+      moment: 2.29.4
       react: 18.2.0
+      react-datetime: 3.1.1_moment@2.29.4+react@18.2.0
       react-dom: 18.2.0_react@18.2.0
       react-google-recaptcha-v3: 1.10.1_biqbaboplfbrettd7655fr4n2y
       react-jss: 10.10.0_react@18.2.0
@@ -3549,6 +3555,13 @@ packages:
 
   /@types/mime/3.0.1:
     resolution: {integrity: sha512-Y4XFY5VJAuw0FgAqPNd6NNoV44jbq9Bz2L7Rh/J6jLTiHBSBJa9fxqQIvkIld4GsoDOcCbvzOUAbLPsSKKg+uA==}
+    dev: false
+
+  /@types/moment-timezone/0.5.30:
+    resolution: {integrity: sha512-aDVfCsjYnAQaV/E9Qc24C5Njx1CoDjXsEgkxtp9NyXDpYu4CCbmclb6QhWloS9UTU/8YROUEEdEkWI0D7DxnKg==}
+    deprecated: This is a stub types definition. moment-timezone provides its own type definitions, so you do not need this installed.
+    dependencies:
+      moment-timezone: 0.5.43
     dev: false
 
   /@types/node/12.20.55:
@@ -10076,6 +10089,16 @@ packages:
       yargs-unparser: 2.0.0
     dev: false
 
+  /moment-timezone/0.5.43:
+    resolution: {integrity: sha512-72j3aNyuIsDxdF1i7CEgV2FfxM1r6aaqJyLB2vwb33mXYyoyLly+F1zbWqhA3/bVIoJ4szlUoMbUnVdid32NUQ==}
+    dependencies:
+      moment: 2.29.4
+    dev: false
+
+  /moment/2.29.4:
+    resolution: {integrity: sha512-5LC9SOxjSc2HF6vO2CyuTDNivEdoz2IvyJJGj6X8DJ0eFyfszE0QiEd+iXmBvUP3WHxSjFH/vIsA0EN00cgr8w==}
+    dev: false
+
   /motion/10.15.5:
     resolution: {integrity: sha512-ejP6KioN4pigTGxL93APzOnvtLklParL59UQB2T3HWXQBxFcIp5/7YXFmkgiA6pNKKzjvnLhnonRBN5iSFMnNw==}
     dependencies:
@@ -11695,6 +11718,17 @@ packages:
       raf: 3.4.1
       regenerator-runtime: 0.13.11
       whatwg-fetch: 3.6.2
+    dev: false
+
+  /react-datetime/3.1.1_moment@2.29.4+react@18.2.0:
+    resolution: {integrity: sha512-gHCTjAniCcMb6jdXpz+MpVe/uCeaHNDOofg+l41nLlJI3uBLBMV40CQbGB2TCTUpCzGT1mCs4vQzKGMjXO/WWQ==}
+    peerDependencies:
+      moment: ^2.16.0
+      react: ^16.5.0 || ^17.0.0
+    dependencies:
+      moment: 2.29.4
+      prop-types: 15.8.1
+      react: 18.2.0
     dev: false
 
   /react-dev-utils/12.0.1_ejmzrgarqxnh7hvgzebfqcrvju:

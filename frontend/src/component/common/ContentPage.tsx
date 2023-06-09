@@ -5,11 +5,19 @@ import { green, whiteGreyBG } from "../../styles/colors";
 type ContentPageProps = {
   verifier?: boolean;
   address?: string;
+  theme?: Theme;
   children: ReactNode;
 }
 
+type Theme = {
+  width?: string;
+  maxWidth?: string;
+  minWidth?: string;
+  height?: string;
+}
+
 export function ContentPage(props: ContentPageProps) {
-  const cls = useStyles();
+  const cls = useStyles({theme: props.theme });
   let shortAddress: string | undefined
   if (props.address) {
     const length = props.address.length;
@@ -41,7 +49,7 @@ export function ContentPage(props: ContentPageProps) {
   );
 }
 
-const useStyles = createUseStyles({
+const useStyles = createUseStyles((theme?: Theme) => ({
   verifier: {
     position: "absolute",
     left: "50%",
@@ -70,10 +78,12 @@ const useStyles = createUseStyles({
   },
   contentPage: {
     backgroundColor: whiteGreyBG,
-    width: "670px",
-    height: "700px",
+    maxWidth: theme?.maxWidth ? theme.maxWidth : "",
+    width: theme?.width ? theme.width :  "",
+    height: theme?.height ? theme.height : "700px",
+    minWidth: theme?.minWidth ? theme.minWidth : "",
     borderRadius: "8px",
     filter: "drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25))",
     position: "relative"
   },
-});
+}));

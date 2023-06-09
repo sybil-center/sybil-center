@@ -8,7 +8,7 @@ export function Navigation() {
   const cls = useStyles();
   const currentPath = window.location.pathname;
   const isDevPortal = currentPath === "/devportal";
-  const isCredentials = currentPath === "/";
+  const isCredentials = currentPath === "/credentials";
 
   const devPortalClass = isDevPortal
     ? cn(cls.navigation_link, cls.accent)
@@ -33,13 +33,13 @@ export function Navigation() {
                 </div>
               </a>
             </li>
-            {/*<li>*/}
-            {/*  <a href={`${process.env.PUBLIC_URL}/`}>*/}
-            {/*    <div className={credentialsClass}>*/}
-            {/*      Credentials*/}
-            {/*    </div>*/}
-            {/*  </a>*/}
-            {/*</li>*/}
+            <li>
+              <a href={`${process.env.PUBLIC_URL}/demo`}>
+                <div className={credentialsClass}>
+                  Credentials
+                </div>
+              </a>
+            </li>
           </ul>
         </div>
       </div>
