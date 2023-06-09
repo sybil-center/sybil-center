@@ -217,7 +217,11 @@ export function Issuer<K extends keyof CredentialKinds>(props: Props<K>) {
   };
 
   return (
-    <ContentPage address={address} theme={{ maxWidth: "auto", minWidth: "400px" }}>
+    <ContentPage
+      address={address}
+      theme={{ maxWidth: "auto", minWidth: "400px" }}
+      verifier={true}
+    >
       {render()}
     </ContentPage>
   );

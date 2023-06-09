@@ -87,9 +87,10 @@ export function SetCustomModal<K extends keyof CredentialKinds>({
             {renderIsValidText()}
           </div>
           <div className={cls.place}>
-            <textarea className={cls.textarea}
-                      defaultValue={JSON.stringify(options.custom, null, 1)}
-                      onChange={(e) => handleChange(e)}
+            <textarea
+              className={cls.textarea}
+              defaultValue={JSON.stringify(options.custom, null, 1)}
+              onChange={(e) => handleChange(e)}
             />
           </div>
         </div>
