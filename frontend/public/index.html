@@ -5,9 +5,40 @@
     <link rel="icon" href="%PUBLIC_URL%/icon.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>Sybil</title>
+    <style>
+      input {
+        display: inline-block;
+        width: 100%;
+        padding: 0;
+        height: 100%;
+        border: none;
+        text-align: inherit;
+        cursor: inherit;
+        font-size: 15px;
+      }
+      html::-webkit-scrollbar {
+        width: 0.7vw;
+      }
+      html::-webkit-scrollbar-thumb {
+        background-color: #D9D9D9;
+      }
+      textarea::-webkit-scrollbar {
+        width: 8px;
+      }
+      textarea::-webkit-scrollbar-thumb {
+        background-color: #D9D9D9;
+      }
+      div::-webkit-scrollbar {
+        width: 8px;
+      }
+      div::-webkit-scrollbar-thumb {
+        background-color: #D9D9D9;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
-
+    <div id="show-credential-modal"></div>
+    <div id="set-custom-modal"></div>
   </body>
 </html>

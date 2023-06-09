@@ -1,4 +1,4 @@
-import React from "react";
+import { ReactNode } from "react";
 import { appConfig } from "./config/app-config";
 import { Header } from "./component/common/Header";
 import { createUseStyles } from "react-jss";
@@ -16,11 +16,12 @@ import { Popul } from "./component/common/Popul";
 import { GitHubAccOwnerIssuer } from "./component/git-hub-account-ownership/git-hub-acc-owner-issuer";
 import { DiscordAccOwnerIssuer } from "./component/discord-accoun-ownership/discord-acc-owner-issuer";
 import { DevPortal } from "./component/dev-portal/DevPortal";
+import { CredentialsPage } from "./component/credentials/CredentialsPage";
 
 function App() {
   const currentIssuer = useAppSelector(state => state.issuer.currentIssuer);
 
-  const toIssuerComponent = (issuerType: IssuerType): React.ReactNode => {
+  const toIssuerComponent = (issuerType: IssuerType): ReactNode => {
     switch (issuerType) {
       case "ETH_ACCOUNT_OWNERSHIP":
         return <EthAccOwnerIssuer/>;
@@ -37,12 +38,13 @@ function App() {
 
   return (
     <>
-      <Routes>
-        <Route path={"/"}
-               element={
-                 <>
-                   <WagmiConfig client={wagmiClient}>
-                     <Web3Modal projectId={appConfig.walletConnectProjectId} ethereumClient={web3modalClient}/>
+      <WagmiConfig client={wagmiClient}>
+        <Web3Modal projectId={appConfig.walletConnectProjectId} ethereumClient={web3modalClient}/>
+        <Routes>
+          <Route path={"/"}
+                 element={
+                   <>
+
                      <Header title={"VC ISSUER"}
                              logo={process.env.PUBLIC_URL + "/icon.png"}
                              theme={{ backgroundColor: "#3D529C" }}/>
@@ -61,13 +63,15 @@ function App() {
 
                        </div>
                      </div>
-                   </WagmiConfig>
-                 </>
-               }
-        />
-        <Route path={"/popul"} element={<Popul/>}/>
-        <Route path={"/devportal"} element={<DevPortal/>}/>
-      </Routes>
+                   </>
+                 }
+          />
+          <Route path={"/popul"} element={<Popul/>}/>
+          <Route path={"/devportal"} element={<DevPortal/>}/>
+          <Route path={"/credentials"} element={<CredentialsPage/>}/>
+        </Routes>
+      </WagmiConfig>
+
     </>
   );
 }
