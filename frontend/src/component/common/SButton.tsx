@@ -11,7 +11,7 @@ type Theme = {
 type Props = {
   theme?: Theme;
   text: string;
-  onClick?: MouseEventHandler<HTMLDivElement>
+  onClick?: MouseEventHandler<HTMLDivElement>;
 }
 
 export function SButton(props: Props) {
