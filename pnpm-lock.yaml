@@ -104,6 +104,7 @@ importers:
       dotenv: ^16.0.3
       ethers: ^5.7.2
       key-did-resolver: ^2.3.0
+      lottie-react: ^2.4.0
       moment: ^2.29.4
       prettier: ^2.8.3
       react: ^18.2.0
@@ -142,6 +143,7 @@ importers:
       dids: 4.0.0
       ethers: 5.7.2
       key-did-resolver: 2.3.0
+      lottie-react: 2.4.0_biqbaboplfbrettd7655fr4n2y
       moment: 2.29.4
       react: 18.2.0
       react-datetime: 3.1.1_moment@2.29.4+react@18.2.0
@@ -9863,6 +9865,21 @@ packages:
     hasBin: true
     dependencies:
       js-tokens: 4.0.0
+    dev: false
+
+  /lottie-react/2.4.0_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-pDJGj+AQlnlyHvOHFK7vLdsDcvbuqvwPZdMlJ360wrzGFurXeKPr8SiRCjLf3LrNYKANQtSsh5dz9UYQHuqx4w==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      lottie-web: 5.12.0
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+    dev: false
+
+  /lottie-web/5.12.0:
+    resolution: {integrity: sha512-tt2oiv0EmXC8J/RF877dVCo93vZBBnww+SO6dldREgHD8EsP97jQ42JRryIRfY+6aVESQsHYNEAYgH25cBFy7A==}
     dev: false
 
   /loupe/2.3.6:

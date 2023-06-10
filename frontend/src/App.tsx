@@ -17,6 +17,7 @@ import { GitHubAccOwnerIssuer } from "./component/git-hub-account-ownership/git-
 import { DiscordAccOwnerIssuer } from "./component/discord-accoun-ownership/discord-acc-owner-issuer";
 import { DevPortal } from "./component/dev-portal/DevPortal";
 import { CredentialsPage } from "./component/credentials/CredentialsPage";
+import { HomePage } from "./component/home/HomePage";
 
 function App() {
   const currentIssuer = useAppSelector(state => state.issuer.currentIssuer);
@@ -41,31 +42,7 @@ function App() {
       <WagmiConfig client={wagmiClient}>
         <Web3Modal projectId={appConfig.walletConnectProjectId} ethereumClient={web3modalClient}/>
         <Routes>
-          <Route path={"/"}
-                 element={
-                   <>
-
-                     <Header title={"VC ISSUER"}
-                             logo={process.env.PUBLIC_URL + "/icon.png"}
-                             theme={{ backgroundColor: "#3D529C" }}/>
-
-                     <div className={cls.app}>
-                       <div className={cls.app__container}>
-                         <div className={cls.app__sideBar}>
-                           <Sidebar title={"Credentials"}/>
-                         </div>
-
-                         <div className={cls.app__content}>
-                           <Content>
-                             {toIssuerComponent(currentIssuer)}
-                           </Content>
-                         </div>
-
-                       </div>
-                     </div>
-                   </>
-                 }
-          />
+          <Route path={"/"} element={<HomePage/>}/>
           <Route path={"/popul"} element={<Popul/>}/>
           <Route path={"/devportal"} element={<DevPortal/>}/>
           <Route path={"/credentials"} element={<CredentialsPage/>}/>
