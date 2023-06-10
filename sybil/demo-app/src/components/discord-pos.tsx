@@ -3,7 +3,7 @@ import { DiscordAccountVC, SolanaProofProvider, SolanaProvider, Sybil } from "@s
 import styles from "@/styles/twitter-pos.module.css";
 
 export const sybil = new Sybil(
-  { apiKey: "get API keys from Dev Portal" },
+  { apiKey: "get API keys from Dev Portal - https://app.sybil.center/devportal" },
 );
 
 export function DiscordPos() {

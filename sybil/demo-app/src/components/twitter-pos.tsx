@@ -3,7 +3,7 @@ import styles from "@/styles/twitter-pos.module.css";
 import { TwitterAccountVC, EthProofProvider, type IEIP1193Provider, Sybil } from "@sybil-center/sdk";
 
 export const sybil = new Sybil(
-  { apiKey: "get API keys from Dev Portal" });
+  { apiKey: "get API keys from Dev Portal - https://app.sybil.center/devportal" });
 
 export function TwitterPos() {
   const [state, setState] = useState<{
