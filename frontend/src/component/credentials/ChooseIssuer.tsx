@@ -11,7 +11,11 @@ export function ChooseIssuer() {
   const { address } = useAccount();
   const cls = useStyles();
   return (
-    <ContentPage address={address} theme={{ maxWidth: "auto", minWidth: "400px" }}>
+    <ContentPage
+      address={address}
+      theme={{ maxWidth: "auto", minWidth: "400px" }}
+      verifier={true}
+    >
       <div className={cls.title}>
         <img
           className={cls.title_img}
