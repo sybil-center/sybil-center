@@ -6,12 +6,17 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "npx tsm ./src/main.ts",
-    "test": "tsc -p tsconfig.json --noEmit && npm run test-other && npm run test-unit && npm run test-integration",
+    "test": "tsc -p tsconfig.json --noEmit && npm run test-other && npm run test-unit && npm run test-integraiton-no-db",
+    "test-all": "tsc -p tsconfig.json --noEmit && npm run test-other && npm run test-unit && npm run test-integration",
     "test:watch": "./node_modules/.bin/watchlist src test --eager -- npm run test",
     "test-on-win": "set NODE_ENV=test && npx tsm ./node_modules/uvu/bin.js ./test",
     "test-other": "echo OTHER-TESTS && NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test/other",
     "test-unit": "echo UNIT-TESTS && NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test/unit",
-    "test-integration": "echo INTEGRATION-TESTS && NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test/integration"
+    "test-integration": "echo INTEGRATION-TESTS-ALL && NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test/integration",
+    "test-integraiton-no-db": "echo INTEGRATION-TESTS-NO-DB && npm run test-integration-api && npm run test-integration-internal",
+    "test-integration-api": "echo INTEGRATION-API-TESTs && NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test/integration/API",
+    "test-integration-internal": "echo INTEGRATION-INTERNAL-TESTS && NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test/integration/internal",
+    "test-integration-db": "echo INTEGRATION-DB-TESTS && NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test/integration/DB"
   },
   "keywords": [],
   "type": "module",

@@ -1,11 +1,11 @@
 import { suite } from "uvu";
 import * as a from "uvu/assert";
-import { getPayload, toJWS } from "../../../../src/util/jwt.util.js";
+import { getPayload, toJWS } from "../../../../../src/util/jwt.util.js";
 import sortKeys from "sort-keys";
-import { DIDService } from "../../../../src/base/service/did.service.js";
+import { DIDService } from "../../../../../src/base/service/did.service.js";
 import { createInjector } from "typed-inject";
-import { Config } from "../../../../src/backbone/config.js";
-import { Logger } from "../../../../src/backbone/logger.js";
+import { Config } from "../../../../../src/backbone/config.js";
+import { Logger } from "../../../../../src/backbone/logger.js";
 
 const test = suite("INTEGRATION: did service test");
 
@@ -21,7 +21,7 @@ const ordered = sortKeys(unordered, { deep: true });
  * Therefore, you MUST order VC when issue it
  */
 test("should order payload from jws", async () => {
-  const pathToConfig = new URL("../env-config/test.env", import.meta.url);
+  const pathToConfig = new URL("../../../../env-config/test.env", import.meta.url);
 
   const didService = createInjector()
     .provideValue("config", new Config(pathToConfig))

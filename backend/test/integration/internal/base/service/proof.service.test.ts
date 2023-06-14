@@ -1,15 +1,15 @@
 import { suite } from "uvu";
 import * as a from "uvu/assert";
-import { ProofService } from "../../../../src/base/service/proof.service.js";
+import { ProofService } from "../../../../../src/base/service/proof.service.js";
 import { Credential } from "@sybil-center/sdk/types";
 import sortKeys from "sort-keys";
 import { createInjector, Injector } from "typed-inject";
-import { Config } from "../../../../src/backbone/config.js";
-import { DIDService } from "../../../../src/base/service/did.service.js";
+import { Config } from "../../../../../src/backbone/config.js";
+import { DIDService } from "../../../../../src/base/service/did.service.js";
 
 const test = suite("INTEGRATION: proofService test");
 
-const PATH_TO_CONFIG = new URL("../env-config/test.env", import.meta.url);
+const PATH_TO_CONFIG = new URL("../../../../env-config/test.env", import.meta.url);
 let injector: Injector<{ didService: DIDService; proofService: ProofService }>;
 
 test.before(async () => {
