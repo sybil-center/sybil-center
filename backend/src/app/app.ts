@@ -67,24 +67,16 @@ export class App {
       .provideClass("discordAccountIssuer", DiscordAccountIssuer)
 
       .provideClass("issuerContainer", IssuerContainer);
-    const httpServer = app.context.resolve("httpServer");
-    const issuerContainer = app.context.resolve("issuerContainer");
-    const config = app.context.resolve("config");
-    const verifier = app.context.resolve("credentialVerifier");
-    const apiKeyService = app.context.resolve("apiKeyService");
-    await httpServer.register();
-    credentialController(
-      httpServer.fastify,
-      issuerContainer,
-      config,
-      verifier,
-      apiKeyService
-    );
-    oauthPageController(httpServer.fastify);
-    apiKeyController(httpServer.fastify, apiKeyService, config);
-    configController(httpServer.fastify, config);
-    const didService = app.context.resolve("didService");
-    await didService.init();
+
+    await app.context.resolve("httpServer").register();
+
+    // Controllers
+    credentialController(app.context);
+    oauthPageController(app.context);
+    apiKeyController(app.context);
+    configController(app.context);
+
+    await app.context.resolve("didService").init();
     return app;
   }
 

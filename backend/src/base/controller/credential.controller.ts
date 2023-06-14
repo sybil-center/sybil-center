@@ -1,5 +1,5 @@
 import type { IssuerContainer } from "../service/issuer-container.js";
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { FastifyRequest } from "fastify";
 import type { OAuthQueryCallBack } from "../service/credentials.js";
 import { genVCRotes, verifyCredentialRoute } from "./routes/credential.route.js";
 import { vcOAuthCallback } from "./routes/callback.route.js";
@@ -13,6 +13,9 @@ import { Credential } from "../types/credential.js";
 import { CredentialVerifier } from "../service/credential-verifivator.js";
 import { Config } from "../../backbone/config.js";
 import { ApiKeyService } from "../service/api-key.service.js";
+import { HttpServer } from "../../backbone/http-server.js";
+import { Injector } from "typed-inject";
+import { toContext } from "../../util/context.util.js";
 
 function validateCustomSize(custom: object, sizeLimit: number): void {
   const customSize = new Uint8Array(Buffer.from(JSON.stringify(custom))).length;
@@ -22,14 +25,33 @@ function validateCustomSize(custom: object, sizeLimit: number): void {
   );
 }
 
-export function credentialController(
-  fastify: FastifyInstance,
-  issuerContainer: IssuerContainer,
-  config: Config,
-  verifier: CredentialVerifier,
-  apiKeyService: ApiKeyService
-): FastifyInstance {
+type Dependencies = {
+  httpServer: HttpServer;
+  issuerContainer: IssuerContainer;
+  config: Config;
+  credentialVerifier: CredentialVerifier;
+  apiKeyService: ApiKeyService;
+}
 
+const tokens: (keyof Dependencies)[] = [
+  "httpServer",
+  "issuerContainer",
+  "config",
+  "credentialVerifier",
+  "apiKeyService"
+];
+
+export function credentialController(
+  injector: Injector<Dependencies>,
+): void {
+  const {
+    config,
+    credentialVerifier: verifier,
+    issuerContainer,
+    apiKeyService,
+    httpServer
+  } = toContext(tokens, injector);
+  const fastify = httpServer.fastify;
   const isFrontend = async (req: FastifyRequest): Promise<boolean> => {
     try {
       const frontendDomain = config.frontendOrigin.origin;
@@ -150,8 +172,6 @@ export function credentialController(
       return await verifier.verify(req.body);
     }
   });
-
-  return fastify;
 }
 
 

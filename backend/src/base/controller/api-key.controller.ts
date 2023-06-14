@@ -1,4 +1,3 @@
-import { FastifyInstance } from "fastify";
 import { ApiKeyService } from "../service/api-key.service.js";
 import { Credential } from "../types/credential.js";
 import { generateAPIkeysRoute } from "./routes/api-key.route.js";
@@ -6,18 +5,30 @@ import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 import { ClientError } from "../../backbone/errors.js";
 import { EthAccountVC } from "@sybil-center/sdk";
 import { Config } from "../../backbone/config.js";
+import { Injector } from "typed-inject";
+import { HttpServer } from "../../backbone/http-server.js";
+import { toContext } from "../../util/context.util.js";
 
 type ApiKeyReq = {
   credential: Credential;
   captchaToken?: string;
 }
 
+type Dependencies = {
+  httpServer: HttpServer;
+  apiKeyService: ApiKeyService;
+  config: Config;
+}
+
+const tokens: (keyof Dependencies)[] = [
+  "httpServer",
+  "apiKeyService",
+  "config"
+];
+
 /** Controller for generating API KEYS */
-export function apiKeyController(
-  fastify: FastifyInstance,
-  apiKeyService: ApiKeyService,
-  config: Config,
-): FastifyInstance {
+export function apiKeyController(injector: Injector<Dependencies>): void {
+  const { httpServer: { fastify }, apiKeyService, config } = toContext(tokens, injector);
 
   fastify.route<{ Body: ApiKeyReq }>({
     method: generateAPIkeysRoute.method,
@@ -47,6 +58,4 @@ export function apiKeyController(
       });
     }
   });
-
-  return fastify;
 }
