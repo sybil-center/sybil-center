@@ -50,6 +50,7 @@
     "io-ts": "^2.2.20",
     "key-did-provider-ed25519": "^3.0.0",
     "key-did-resolver": "^3.0.0",
+    "mongodb": "^5.6.0",
     "pino": "^8.10.0",
     "pino-pretty": "^9.3.0",
     "sort-keys": "^5.0.0",
