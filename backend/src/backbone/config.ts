@@ -50,6 +50,11 @@ export class Config {
    */
   readonly captchaValidScore: number;
 
+  /** Database connection URL, include username and password */
+  readonly dbURL: string;
+  /** Database name */
+  readonly dbName: string;
+
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -88,6 +93,9 @@ export class Config {
     this.captchaSiteKey = getStrOrThrow("CAPTCHA_SITE_KEY");
     this.captchaRequired = getBoolOrElse("CAPTCHA_REQUIRED", false);
     this.captchaValidScore = getCaptchaValidScore("CAPTCHA_VALID_SCORE", 0.7);
+
+    this.dbURL = getStrOrThrow("DB_URL");
+    this.dbName = getStrOrThrow("DB_NAME");
   }
 }
 
