@@ -15,5 +15,11 @@ export function generateAPIkeysEP(): string {
 /** Returns regexp '^(<prefix1>:.+|<prefix2>:.+| ... | <prefixN>:.+)' */
 export function subjectIdRegExp(prefixes: Prefix[]): string {
   const prefixRegexp = prefixes.map((prefix) => `${prefix}:.+`);
-  return `^(${prefixRegexp.join("|")})`
+  return `^(${prefixRegexp.join("|")})`;
 }
+
+export const selfLoginClientEP = "/api/v1/clients/self/login";
+export const selfIsLoggedInClientEP = "/api/v1/clients/self/is-loggedin";
+export const selfLogoutClientEP = "/api/v1/clients/self/logout";
+export const selfUpdateClientEP = "/api/v1/clients/self/update";
+export const selfFindClientEP = "/api/v1/clients/self";
