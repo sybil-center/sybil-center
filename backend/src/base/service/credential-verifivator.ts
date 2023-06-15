@@ -16,7 +16,9 @@ export class CredentialVerifier {
   ) {}
 
   async verify(credential: Credential): Promise<VerifyResult> {
-    if (credential.issuer.id !== this.didService.id) return { isVerified: false };
+    if (credential.issuer.id !== this.didService.id) return {
+      isVerified: false,
+    };
     const isExpired = credential.expirationDate
       ? (new Date().getTime() >= credential.expirationDate.getTime())
       : false;

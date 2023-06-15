@@ -4,6 +4,7 @@ import { Disposable, tokens } from "typed-inject";
 import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
+import cookie from "@fastify/cookie";
 import fastifyStatic from "@fastify/static";
 import { ClientError, ServerError } from "./errors.js";
 import type { Config } from "./config.js";
@@ -34,6 +35,8 @@ export class HttpServer implements Disposable {
   async register(): Promise<void> {
     // register fastify cors
     this.fastify.register(cors, { origin: "*" });
+
+    this.fastify.register(cookie, {});
 
     // register swagger
     await this.fastify.register(swagger, {

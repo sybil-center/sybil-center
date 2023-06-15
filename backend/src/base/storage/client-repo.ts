@@ -9,6 +9,8 @@ export type ClientEntity = {
   customSchemas: { [key: string]: any }[];
 }
 
+export type ClientUpdate = Partial<Omit<ClientEntity, "accountId">>;
+
 export type ClientFindFilter = {
   /** according to {@link https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md} */
   accountId: string;
@@ -111,7 +113,8 @@ export class ClientRepo implements IClientRepo, Disposable {
         { accountId: accountId },
         {
           $set: {
-            ...props
+            restrictionURIs: props.restrictionURIs,
+            customSchemas: props.customSchemas
           }
         }
       );

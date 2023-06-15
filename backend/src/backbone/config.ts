@@ -57,6 +57,10 @@ export class Config {
 
   /** Secret for create JWT */
   readonly jwtSecret: string;
+
+  /** Client custom schema size limit */
+  readonly customSchemaSizeLimit: number;
+
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -100,6 +104,8 @@ export class Config {
     this.dbName = getStrOrThrow("DB_NAME");
 
     this.jwtSecret = getStrOrThrow("JWT_SECRET");
+
+    this.customSchemaSizeLimit = getNumOrElse("CUSTOM_SCHEMA_SIZE_LIMIT", 51200);
   }
 }
 

@@ -3,10 +3,11 @@ import { hash as sha256 } from "@stablelib/sha256";
 import * as u8a from "uint8arrays";
 import crypto from "node:crypto";
 import { ClientError } from "../../backbone/errors.js";
-import { CredentialType, EthAccountVC } from "@sybil-center/sdk";
+import { EthAccountVC } from "@sybil-center/sdk";
 import { APIKeys } from "@sybil-center/sdk/types";
 import { CredentialVerifier } from "./credential-verifivator.js";
 import { ICaptchaService } from "./captcha.service.js";
+import { credentialUtil } from "../../util/credential.utils.js";
 
 /** Result of verifying key */
 export type KeyVerifyResult = {
@@ -71,9 +72,9 @@ export class ApiKeyService {
     const { isVerified } = await this.verifier.verify(credential);
     if (!isVerified) throw new ClientError("Credential is not verified");
     const { chainId, address } = credential.credentialSubject.ethereum;
-    const forKeys = `${chainId}:${address}`;
-    const apikeySign = this.#signAES(forKeys, "apikey");
-    const secretkeySign = this.#signAES(forKeys, "secretkey");
+    const accountId = `${chainId}:${address}`;
+    const apikeySign = this.#signAES(accountId, "apikey");
+    const secretkeySign = this.#signAES(accountId, "secretkey");
     return {
       apiKey: `ak_${apikeySign}`,
       secretKey: `sk_${secretkeySign}`
@@ -85,25 +86,18 @@ export class ApiKeyService {
     // set "auth" when invoke captcha request on frontend
     const isHumanResult = await this.captchaService.isHuman(captchaToken, "auth");
     if (!isHumanResult.isHuman) {
-      throw new ClientError("Non human actions are detected")
+      throw new ClientError("Non human actions was detected")
     }
   }
 
   /** Validate credential properties before API KEYS generating */
   #validateCredential(credential: EthAccountVC) {
-    const ethAccountVCType: CredentialType = "EthereumAccount";
-    if (credential.type[1] !== ethAccountVCType) {
-      throw new ClientError(`Credential must have '${ethAccountVCType}' type`);
-    }
-    const ttlRange = this.config.apiKeysCredentialTTL;
-    const expirationDate = credential.expirationDate?.getTime();
-    const issuanceDate = credential.issuanceDate.getTime();
-    if (!expirationDate) {
-      throw new ClientError(`Credential must has 'expirationDate'`);
-    }
-    if (expirationDate - issuanceDate > ttlRange) {
-      throw new ClientError(`Credential TTL must be less then ${ttlRange} MS`);
-    }
+    const { valid, reason} = credentialUtil.validate(credential, {
+      type: "EthereumAccount",
+      reqExpDate: true,
+      ttlRange: this.config.apiKeysCredentialTTL
+    });
+    if (!valid) throw new ClientError(reason!)
   }
 
   /** Verify API KEY, returns object with key and 'is secret' flag */

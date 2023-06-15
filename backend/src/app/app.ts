@@ -18,6 +18,10 @@ import { apiKeyController } from "../base/controller/api-key.controller.js";
 import { CaptchaService, ICaptchaService } from "../base/service/captcha.service.js";
 import { configController } from "../base/controller/config.controller.js";
 import { IJwtService, JwtService } from "../base/service/jwt.service.js";
+import { clientController } from "../base/controller/client.controller.js";
+import { ClientService, type IClientService } from "../base/service/client.service.js";
+import { MongoDB } from "../base/storage/mongo-db.js";
+import { ClientRepo, IClientRepo } from "../base/storage/client-repo.js";
 
 type DI = {
   logger: ILogger;
@@ -33,6 +37,10 @@ type DI = {
   credentialVerifier: CredentialVerifier;
   apiKeyService: ApiKeyService;
   captchaService: ICaptchaService;
+  jwtService: IJwtService;
+  mongoDB: MongoDB;
+  clientRepo: IClientRepo;
+  clientService: IClientService;
 };
 
 export class App {
@@ -61,6 +69,9 @@ export class App {
       .provideClass("captchaService", CaptchaService)
       .provideClass("apiKeyService", ApiKeyService)
       .provideClass("jwtService", JwtService)
+      .provideClass("mongoDB", MongoDB)
+      .provideClass("clientRepo", ClientRepo)
+      .provideClass("clientService", ClientService)
 
       // Issuers
       .provideClass("ethereumAccountIssuer", EthereumAccountIssuer)
@@ -77,6 +88,7 @@ export class App {
     oauthPageController(app.context);
     apiKeyController(app.context);
     configController(app.context);
+    clientController(app.context);
 
     await app.context.resolve("didService").init();
     return app;
