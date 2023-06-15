@@ -23,6 +23,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^18.11.10",
     "@types/sinon": "^10.0.13",
     "prettier": "^2.8.3",
@@ -33,6 +34,7 @@
     "watchlist": "^0.3.1"
   },
   "dependencies": {
+    "@fastify/cookie": "^8.3.0",
     "@fastify/cors": "^8.2.0",
     "@fastify/static": "^6.9.0",
     "@fastify/swagger": "^8.3.0",
@@ -53,6 +55,7 @@
     "fastify-cors": "^6.1.0",
     "fp-ts": "^2.13.1",
     "io-ts": "^2.2.20",
+    "jsonwebtoken": "^9.0.0",
     "key-did-provider-ed25519": "^3.0.0",
     "key-did-resolver": "^3.0.0",
     "mongodb": "^5.6.0",
