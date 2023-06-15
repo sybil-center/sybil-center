@@ -17,6 +17,7 @@ import { ApiKeyService } from "../base/service/api-key.service.js";
 import { apiKeyController } from "../base/controller/api-key.controller.js";
 import { CaptchaService, ICaptchaService } from "../base/service/captcha.service.js";
 import { configController } from "../base/controller/config.controller.js";
+import { IJwtService, JwtService } from "../base/service/jwt.service.js";
 
 type DI = {
   logger: ILogger;
@@ -59,6 +60,7 @@ export class App {
       .provideClass("credentialVerifier", CredentialVerifier)
       .provideClass("captchaService", CaptchaService)
       .provideClass("apiKeyService", ApiKeyService)
+      .provideClass("jwtService", JwtService)
 
       // Issuers
       .provideClass("ethereumAccountIssuer", EthereumAccountIssuer)

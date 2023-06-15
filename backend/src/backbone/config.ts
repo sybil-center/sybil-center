@@ -55,6 +55,8 @@ export class Config {
   /** Database name */
   readonly dbName: string;
 
+  /** Secret for create JWT */
+  readonly jwtSecret: string;
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -96,12 +98,13 @@ export class Config {
 
     this.dbURL = getStrOrThrow("DB_URL");
     this.dbName = getStrOrThrow("DB_NAME");
+
+    this.jwtSecret = getStrOrThrow("JWT_SECRET");
   }
 }
 
 /**
  * Get env variable as string, or throw error if not exists
- *
  * @param name of environment variable
  */
 function getStrOrThrow(name: string): string {
@@ -112,7 +115,6 @@ function getStrOrThrow(name: string): string {
 
 /**
  * Get env variable as number, or throw error if not exists
- *
  * @param envVar environment variable
  */
 function getNumOrThrow(envVar: string): number {
