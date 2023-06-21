@@ -9,7 +9,16 @@ export function extractProps<T extends AnyObj = AnyObj>(obj: T, props?: string[]
   if (!props) return {};
   const keys = Object.keys(obj);
   const newProps = keys.filter((key) => props.includes(key));
-  const newObj: AnyObj = {}
+  const newObj: AnyObj = {};
   newProps.forEach((prop) => newObj[prop] = obj[prop]);
-  return newObj as Partial<T>
+  return newObj as Partial<T>;
 }
+
+export const objUtil = {
+  extractProps: extractProps,
+  cleanUndefined: (obj: { [key: string]: any }) => {
+    Object
+      .keys(obj)
+      .forEach((key) => (<any>obj)[key] === undefined && delete (<any>obj)[key]);
+  }
+};
