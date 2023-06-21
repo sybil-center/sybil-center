@@ -1,9 +1,13 @@
 import { ethers } from "ethers";
-import { Prefix } from "@sybil-center/sdk"
+import { Prefix } from "@sybil-center/sdk";
 
-const ethDidPkhPrefix = "did:pkh:eip155:1";
-const celoDidPkhPrefix = "did:pkh:eip155:42220";
-const polygonDidPkhPrefix = "did:pkh:eip155:137";
+const ethChainId = "eip155:1";
+const celoChainId = "eip155:42220";
+const polygonChainId = "eip155:137";
+
+const ethDidPkhPrefix = `did:pkh:${ethChainId}`;
+const celoDidPkhPrefix = `did:pkh:${celoChainId}`;
+const polygonDidPkhPrefix = `did:pkh:${polygonChainId}`;
 
 const address = "0xCee05036e05350c2985582f158aEe0d9e0437446";
 const privateKey =
@@ -21,6 +25,7 @@ export const ethereumSupport = {
       didPkh: `${ethDidPkhPrefix}:${address}`,
       address: address,
       privateKey: privateKey,
+      accountId: `${ethChainId}:${address}`
     },
     celo: {
       didPkhPrefix: celoDidPkhPrefix,
@@ -28,6 +33,7 @@ export const ethereumSupport = {
       didPkh: `${celoDidPkhPrefix}:${address}`,
       address: address,
       privateKey: privateKey,
+      accountId: `${celoChainId}:${address}`
     },
     polygon: {
       didPkhPrefix: polygonDidPkhPrefix,
@@ -35,6 +41,7 @@ export const ethereumSupport = {
       didPkh: `${polygonDidPkhPrefix}:${address}`,
       address: address,
       privateKey: privateKey,
+      accountId: `${polygonChainId}:${address}`
     },
   },
 
