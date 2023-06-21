@@ -1,5 +1,5 @@
 import { tokens } from "typed-inject";
-import { type ClientEntity, ClientFindFilter, type IClientRepo } from "../storage/client-repo.js";
+import { type ClientEntity, ClientFindFilter, type IClientRepo } from "../storage/client.repo.js";
 import { Credential } from "@sybil-center/sdk";
 import { CredentialVerifier } from "./credential-verifivator.js";
 import { ICaptchaService } from "./captcha.service.js";
@@ -26,13 +26,7 @@ export interface IClientService {
    */
   get(filter: ClientFindFilter): Promise<ClientEntity>;
 
-  /**
-   * Update client entity by filter and others client entity props
-   * @param filter {@link ClientFindFilter}
-   * @param props client entity props without clientId
-   * @return accountId
-   */
-  updateOrCreate(filter: ClientFindFilter, props: Omit<ClientEntity, "accountId">): Promise<string>;
+  create(client: ClientEntity): Promise<ClientEntity>;
 
   /**
    * Update client entity by filter and others partial client entity props
@@ -45,7 +39,7 @@ export interface IClientService {
     filter: ClientFindFilter,
     props: Partial<Omit<ClientEntity, "accountId">>,
     requirements?: ClientUpdateReq
-  ): Promise<string>;
+  ): Promise<ClientEntity>;
 
   /**
    * Find client by filter or create client if doesn't present
@@ -77,24 +71,25 @@ export class ClientService implements IClientService {
     return this.clientRepo.get(filter);
   }
 
-  async updateOrCreate(filter: ClientFindFilter, props: Omit<ClientEntity, "accountId">): Promise<string> {
-    return this.clientRepo.updateOrCreate(filter, props,);
+  async create(client: ClientEntity): Promise<ClientEntity> {
+    return this.clientRepo.create(client);
   }
 
   async update(
     { accountId }: ClientFindFilter,
     props: Partial<Omit<ClientEntity, "accountId">>,
     requirements?: ClientUpdateReq
-  ): Promise<string> {
+  ): Promise<ClientEntity> {
     if (requirements) {
       const { credential, captchaToken } = requirements;
-      if (accountId !== credential.credentialSubject?.id) {
+      if (accountId !== credentialUtil.extractAccountId(credential)) {
+        console.log("should throw");
         throw new ClientError("Credential account Id not matched with session account id");
       }
       await this.validateCredential(credential);
       await this.validateCaptcha(captchaToken);
     }
-    return this.clientRepo.update({ accountId }, props);
+    return await this.clientRepo.update({ accountId }, props);
   }
 
   private async validateCredential(credential: Credential): Promise<void> {
@@ -118,16 +113,11 @@ export class ClientService implements IClientService {
   async findOrCreate(filter: ClientFindFilter): Promise<ClientEntity> {
     const client = await this.find(filter);
     if (client) return client;
-    const props: Omit<ClientEntity, "accountId"> = {
+    const clientEntity: ClientEntity = {
+      accountId: filter.accountId,
       restrictionURIs: [],
       customSchemas: []
     };
-    const accountId = await this.updateOrCreate(filter, props);
-    return {
-      accountId: accountId,
-      ...props
-    };
+    return await this.create(clientEntity);
   }
-
-
 }

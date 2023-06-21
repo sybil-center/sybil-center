@@ -21,7 +21,7 @@ import { IJwtService, JwtService } from "../base/service/jwt.service.js";
 import { clientController } from "../base/controller/client.controller.js";
 import { ClientService, type IClientService } from "../base/service/client.service.js";
 import { MongoDB } from "../base/storage/mongo-db.js";
-import { ClientRepo, IClientRepo } from "../base/storage/client-repo.js";
+import { ClientRepoCached, IClientRepo } from "../base/storage/client.repo.js";
 
 type DI = {
   logger: ILogger;
@@ -70,7 +70,7 @@ export class App {
       .provideClass("apiKeyService", ApiKeyService)
       .provideClass("jwtService", JwtService)
       .provideClass("mongoDB", MongoDB)
-      .provideClass("clientRepo", ClientRepo)
+      .provideClass("clientRepo", ClientRepoCached)
       .provideClass("clientService", ClientService)
 
       // Issuers

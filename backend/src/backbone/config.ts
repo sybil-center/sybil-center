@@ -61,8 +61,13 @@ export class Config {
   /** Client custom schema size limit */
   readonly customSchemaSizeLimit: number;
 
+  /** Requirement and cache size for apikey repo {@link ApikeyRepoCached} */
   readonly apikeysCacheRequired: boolean;
   readonly apikeysCacheSize: number;
+
+  /** Requirement and cache size for client repo {@link ClientRepoCached} */
+  readonly clientCacheRequired: boolean;
+  readonly clientCacheSize: number;
 
   constructor(envFilepath?: URL) {
     if (envFilepath) {
@@ -112,6 +117,10 @@ export class Config {
 
     this.apikeysCacheSize = getNumOrElse("APIKEYS_CACHE_SIZE", 100);
     this.apikeysCacheRequired = getBoolOrElse("APIKEYS_CACHE_REQUIRED", false);
+
+    this.clientCacheSize = getNumOrElse("CLIENT_CACHE_SIZE", 100);
+    this.clientCacheRequired = getBoolOrElse("CLIENT_CACHE_REQUIRED", false);
+
   }
 }
 

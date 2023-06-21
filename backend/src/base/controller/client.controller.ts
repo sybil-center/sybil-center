@@ -18,7 +18,7 @@ import { credentialUtil } from "../../util/credential.utils.js";
 import { type IClientService } from "../service/client.service.js";
 import { ILogger } from "../../backbone/logger.js";
 import { encode } from "../../util/encoding.util.js";
-import { ClientUpdate } from "../storage/client-repo.js";
+import { ClientUpdate } from "../storage/client.repo.js";
 
 type Dependencies = {
   httpServer: HttpServer;
@@ -42,11 +42,11 @@ type LoginReq = {
 }
 
 type UpdateSelf = {
-  requirement: {
+  requirements: {
     credential: Credential;
     captchaToken?: string;
   }
-  toUpdate: ClientUpdate
+  client: ClientUpdate
 }
 
 const clientCookie = "sybil-client";
@@ -125,15 +125,21 @@ export function clientController(injector: Injector<Dependencies>) {
 
   fastify.route<{ Body: UpdateSelf }>({
     ...selfClientUpdateRoute,
-    preHandler: async ({ body: { toUpdate } }) => {
-      validateCustomSchemas(toUpdate.customSchemas);
+    preHandler: async ({ body: { client, requirements } }) => {
+      validateCustomSchemas(client.customSchemas);
+      requirements.credential = ThrowDecoder.decode(
+        Credential, requirements.credential,
+        new ClientError("Invalid credential")
+      );
     },
-    handler: async ({ cookies, body: { toUpdate, requirement } }, resp) => {
+    handler: async ({ cookies, body: { client, requirements } }) => {
       const jwt = cookies[clientCookie];
       if (!jwt) throw new ClientError(`Login first`, 403);
       const { accountId } = jwtService.verifyToken<AccountJWT>(jwt);
-      await clientService.update({ accountId }, toUpdate, requirement);
-      resp.send({ status: "ok" });
+      await clientService.update({ accountId }, client, requirements);
+      return {
+        status: "ok",
+      };
     }
   });
 

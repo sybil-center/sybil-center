@@ -1,6 +1,7 @@
 import { Route } from "../../types/route.js";
 import {
-  selfFindClientEP, selfIsLoggedInClientEP,
+  selfFindClientEP,
+  selfIsLoggedInClientEP,
   selfLoginClientEP,
   selfLogoutClientEP,
   selfUpdateClientEP
@@ -27,7 +28,7 @@ export const clientLoginRoute: Route = {
 export const clientIsLoggedInRoute: Route = {
   method: ["GET"],
   url: selfIsLoggedInClientEP,
-}
+};
 
 export const clientLogoutRoute: Route = {
   method: ["GET"],
@@ -35,16 +36,18 @@ export const clientLogoutRoute: Route = {
 };
 
 export const selfClientUpdateRoute: Route = {
-  method: ["POST"],
+  method: ["PATCH"],
   url: selfUpdateClientEP,
   schema: {
     body: {
       type: "object",
-      required: ["requirements", "toUpdate"],
+      required: ["requirements", "client"],
+      additionalProperties: false,
       properties: {
         requirements: {
           type: "object",
           required: ["credential"],
+          additionalProperties: false,
           properties: {
             credential: credentialSchema,
             captchaToken: {
@@ -53,8 +56,13 @@ export const selfClientUpdateRoute: Route = {
             }
           }
         },
-        toUpdate: {
+        client: {
           type: "object",
+          required: [
+            "restrictionURIs",
+            "customSchemas"
+          ],
+          additionalProperties: false,
           properties: {
             restrictionURIs: {
               nullable: true,
@@ -84,4 +92,4 @@ export const selfClientUpdateRoute: Route = {
 export const selfClientFindRoute: Route = {
   method: ["GET"],
   url: selfFindClientEP,
-}
+};

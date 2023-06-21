@@ -15,7 +15,7 @@ import {
 import * as a from "uvu/assert";
 import { AccountJWT } from "../../../src/base/service/jwt.service.js";
 import { encode } from "../../../src/util/encoding.util.js";
-import { ClientEntity } from "../../../src/base/storage/client-repo.js";
+import { ClientEntity } from "../../../src/base/storage/client.repo.js";
 
 const test = suite("INTEGRATION API: client controller");
 
@@ -46,6 +46,9 @@ test.before(async () => {
   const config = new URL("../../env-config/test.env", import.meta.url);
   configDotEnv({ path: config, override: true });
   app = await App.init();
+});
+
+test.before.each(async () => {
   const captchaService = app.context.resolve("captchaService");
   sinon.stub(captchaService, "isHuman").resolves({
     isHuman: true,
@@ -59,7 +62,7 @@ test.before(async () => {
     customSchemas: [],
     restrictionURIs: []
   });
-  sinon.stub(clientService, "update").resolves(accountId);
+
   sinon.stub(clientService, "get").resolves({
     accountId: accountId,
     customSchemas: [],
@@ -67,10 +70,14 @@ test.before(async () => {
   });
 });
 
-test.after(async () => {
+test.after.each(async () => {
   sinon.restore();
+});
+
+test.after(async () => {
   await app.close();
 });
+
 
 const issueCredential = async (): Promise<EthAccountVC> => {
   const { apiKeysCredentialTTL: ttlRange } = app.context.resolve("config");
@@ -209,6 +216,15 @@ test("should logout client", async () => {
 
 test("should update client", async () => {
   const fastify = app.context.resolve("httpServer").fastify;
+  const clientRepo = app.context.resolve("clientRepo");
+  const clientProps: Omit<ClientEntity, "accountId"> = {
+    restrictionURIs: ["https://example.com"],
+    customSchemas: [{ properties: { name: { type: "string" } } }]
+  };
+  sinon.stub(clientRepo, "update").resolves({
+    accountId: ethereumSupport.info.ethereum.accountId,
+    ...clientProps
+  });
   const credential = await issueCredential();
   const loginResp = await fastify.inject({
     method: "POST",
@@ -221,7 +237,7 @@ test("should update client", async () => {
   a.is(loginResp.statusCode, 200, "client login resp status code is not matched");
   const cookies = toStrCookies(loginResp.cookies);
   const updateResp = await fastify.inject({
-    method: "POST",
+    method: "PATCH",
     url: selfUpdateClientEP,
     headers: {
       cookie: cookies
@@ -231,10 +247,7 @@ test("should update client", async () => {
         credential: credential,
         captchaToken: "test",
       },
-      toUpdate: {
-        restrictionURIs: ["https://example.com"],
-        customSchemas: [{ properties: { name: { type: "string" } } }]
-      }
+      client: { ...clientProps }
     }
   });
   a.is(

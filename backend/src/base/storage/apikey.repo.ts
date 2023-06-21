@@ -5,7 +5,6 @@ import { ClientError, ServerError } from "../../backbone/errors.js";
 import { Config } from "../../backbone/config.js";
 import { TableListCache } from "../../util/cache.util.js";
 import { ILogger } from "../../backbone/logger.js";
-import { ClientFindFilter } from "./client-repo.js";
 import { objUtil } from "../../util/model.util.js";
 
 export type ApikeyEntity = {
@@ -46,7 +45,7 @@ export interface IApikeyRepo extends Disposable {
 
   create(entity: ApikeyEntity): Promise<ApikeyEntity>;
 
-  delete({ accountId }: ClientFindFilter): Promise<string>;
+  delete({ accountId }: ApikeyFilter): Promise<string>;
 
   dispose(): Promise<void>;
 }
@@ -104,7 +103,7 @@ export class ApikeyRepo implements IApikeyRepo {
 
   }
 
-  async delete({ accountId }: ClientFindFilter): Promise<string> {
+  async delete({ accountId }: ApikeyFilter): Promise<string> {
     const result = await this.apikeys.deleteOne({ accountId: accountId });
     if (result.deletedCount === 0) {
       throw new ClientError(`Apikeys with accountId=${accountId} is not present`);
@@ -166,7 +165,7 @@ export class ApikeyRepoCached implements IApikeyRepo {
     return this.apikeyRepo.create(entity);
   }
 
-  async delete(filter: ClientFindFilter): Promise<string> {
+  async delete(filter: ApikeyFilter): Promise<string> {
     const deletedAccountId = this.apikeyRepo.delete(filter);
     if (this.cache) this.cache.delete(filter.accountId);
     return deletedAccountId;
