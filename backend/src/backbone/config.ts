@@ -61,6 +61,9 @@ export class Config {
   /** Client custom schema size limit */
   readonly customSchemaSizeLimit: number;
 
+  readonly apikeysCacheRequired: boolean;
+  readonly apikeysCacheSize: number;
+
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -106,6 +109,9 @@ export class Config {
     this.jwtSecret = getStrOrThrow("JWT_SECRET");
 
     this.customSchemaSizeLimit = getNumOrElse("CUSTOM_SCHEMA_SIZE_LIMIT", 51200);
+
+    this.apikeysCacheSize = getNumOrElse("APIKEYS_CACHE_SIZE", 100);
+    this.apikeysCacheRequired = getBoolOrElse("APIKEYS_CACHE_REQUIRED", false);
   }
 }
 

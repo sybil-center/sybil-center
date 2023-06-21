@@ -86,18 +86,18 @@ export class ApiKeyService {
     // set "auth" when invoke captcha request on frontend
     const isHumanResult = await this.captchaService.isHuman(captchaToken, "auth");
     if (!isHumanResult.isHuman) {
-      throw new ClientError("Non human actions was detected")
+      throw new ClientError("Non human actions was detected");
     }
   }
 
   /** Validate credential properties before API KEYS generating */
   #validateCredential(credential: EthAccountVC) {
-    const { valid, reason} = credentialUtil.validate(credential, {
+    const { valid, reason } = credentialUtil.validate(credential, {
       type: "EthereumAccount",
       reqExpDate: true,
       ttlRange: this.config.apiKeysCredentialTTL
     });
-    if (!valid) throw new ClientError(reason!)
+    if (!valid) throw new ClientError(reason!);
   }
 
   /** Verify API KEY, returns object with key and 'is secret' flag */
