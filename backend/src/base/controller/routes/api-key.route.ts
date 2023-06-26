@@ -1,5 +1,5 @@
 import { Route } from "../../types/route.js";
-import { generateAPIkeysEP } from "../../../util/route.util.js";
+import { findApikeysEP, generateAPIkeysEP } from "../../../util/route.util.js";
 import { credentialSchema } from "../../schemas/credential.schema.js";
 
 export const generateAPIkeysRoute: Route = {
@@ -20,4 +20,9 @@ export const generateAPIkeysRoute: Route = {
       }
     }
   }
-}
+};
+
+export const findApikeysRoute: Route = {
+  method: ["GET"],
+  url: findApikeysEP
+};

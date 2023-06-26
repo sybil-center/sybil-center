@@ -22,7 +22,7 @@ export async function isValidVC(credential: Credential): Promise<boolean> {
   }
 }
 
-type ValidateOptions = {
+export type CredentialOptions = {
   ttlRange?: number; // range between issuance date and expiration date
   type: CredentialType;
   reqExpDate?: boolean; // require expiration date
@@ -33,7 +33,7 @@ type ValidateResult = {
   reason?: string; // if valid === false
 }
 
-function validate(credential: Credential, options: ValidateOptions): ValidateResult {
+function validate(credential: Credential, options: CredentialOptions): ValidateResult {
   if (!credential.type.includes(options.type)) return {
     valid: false,
     reason: `Credential must have '${options.type}' type`

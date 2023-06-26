@@ -13,7 +13,7 @@ import { GitHubAccountIssuer } from "../mates/github/issuers/github-account/inde
 import { DiscordAccountIssuer } from "../mates/discord/issuers/discord-account/index.js";
 import { oauthPageController } from "../base/controller/oauth-page.controller.js";
 import { CredentialVerifier } from "../base/service/credential-verifivator.js";
-import { ApiKeyService } from "../base/service/api-key.service.js";
+import { ApikeyService } from "../base/service/apikey.service.js";
 import { apiKeyController } from "../base/controller/api-key.controller.js";
 import { CaptchaService, ICaptchaService } from "../base/service/captcha.service.js";
 import { configController } from "../base/controller/config.controller.js";
@@ -22,6 +22,8 @@ import { clientController } from "../base/controller/client.controller.js";
 import { ClientService, type IClientService } from "../base/service/client.service.js";
 import { MongoDB } from "../base/storage/mongo-db.js";
 import { ClientRepoCached, IClientRepo } from "../base/storage/client.repo.js";
+import { ApikeyRepoCached } from "../base/storage/apikey.repo.js";
+import { GateService } from "../base/service/gate.service.js";
 
 type DI = {
   logger: ILogger;
@@ -35,12 +37,14 @@ type DI = {
   twitterAccountIssuer: TwitterAccountIssuer;
   gitHubAccountIssuer: GitHubAccountIssuer;
   credentialVerifier: CredentialVerifier;
-  apiKeyService: ApiKeyService;
+  apikeyService: ApikeyService;
   captchaService: ICaptchaService;
   jwtService: IJwtService;
   mongoDB: MongoDB;
   clientRepo: IClientRepo;
   clientService: IClientService;
+  apikeyRepo: ApikeyRepoCached;
+  gateService: GateService;
 };
 
 export class App {
@@ -62,16 +66,20 @@ export class App {
       .provideClass("logger", Logger)
       .provideClass("config", Config)
       .provideClass("httpServer", HttpServer)
+      // Storage layer
+      .provideClass("mongoDB", MongoDB)
+      .provideClass("clientRepo", ClientRepoCached)
+      .provideClass("apikeyRepo", ApikeyRepoCached)
+      // Service layer
       .provideClass("didService", DIDService)
       .provideClass("multiSignService", MultiSignService)
       .provideClass("proofService", ProofService)
       .provideClass("credentialVerifier", CredentialVerifier)
       .provideClass("captchaService", CaptchaService)
-      .provideClass("apiKeyService", ApiKeyService)
+      .provideClass("apikeyService", ApikeyService)
       .provideClass("jwtService", JwtService)
-      .provideClass("mongoDB", MongoDB)
-      .provideClass("clientRepo", ClientRepoCached)
       .provideClass("clientService", ClientService)
+      .provideClass("gateService", GateService)
 
       // Issuers
       .provideClass("ethereumAccountIssuer", EthereumAccountIssuer)
@@ -82,6 +90,7 @@ export class App {
       .provideClass("issuerContainer", IssuerContainer);
 
     await app.context.resolve("httpServer").register();
+
 
     // Controllers
     credentialController(app.context);

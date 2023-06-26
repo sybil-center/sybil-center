@@ -12,7 +12,7 @@ import { ChallengeReq } from "../types/challenge.js";
 import { Credential } from "../types/credential.js";
 import { CredentialVerifier } from "../service/credential-verifivator.js";
 import { Config } from "../../backbone/config.js";
-import { ApiKeyService } from "../service/api-key.service.js";
+import { ApikeyService } from "../service/apikey.service.js";
 import { HttpServer } from "../../backbone/http-server.js";
 import { Injector } from "typed-inject";
 import { toContext } from "../../util/context.util.js";
@@ -30,7 +30,7 @@ type Dependencies = {
   issuerContainer: IssuerContainer;
   config: Config;
   credentialVerifier: CredentialVerifier;
-  apiKeyService: ApiKeyService;
+  apikeyService: ApikeyService;
 }
 
 const tokens: (keyof Dependencies)[] = [
@@ -38,7 +38,7 @@ const tokens: (keyof Dependencies)[] = [
   "issuerContainer",
   "config",
   "credentialVerifier",
-  "apiKeyService"
+  "apikeyService"
 ];
 
 export function credentialController(
@@ -48,7 +48,7 @@ export function credentialController(
     config,
     credentialVerifier: verifier,
     issuerContainer,
-    apiKeyService,
+    apikeyService,
     httpServer
   } = toContext(tokens, injector);
   const fastify = httpServer.fastify;
@@ -69,7 +69,7 @@ export function credentialController(
     if (!authorization) return false;
     const key = authorization.split(" ")[1];
     if (!key) return false;
-    await apiKeyService.verify(key);
+    await apikeyService.verify(key);
     return true;
   };
 

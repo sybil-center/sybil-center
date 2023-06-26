@@ -33,7 +33,7 @@ test("should generate and verify app key and secret", async () => {
   const { didPkh, address } = ethereumSupport.info.ethereum;
   const fastify = app.context.resolve("httpServer").fastify;
   const frontendDomain = app.context.resolve("config").frontendOrigin;
-  const apiKeyService = app.context.resolve("apiKeyService");
+  const apiKeyService = app.context.resolve("apikeyService");
   const expirationDate = new Date();
   expirationDate.setMinutes(expirationDate.getMinutes() + 3);
   const ethAccountVC = await appSup.issueEthAccountVC({
@@ -58,10 +58,10 @@ test("should generate and verify app key and secret", async () => {
     `api key response fail. error: ${apiKeyResp.body}`
   );
   const { apiKey, secretKey } = JSON.parse(apiKeyResp.body) as APIKeys;
-  const { key: fromApiKey, isSecret: notSecret } = await apiKeyService.verify(apiKey);
+  const { originKey: fromApiKey, isSecret: notSecret } = await apiKeyService.verify(apiKey);
   a.is(notSecret, false, "app key verification fail");
   a.is(fromApiKey, `eip155:1:${address}`);
-  const { key: fromSecret, isSecret } = await apiKeyService.verify(secretKey);
+  const { originKey: fromSecret, isSecret } = await apiKeyService.verify(secretKey);
   a.is(isSecret, true, "secret key verification fail");
   a.is(fromSecret, `eip155:1:${address}`);
 

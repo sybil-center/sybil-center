@@ -43,7 +43,7 @@ test("should generate & verify jwt token from credential", async () => {
   const jwtService = app.context.resolve("jwtService");
   const subjectId = ethereumSupport.info.ethereum.didPkh;
   const credential = await issueCredential();
-  const token = await jwtService.toAccountJWT({ credential: credential });
+  const token = await jwtService.toAccountJWT(credential);
   const payload = jwtService.verifyToken<AccountJWT>(token);
   const accountId = subjectId.split(":").slice(2).join("");
   a.is(accountId, payload.accountId, "account id from not matched");
@@ -54,7 +54,7 @@ test("should throw error because invalid JWT", async () => {
   const invalidPayload = { accountId: "invalid:account:id" };
   const jwtInvalidPayload = toString(fromString(JSON.stringify(invalidPayload), "utf8"), "base64url");
   const credential = await issueCredential();
-  const token = await jwtService.toAccountJWT({ credential: credential });
+  const token = await jwtService.toAccountJWT(credential);
   const [jwtHeader, _, jwtSign] = token.split(".");
   const invalidToken = `${jwtHeader}.${jwtInvalidPayload}.${jwtSign}`;
   let thrown = false;

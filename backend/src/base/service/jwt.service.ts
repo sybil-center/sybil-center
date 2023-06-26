@@ -1,18 +1,11 @@
-import { Credential, EthAccountVC } from "@sybil-center/sdk";
+import { EthAccountVC } from "@sybil-center/sdk";
 import { tokens } from "typed-inject";
-import { CredentialVerifier } from "./credential-verifivator.js";
 import { ClientError } from "../../backbone/errors.js";
 import { credentialUtil } from "../../util/credential.utils.js";
-import { ICaptchaService } from "./captcha.service.js";
 import jwt from "jsonwebtoken";
 import { hash as sha256 } from "@stablelib/sha256";
 import { fromString } from "uint8arrays";
-
-
-type ToAccountJWT = {
-  credential: EthAccountVC;
-  captchaToken?: string;
-}
+import { Credential } from "../types/credential.js";
 
 export type AccountJWT = {
   accountId: string
@@ -22,9 +15,8 @@ export interface IJwtService {
   /**
    * Generate JWT from credential and captcha token
    * @param credential ETH account credential {@link EthAccountVC}
-   * @param captchaToken
    */
-  toAccountJWT({ credential, captchaToken }: ToAccountJWT): Promise<string>;
+  toAccountJWT(credential: Credential): Promise<string>;
 
   /**
    *  Verify JWT and return payload, if token is invalid throw error
@@ -44,17 +36,12 @@ export class JwtService implements IJwtService {
   );
   constructor(
     private readonly config: { jwtSecret: string; apiKeysCredentialTTL: number },
-    private readonly verifier: CredentialVerifier,
-    private readonly captchaService: ICaptchaService
   ) {
     this.jwtSecret = Buffer.from(sha256(fromString(this.config.jwtSecret, "utf8")));
   }
 
-  async toAccountJWT({ credential, captchaToken }: ToAccountJWT): Promise<string> {
+  async toAccountJWT(credential: Credential): Promise<string> {
     this.validateCredential(credential);
-    if (captchaToken) await this.validateCaptcha(captchaToken);
-    const { isVerified } = await this.verifier.verify(credential);
-    if (!isVerified) throw new ClientError("Credential is not verified");
     const accountId = this.extractAccountId(credential);
     const jwtPayload: AccountJWT = {
       accountId: accountId
@@ -63,19 +50,13 @@ export class JwtService implements IJwtService {
   }
 
   /** Validate credential properties before API KEYS generating */
-  private validateCredential(credential: EthAccountVC): void {
-    const { valid, reason } = credentialUtil.validate(credential, {
+  private validateCredential(credential: Credential): credential is EthAccountVC {
+    const { valid } = credentialUtil.validate(credential, {
       type: "EthereumAccount",
       reqExpDate: true,
       ttlRange: this.config.apiKeysCredentialTTL
     });
-    if (!valid) throw new ClientError(reason!);
-  }
-
-  /** Validate CAPTCHA */
-  private async validateCaptcha(captchaToken: string): Promise<void> {
-    const { isHuman } = await this.captchaService.isHuman(captchaToken, "login");
-    if (!isHuman) throw new ClientError("Non human actions was detected");
+    return valid;
   }
 
   private extractAccountId(credential: Credential): string {

@@ -1,10 +1,12 @@
 import { Route } from "../../types/route.js";
 import {
+  getSelfClientApikeysEP,
   selfFindClientEP,
   selfIsLoggedInClientEP,
   selfLoginClientEP,
   selfLogoutClientEP,
-  selfUpdateClientEP
+  selfUpdateClientEP,
+  updateSelfClientApikeysEP
 } from "../../../util/route.util.js";
 import { credentialSchema } from "../../schemas/credential.schema.js";
 
@@ -35,7 +37,7 @@ export const clientLogoutRoute: Route = {
   url: selfLogoutClientEP,
 };
 
-export const selfClientUpdateRoute: Route = {
+export const updateSelfClientRoute: Route = {
   method: ["PATCH"],
   url: selfUpdateClientEP,
   schema: {
@@ -89,7 +91,52 @@ export const selfClientUpdateRoute: Route = {
   }
 };
 
-export const selfClientFindRoute: Route = {
+export const findSelfClientRoute: Route = {
   method: ["GET"],
   url: selfFindClientEP,
+};
+
+export const getSelfClientApikeysRoute: Route = {
+  method: ["GET"],
+  url: getSelfClientApikeysEP,
+};
+
+export const updateSelfClientApikeysRoute: Route = {
+  method: ["PATCH"],
+  url: updateSelfClientApikeysEP,
+  schema: {
+    body: {
+      type: "object",
+      additionalProperties: false,
+      required: ["requirements"],
+      properties: {
+        requirements: {
+          type: "object",
+          required: ["credential"],
+          additionalProperties: false,
+          properties: {
+            credential: credentialSchema,
+            captchaToken: {
+              type: "string",
+              nullable: true
+            }
+          }
+        },
+        apikeys: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            onlySecret: {
+              type: "boolean",
+              nullable: true,
+            },
+            refresh: {
+              type: "boolean",
+              nullable: true,
+            }
+          }
+        }
+      }
+    }
+  }
 };

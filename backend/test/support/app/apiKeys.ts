@@ -7,7 +7,7 @@ export async function apiKeys(
   app: App
 ): Promise<APIKeys> {
   const { didPkh } = ethereumSupport.info.ethereum;
-  const apiKeyService = app.context.resolve("apiKeyService");
+  const apiKeyService = app.context.resolve("apikeyService");
   const expirationDate = new Date();
   expirationDate.setMinutes(expirationDate.getMinutes() + 3);
   const issuer = app.context.resolve("ethereumAccountIssuer");
@@ -20,5 +20,5 @@ export async function apiKeys(
     sessionId: sessionId,
     signature: signature,
   }) as EthAccountVC;
-  return await apiKeyService.generate({ credential });
+  return await apiKeyService.generate(credential);
 }

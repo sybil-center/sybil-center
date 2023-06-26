@@ -12,9 +12,10 @@ export type ApikeyEntity = {
   reqCount: number;
   apikeySalt?: string;
   secretSalt?: string;
+  onlySecret?: boolean;
 }
 
-type ApikeyUpdate = Partial<Omit<ApikeyEntity, "accountId">>
+type ApikeyEntityUpdate = Partial<Omit<ApikeyEntity, "accountId">>
 
 export type ApikeyFilter = {
   accountId: string
@@ -41,7 +42,7 @@ export interface IApikeyRepo extends Disposable {
    * @param filter
    * @param props
    */
-  update(filter: ApikeyFilter, props: ApikeyUpdate): Promise<ApikeyEntity>;
+  update(filter: ApikeyFilter, props: ApikeyEntityUpdate): Promise<ApikeyEntity>;
 
   create(entity: ApikeyEntity): Promise<ApikeyEntity>;
 
@@ -80,7 +81,7 @@ export class ApikeyRepo implements IApikeyRepo {
     return apikeys;
   }
 
-  async update({ accountId }: ApikeyFilter, props: ApikeyUpdate): Promise<ApikeyEntity> {
+  async update({ accountId }: ApikeyFilter, props: ApikeyEntityUpdate): Promise<ApikeyEntity> {
     objUtil.cleanUndefined(props);
     const result = await this.apikeys.findOneAndUpdate(
       { accountId },
@@ -155,7 +156,7 @@ export class ApikeyRepoCached implements IApikeyRepo {
     throw new ClientError(`Apikey entity with accountId=${filter.accountId} is not present`);
   }
 
-  async update(filter: ApikeyFilter, props: ApikeyUpdate): Promise<ApikeyEntity> {
+  async update(filter: ApikeyFilter, props: ApikeyEntityUpdate): Promise<ApikeyEntity> {
     const updated = await this.apikeyRepo.update(filter, props);
     this.cache?.push(updated.accountId, updated);
     return updated;

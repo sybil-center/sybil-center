@@ -6,6 +6,7 @@ import { appSup } from "../../support/app/index.js";
 import { ethereumSupport } from "../../support/chain/ethereum.js";
 import { EthAccountVC } from "@sybil-center/sdk";
 import {
+  getSelfClientApikeysEP,
   selfFindClientEP,
   selfIsLoggedInClientEP,
   selfLoginClientEP,
@@ -16,6 +17,7 @@ import * as a from "uvu/assert";
 import { AccountJWT } from "../../../src/base/service/jwt.service.js";
 import { encode } from "../../../src/util/encoding.util.js";
 import { ClientEntity } from "../../../src/base/storage/client.repo.js";
+import { Apikeys } from "../../../src/base/service/apikey.service.js";
 
 const test = suite("INTEGRATION API: client controller");
 
@@ -55,7 +57,7 @@ test.before.each(async () => {
     score: 0.9,
     reasons: []
   });
-  const accountId = ethereumSupport.info.ethereum.didPkh.split(":").slice(2).join("");
+  const accountId = ethereumSupport.info.ethereum.accountId;
   const clientService = app.context.resolve("clientService");
   sinon.stub(clientService, "findOrCreate").resolves({
     accountId: accountId,
@@ -216,6 +218,7 @@ test("should logout client", async () => {
 
 test("should update client", async () => {
   const fastify = app.context.resolve("httpServer").fastify;
+  const config = app.context.resolve("config");
   const clientRepo = app.context.resolve("clientRepo");
   const clientProps: Omit<ClientEntity, "accountId"> = {
     restrictionURIs: ["https://example.com"],
@@ -229,6 +232,9 @@ test("should update client", async () => {
   const loginResp = await fastify.inject({
     method: "POST",
     url: selfLoginClientEP,
+    headers: {
+      referer: config.frontendOrigin.href
+    },
     payload: {
       credential: credential,
       captchaToken: "test"
@@ -240,7 +246,8 @@ test("should update client", async () => {
     method: "PATCH",
     url: selfUpdateClientEP,
     headers: {
-      cookie: cookies
+      cookie: cookies,
+      referer: config.frontendOrigin.href
     },
     payload: {
       requirements: {
@@ -260,7 +267,8 @@ test("should update client", async () => {
 
 test("should find client entity from cookies", async () => {
   const fastify = app.context.resolve("httpServer").fastify;
-  const expAccountId = ethereumSupport.info.ethereum.didPkh.split(":").slice(2).join("");
+  const config = app.context.resolve("config");
+  const expAccountId = ethereumSupport.info.ethereum.accountId;
   const credential = await issueCredential();
   const loginResp = await fastify.inject({
     method: "POST",
@@ -276,12 +284,59 @@ test("should find client entity from cookies", async () => {
     method: "GET",
     url: selfFindClientEP,
     headers: {
-      cookie: cookies
+      cookie: cookies,
+      referer: config.frontendOrigin.href
     }
   });
   a.is(findResp.statusCode, 200, `Client find resp error: ${findResp.body}`);
   const client = JSON.parse(findResp.body) as ClientEntity;
   a.is(client.accountId, expAccountId, "found client entity account id not matched");
 });
+
+test("should get client apikeys", async () => {
+  const fastify = app.context.resolve("httpServer").fastify;
+  const config = app.context.resolve("config");
+  const apikeyService = app.context.resolve("apikeyService");
+  const apikeyRepo = app.context.resolve("apikeyRepo");
+  const expAccountId = ethereumSupport.info.ethereum.accountId;
+  const credential = await issueCredential();
+  sinon.stub(apikeyRepo, "find").resolves({
+    reqCount: 0,
+    accountId: expAccountId
+  });
+  const loginResp = await fastify.inject({
+    method: "POST",
+    url: selfLoginClientEP,
+    payload: {
+      credential: credential,
+      captchaToken: "test"
+    }
+  });
+  a.is(loginResp.statusCode, 200, `Client login resp error: ${loginResp.body}`);
+  const cookies = toStrCookies(loginResp.cookies);
+  const getApikeysResp = await fastify.inject({
+    method: "GET",
+    url: getSelfClientApikeysEP,
+    headers: {
+      cookie: cookies,
+      Referer: config.frontendOrigin.href
+    }
+  });
+  a.is(
+    getApikeysResp.statusCode, 200,
+    `Get client apikeys resp error: ${getApikeysResp.body}`
+  );
+  const {
+    secretKey,
+    apiKey,
+    onlySecret,
+    reqCount
+  } = JSON.parse(getApikeysResp.body) as Apikeys;
+  await apikeyService.verifyKey(secretKey);
+  await apikeyService.verifyKey(apiKey);
+  a.not.ok(onlySecret, `only secret has to be undefined`);
+  a.is(reqCount, 0, "request count not matched");
+});
+
 
 test.run();

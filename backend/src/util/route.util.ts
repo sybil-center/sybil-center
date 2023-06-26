@@ -12,6 +12,8 @@ export function generateAPIkeysEP(): string {
   return "/api/v1/keys";
 }
 
+export const findApikeysEP = `/api/v1/api-keys`;
+
 /** Returns regexp '^(<prefix1>:.+|<prefix2>:.+| ... | <prefixN>:.+)' */
 export function subjectIdRegExp(prefixes: Prefix[]): string {
   const prefixRegexp = prefixes.map((prefix) => `${prefix}:.+`);
@@ -23,3 +25,6 @@ export const selfIsLoggedInClientEP = "/api/v1/clients/self/is-loggedin";
 export const selfLogoutClientEP = "/api/v1/clients/self/logout";
 export const selfUpdateClientEP = "/api/v1/clients/self/update";
 export const selfFindClientEP = "/api/v1/clients/self";
+export const getSelfClientApikeysEP = "/api/v1/clients/self/api-keys";
+export const updateSelfClientApikeysEP = "/api/v1/clients/self/api-keys";
+export const setSelfClientApikeysOnlySecretEP = "/api/v1/clients/self/api-keys/set-only-secret";
