@@ -4,7 +4,7 @@ import type { IOAuthService } from "../../base/types/oauth.js";
 import { credentialOAuthCallbackURL } from "../../util/route.util.js";
 import { AccessTokenResponse, OAuthState } from "../../base/types/oauth.js";
 import { rest } from "../../util/fetch.util.js";
-import { makeURL } from "../../util/make-url.util.js";
+import { makeURL } from "../../util/url.util.js";
 import { CredentialType } from "@sybil-center/sdk/types"
 
 type LinkReq = {

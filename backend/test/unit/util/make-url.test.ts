@@ -1,6 +1,6 @@
 import { suite } from "uvu";
 import * as a from "uvu/assert";
-import { makeURL } from "../../../src/util/make-url.util.js";
+import { makeURL } from "../../../src/util/url.util.js";
 
 const test = suite("UNIT: make url util test");
 

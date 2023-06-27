@@ -3,7 +3,7 @@ import * as t from "io-ts";
 import { rest }  from "../../util/fetch.util.js";
 import { AccessTokenResponse, type IOAuthService, OAuthState, } from "../../base/types/oauth.js";
 import { credentialOAuthCallbackURL } from "../../util/route.util.js";
-import { makeURL } from "../../util/make-url.util.js";
+import { makeURL } from "../../util/url.util.js";
 import { CredentialType } from "@sybil-center/sdk/types";
 
 const OutGitHubUser = t.exact(
