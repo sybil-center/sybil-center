@@ -24,6 +24,7 @@ import { MongoDB } from "../base/storage/mongo-db.js";
 import { ClientRepoCached, IClientRepo } from "../base/storage/client.repo.js";
 import { ApikeyRepoCached } from "../base/storage/apikey.repo.js";
 import { GateService } from "../base/service/gate.service.js";
+import { SchemasService } from "../base/service/schemas.service.js";
 
 type DI = {
   logger: ILogger;
@@ -44,6 +45,7 @@ type DI = {
   clientRepo: IClientRepo;
   clientService: IClientService;
   apikeyRepo: ApikeyRepoCached;
+  schemasService: SchemasService;
   gateService: GateService;
 };
 
@@ -62,6 +64,7 @@ export class App {
 
   static async init(): Promise<App> {
     const app = new App();
+    //@ts-ignore
     app.context = createInjector()
       .provideClass("logger", Logger)
       .provideClass("config", Config)
@@ -71,6 +74,7 @@ export class App {
       .provideClass("clientRepo", ClientRepoCached)
       .provideClass("apikeyRepo", ApikeyRepoCached)
       // Service layer
+      .provideClass("schemasService", SchemasService)
       .provideClass("didService", DIDService)
       .provideClass("multiSignService", MultiSignService)
       .provideClass("proofService", ProofService)

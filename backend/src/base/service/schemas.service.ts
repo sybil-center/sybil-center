@@ -5,14 +5,23 @@ type ValidResult = {
   reason: string;
 }
 
-export interface ISchemaService {
+export interface ISchemasService {
 
+  validateSchema(schema: { [key: string]: any }): ValidResult;
+
+  validate<TData = any>(
+    schema: JSONSchemaType<TData>,
+    data: TData
+  ): ValidResult;
 }
 
-export class SchemaService {
-  constructor(private readonly ajv = new Ajv()) {}
+export class SchemasService implements ISchemasService {
+  private readonly ajv
+  constructor() {
+    this.ajv = new Ajv()
+  }
 
-  validateSchema<TData = any>(schema: JSONSchemaType<TData>): ValidResult {
+  validateSchema(schema: { [key: string]: any }): ValidResult {
     const isValid = this.ajv.validateSchema(schema) as boolean;
     return {
       isValid,
@@ -21,7 +30,7 @@ export class SchemaService {
   }
 
   validate<TData = any>(
-    schema: JSONSchemaType<TData>,
+    schema: { [key: string]: any },
     data: TData
   ): ValidResult {
     try {

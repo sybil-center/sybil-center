@@ -53,8 +53,6 @@ export class JwtService implements IJwtService {
   private validateCredential(credential: Credential): credential is EthAccountVC {
     const { valid } = credentialUtil.validate(credential, {
       type: "EthereumAccount",
-      reqExpDate: true,
-      ttlRange: this.config.apiKeysCredentialTTL
     });
     return valid;
   }

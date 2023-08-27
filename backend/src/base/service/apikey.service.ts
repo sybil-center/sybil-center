@@ -181,9 +181,7 @@ export class ApikeyService {
   /** Validate credential properties before API KEYS generating */
   private validateCredential(credential: Credential): credential is EthAccountVC {
     const { valid, reason } = credentialUtil.validate(credential, {
-      type: "EthereumAccount",
-      reqExpDate: true,
-      ttlRange: this.config.apiKeysCredentialTTL
+      type: "EthereumAccount"
     });
     if (!valid) throw new ClientError(reason!);
     return true;

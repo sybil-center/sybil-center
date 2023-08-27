@@ -73,6 +73,7 @@ export const updateSelfClientRoute: Route = {
               uniqueItems: true,
               items: {
                 type: "string",
+                format: "uri",
                 maxLength: 200
               }
             },

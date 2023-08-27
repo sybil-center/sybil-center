@@ -22,6 +22,7 @@ import { encode } from "../../util/encoding.util.js";
 import { ClientUpdate } from "../storage/client.repo.js";
 import { ApikeyService, ApikeysUpdate } from "../service/apikey.service.js";
 import { IGateService, OpenResult } from "../service/gate.service.js";
+import { ISchemasService } from "../service/schemas.service.js";
 
 type Dependencies = {
   httpServer: HttpServer;
@@ -30,7 +31,8 @@ type Dependencies = {
   clientService: IClientService,
   apikeyService: ApikeyService
   logger: ILogger,
-  gateService: IGateService
+  gateService: IGateService,
+  schemasService: ISchemasService
 }
 
 const tokens: (keyof Dependencies)[] = [
@@ -40,13 +42,21 @@ const tokens: (keyof Dependencies)[] = [
   "clientService",
   "apikeyService",
   "logger",
-  "gateService"
+  "gateService",
+  "schemasService"
 ];
 
 type LoginReq = {
   credential: Credential;
   captchaToken?: string;
 }
+
+type Requirements = {
+  credential: Credential;
+  captchaToken?: string;
+}
+
+
 
 type UpdateSelf = {
   requirements: {
@@ -67,7 +77,8 @@ export function clientController(injector: Injector<Dependencies>) {
     jwtService,
     clientService,
     apikeyService,
-    gateService: gate
+    gateService: gate,
+    schemasService
   } = toContext(tokens, injector);
 
   async function validateCustomSchemas(schemas: ClientUpdate["customSchemas"]): Promise<OpenResult> {
@@ -78,6 +89,12 @@ export function clientController(injector: Injector<Dependencies>) {
       if (schemaOutOfLimit) return {
         opened: false,
         reason: `Custom schema size out of limit`,
+        errStatus: 400
+      };
+      const result = schemasService.validateSchema(schema);
+      if (!result.isValid) return {
+        opened: result.isValid,
+        reason: result.reason,
         errStatus: 400
       };
     }
