@@ -85,7 +85,7 @@ export class App {
     );
     oauthPageController(httpServer.fastify);
     apiKeyController(app.context);
-    configController(httpServer.fastify, config);
+    configController(app.context);
     const didService = app.context.resolve("didService");
     await didService.init();
     return app;
