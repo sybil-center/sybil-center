@@ -83,7 +83,7 @@ export class App {
       verifier,
       apiKeyService
     );
-    oauthPageController(httpServer.fastify);
+    oauthPageController(app.context);
     apiKeyController(app.context);
     configController(app.context);
     const didService = app.context.resolve("didService");
