@@ -7,6 +7,7 @@ import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 import { ClientError, ServerError } from "../../backbone/errors.js";
 import { credentialUtil, CredOptions } from "../../util/credential.utils.js";
 import { tokens } from "typed-inject";
+import { ApiKeyService } from "./api-key.service.js";
 
 export interface IGateService {
   build(): Gate;
@@ -16,19 +17,22 @@ export class GateService implements IGateService {
   static inject = tokens(
     "config",
     "captchaService",
-    "credentialVerifier"
+    "credentialVerifier",
+    "apiKeyService"
   );
   constructor(
     private readonly config: Config,
     private readonly captchaService: ICaptchaService,
-    private readonly credentialVerifier: CredentialVerifier
+    private readonly credentialVerifier: CredentialVerifier,
+    private readonly apiKeyService: ApiKeyService
   ) {}
 
   build(): Gate {
     return new Gate(
       this.config,
       this.captchaService,
-      this.credentialVerifier
+      this.credentialVerifier,
+      this.apiKeyService
     );
   }
 }
@@ -49,7 +53,8 @@ class Gate {
   constructor(
     private readonly config: Config,
     private readonly captchaService: ICaptchaService,
-    private readonly credentialVerifier: CredentialVerifier
+    private readonly credentialVerifier: CredentialVerifier,
+    private readonly apiKeyService: ApiKeyService
   ) {}
 
   setLock(openFn: OpenFn): Gate {
@@ -108,6 +113,7 @@ class Gate {
     return this;
   }
 
+  /** Check captcha */
   captchaRequired(captcha?: string): Gate {
     this.setLock(async () => {
       if (this.config.captchaRequired && !captcha) return {
@@ -123,6 +129,7 @@ class Gate {
     return this;
   }
 
+  /** Validate captcha */
   validateCaptcha(
     captcha?: string,
     options?: { action?: string, score?: number }
@@ -150,6 +157,35 @@ class Gate {
     return this;
   }
 
+  /** Check API key in request */
+  checkApikey(req: FastifyRequest): Gate {
+    this.setLock(async () => {
+      const authorization = req.headers.authorization;
+      if (!authorization) return {
+        opened: false,
+        reason: `API key missing`,
+        errStatus: 403
+      };
+      const key = authorization.split(" ")[1];
+      if (!key) return {
+        opened: false,
+        reason: `API key missing`,
+        errStatus: 403
+      };
+      try {
+        await this.apiKeyService.verify(key);
+      } catch (e) {
+        return {
+          opened: false,
+          reason: `Invalid API key`,
+          errStatus: 403
+        };
+      }
+      return { opened: true, reason: "" };
+    });
+    return this;
+  }
+
   /** To open gate all locks MUST be opened */
   async openAll(thrower?: Thrower): Promise<OpenResult | never> {
     for (const openFn of this.opens) {
@@ -169,7 +205,7 @@ class Gate {
     };
   }
 
-  /** If one lock is opened then all gate opens */
+  /** If one lock is opened then gate opens */
   async openOne(thrower?: Thrower): Promise<OpenResult | never> {
     let out: OpenResult = {
       opened: false,
