@@ -1,15 +1,15 @@
-import { CredentialRoutes } from "../../../../base/types/route.js";
+import { CredentialRoutes } from "../../../base/types/route.js";
 import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
-import { githubAccountProps, prefixList } from "@sybil-center/sdk/types";
-import { subjectIdRegExp } from "../../../../util/route.util.js";
+import { prefixList } from "@sybil-center/sdk/types";
+import { subjectIdRegExp } from "../../../util/route.util.js";
 
-const tags = ["GitHub account ownership verifiable credential"];
-export const githubAccountRoutes: CredentialRoutes = {
-  credentialType: "GitHubAccount",
+const tags = ["Twitter account ownership verifiable credential"];
+export const twitterAccountRoutes: CredentialRoutes = {
+  credentialType: "TwitterAccount",
 
   issue: {
     method: ["POST"],
-    url: issueEP("GitHubAccount"),
+    url: issueEP("TwitterAccount"),
     schema: {
       tags: tags,
       body: {
@@ -25,7 +25,7 @@ export const githubAccountRoutes: CredentialRoutes = {
 
   canIssue: {
     method: ["GET"],
-    url: canIssueEP("GitHubAccount"),
+    url: canIssueEP("TwitterAccount"),
     schema: {
       tags: tags,
       querystring: {
@@ -48,7 +48,7 @@ export const githubAccountRoutes: CredentialRoutes = {
 
   challenge: {
     method: ["POST"],
-    url: challengeEP("GitHubAccount"),
+    url: challengeEP("TwitterAccount"),
     schema: {
       tags: tags,
       body: {
@@ -72,13 +72,6 @@ export const githubAccountRoutes: CredentialRoutes = {
             type: "string",
             format: "date-time",
             nullable: true
-          },
-          props: {
-            type: "array",
-            items: {
-              "enum": githubAccountProps
-            },
-            nullable: true
           }
         }
       },
@@ -86,7 +79,7 @@ export const githubAccountRoutes: CredentialRoutes = {
         200: {
           type: "object",
           properties: {
-            authUrl: { type: "string" },
+            authUrl: { type: "string", format: "uri" },
             sessionId: { type: "string" },
             issueMessage: { type: "string" }
           }

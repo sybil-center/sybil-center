@@ -1,17 +1,17 @@
-import type { ICredentialIssuer, IOAuthCallback, } from "../../../../base/service/credentials.js";
-import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../../base/service/credentials.js";
+import type { ICredentialIssuer, IOAuthCallback, } from "../../../base/service/credentials.js";
+import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../base/service/credentials.js";
 import { type Disposable, tokens } from "typed-inject";
-import { GitHubService, type GitHubUser } from "../../github.service.js";
-import { ProofService } from "../../../../base/service/proof.service.js";
-import { DIDService } from "../../../../base/service/did.service.js";
-import { ClientError } from "../../../../backbone/errors.js";
-import type { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
-import { fromIssueMessage, toIssueMessage } from "../../../../base/service/message.service.js";
-import { TimedCache } from "../../../../base/service/timed-cache.js";
-import { absoluteId } from "../../../../util/id.util.js";
+import { GitHubService, type GitHubUser } from "../../../base/service/external/github.service.js";
+import { ProofService } from "../../../base/service/proof.service.js";
+import { DIDService } from "../../../base/service/did.service.js";
+import { ClientError } from "../../../backbone/errors.js";
+import type { IMultiSignService } from "../../../base/service/multi-sign.service.js";
+import { fromIssueMessage, toIssueMessage } from "../../../base/service/message.service.js";
+import { TimedCache } from "../../../base/service/timed-cache.js";
+import { absoluteId } from "../../../util/id.util.js";
 import sortKeys from "sort-keys";
-import { OAuthState } from "../../../../base/types/oauth.js";
-import { AnyObj, extractProps } from "../../../../util/model.util.js";
+import { OAuthState } from "../../../base/types/oauth.js";
+import { AnyObj, extractProps } from "../../../util/model.util.js";
 import {
   CanIssueReq,
   CanIssueResp,

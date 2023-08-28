@@ -1,31 +1,31 @@
-import { CredentialRoutes } from "../../../../base/types/route.js";
-import { challengeEP, issueEP, canIssueEP } from "@sybil-center/sdk/util";
-import { ethAccountProps } from "@sybil-center/sdk/types";
-import { subjectIdRegExp } from "../../../../util/route.util.js";
+import { CredentialRoutes } from "../../../base/types/route.js";
+import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
+import { githubAccountProps, prefixList } from "@sybil-center/sdk/types";
+import { subjectIdRegExp } from "../../../util/route.util.js";
 
-const tags = ["Ethereum account ownership verifiable credential"];
-export const ethereumAccountRoutes: CredentialRoutes = {
-  credentialType: "EthereumAccount",
+const tags = ["GitHub account ownership verifiable credential"];
+export const githubAccountRoutes: CredentialRoutes = {
+  credentialType: "GitHubAccount",
 
   issue: {
     method: ["POST"],
-    url: issueEP("EthereumAccount"),
+    url: issueEP("GitHubAccount"),
     schema: {
       tags: tags,
       body: {
         type: "object",
         properties: {
           sessionId: { type: "string" },
-          signature: { type: "string" },
+          signature: { type: "string" }
         },
         required: ["sessionId", "signature"]
-      },
+      }
     }
   },
 
   canIssue: {
     method: ["GET"],
-    url: canIssueEP("EthereumAccount"),
+    url: canIssueEP("GitHubAccount"),
     schema: {
       tags: tags,
       querystring: {
@@ -48,7 +48,7 @@ export const ethereumAccountRoutes: CredentialRoutes = {
 
   challenge: {
     method: ["POST"],
-    url: challengeEP("EthereumAccount"),
+    url: challengeEP("GitHubAccount"),
     schema: {
       tags: tags,
       body: {
@@ -57,7 +57,12 @@ export const ethereumAccountRoutes: CredentialRoutes = {
         properties: {
           subjectId: {
             type: "string",
-            pattern: subjectIdRegExp(["did:pkh:eip155:1", "eip155:1", "ethereum"])
+            pattern: subjectIdRegExp(prefixList.concat())
+          },
+          redirectUrl: {
+            type: "string",
+            format: "uri",
+            nullable: true
           },
           custom: {
             type: "object",
@@ -71,9 +76,19 @@ export const ethereumAccountRoutes: CredentialRoutes = {
           props: {
             type: "array",
             items: {
-              "enum": ethAccountProps
+              "enum": githubAccountProps
             },
             nullable: true
+          }
+        }
+      },
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            authUrl: { type: "string" },
+            sessionId: { type: "string" },
+            issueMessage: { type: "string" }
           }
         }
       }

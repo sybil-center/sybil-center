@@ -1,17 +1,17 @@
-import type { ICredentialIssuer, IOAuthCallback, } from "../../../../base/service/credentials.js";
-import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../../base/service/credentials.js";
+import type { ICredentialIssuer, IOAuthCallback, } from "../../../base/service/credentials.js";
+import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../base/service/credentials.js";
 import { Disposable, tokens } from "typed-inject";
-import { ProofService } from "../../../../base/service/proof.service.js";
-import { TwitterService, type TwitterUser } from "../../twitter.service.js";
-import { DIDService } from "../../../../base/service/did.service.js";
-import { absoluteId } from "../../../../util/id.util.js";
-import { ClientError } from "../../../../backbone/errors.js";
-import type { IMultiSignService } from "../../../../base/service/multi-sign.service.js";
-import { fromIssueMessage, toIssueMessage } from "../../../../base/service/message.service.js";
-import { TimedCache } from "../../../../base/service/timed-cache.js";
+import { ProofService } from "../../../base/service/proof.service.js";
+import { TwitterService, type TwitterUser } from "../../../base/service/external/twitter.service.js";
+import { DIDService } from "../../../base/service/did.service.js";
+import { absoluteId } from "../../../util/id.util.js";
+import { ClientError } from "../../../backbone/errors.js";
+import type { IMultiSignService } from "../../../base/service/multi-sign.service.js";
+import { fromIssueMessage, toIssueMessage } from "../../../base/service/message.service.js";
+import { TimedCache } from "../../../base/service/timed-cache.js";
 import sortKeys from "sort-keys";
-import { OAuthState } from "../../../../base/types/oauth.js";
-import { AnyObj, extractProps } from "../../../../util/model.util.js";
+import { OAuthState } from "../../../base/types/oauth.js";
+import { AnyObj, extractProps } from "../../../util/model.util.js";
 import {
   CanIssueReq,
   CanIssueResp,

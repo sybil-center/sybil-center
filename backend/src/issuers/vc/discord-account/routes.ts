@@ -1,15 +1,18 @@
-import { CredentialRoutes } from "../../../../base/types/route.js";
+import { CredentialRoutes } from "../../../base/types/route.js";
 import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
-import { prefixList } from "@sybil-center/sdk/types";
-import { subjectIdRegExp } from "../../../../util/route.util.js";
+import { discordAccountProps, prefixList } from "@sybil-center/sdk/types";
+import { subjectIdRegExp } from "../../../util/route.util.js";
 
-const tags = ["Twitter account ownership verifiable credential"];
-export const twitterAccountRoutes: CredentialRoutes = {
-  credentialType: "TwitterAccount",
+
+const tags = ["Discord account ownership verifiable credential"];
+const prefixes = prefixList;
+export const discordAccountRoutes: CredentialRoutes = {
+
+  credentialType: "DiscordAccount",
 
   issue: {
     method: ["POST"],
-    url: issueEP("TwitterAccount"),
+    url: issueEP("DiscordAccount"),
     schema: {
       tags: tags,
       body: {
@@ -25,7 +28,7 @@ export const twitterAccountRoutes: CredentialRoutes = {
 
   canIssue: {
     method: ["GET"],
-    url: canIssueEP("TwitterAccount"),
+    url: canIssueEP("DiscordAccount"),
     schema: {
       tags: tags,
       querystring: {
@@ -48,7 +51,7 @@ export const twitterAccountRoutes: CredentialRoutes = {
 
   challenge: {
     method: ["POST"],
-    url: challengeEP("TwitterAccount"),
+    url: challengeEP("DiscordAccount"),
     schema: {
       tags: tags,
       body: {
@@ -57,7 +60,7 @@ export const twitterAccountRoutes: CredentialRoutes = {
         properties: {
           subjectId: {
             type: "string",
-            pattern: subjectIdRegExp(prefixList.concat())
+            pattern: subjectIdRegExp(prefixes.concat())
           },
           redirectUrl: {
             type: "string",
@@ -72,14 +75,21 @@ export const twitterAccountRoutes: CredentialRoutes = {
             type: "string",
             format: "date-time",
             nullable: true
+          },
+          props: {
+            type: "array",
+            items: {
+              "enum": discordAccountProps
+            },
+            nullable: true
           }
-        }
+        },
       },
       response: {
         200: {
           type: "object",
           properties: {
-            authUrl: { type: "string", format: "uri" },
+            authUrl: { type: "string" },
             sessionId: { type: "string" },
             issueMessage: { type: "string" }
           }

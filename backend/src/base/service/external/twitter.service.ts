@@ -1,7 +1,7 @@
 import { TwitterApi } from "twitter-api-v2";
-import { ServerError } from "../../backbone/errors.js";
-import { IOAuthService, OAuthState } from "../../base/types/oauth.js";
-import { credentialOAuthCallbackURL } from "../../util/route.util.js";
+import { ServerError } from "../../../backbone/errors.js";
+import { IOAuthService, OAuthState } from "../../types/oauth.js";
+import { credentialOAuthCallbackURL } from "../../../util/route.util.js";
 import { CredentialType } from "@sybil-center/sdk/types";
 
 export type TwitterUser = {

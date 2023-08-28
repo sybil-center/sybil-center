@@ -7,10 +7,10 @@ import { credentialController } from "../base/controller/credential.controller.j
 import { Config } from "../backbone/config.js";
 import { DIDService } from "../base/service/did.service.js";
 import { MultiSignService } from "../base/service/multi-sign.service.js";
-import { EthereumAccountIssuer } from "../mates/ethereum/issuers/ethereum-account/index.js";
-import { TwitterAccountIssuer } from "../mates/twitter/issuers/twitter-account/index.js";
-import { GitHubAccountIssuer } from "../mates/github/issuers/github-account/index.js";
-import { DiscordAccountIssuer } from "../mates/discord/issuers/discord-account/index.js";
+import { EthereumAccountIssuer } from "../issuers/vc/ethereum-account/index.js";
+import { TwitterAccountIssuer } from "../issuers/vc/twitter-account/index.js";
+import { GitHubAccountIssuer } from "../issuers/vc/github-account/index.js";
+import { DiscordAccountIssuer } from "../issuers/vc/discord-account/index.js";
 import { oauthPageController } from "../base/controller/oauth-page.controller.js";
 import { CredentialVerifier } from "../base/service/credential-verifivator.js";
 import { ApiKeyService } from "../base/service/api-key.service.js";

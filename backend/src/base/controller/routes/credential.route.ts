@@ -1,8 +1,8 @@
 import { CredentialRoutes, Route } from "../../types/route.js";
-import { ethereumAccountRoutes } from "../../../mates/ethereum/issuers/ethereum-account/index.js";
-import { twitterAccountRoutes } from "../../../mates/twitter/issuers/twitter-account/index.js";
-import { githubAccountRoutes } from "../../../mates/github/issuers/github-account/index.js";
-import { discordAccountRoutes } from "../../../mates/discord/issuers/discord-account/index.js";
+import { ethereumAccountRoutes } from "../../../issuers/vc/ethereum-account/index.js";
+import { twitterAccountRoutes } from "../../../issuers/vc/twitter-account/index.js";
+import { githubAccountRoutes } from "../../../issuers/vc/github-account/index.js";
+import { discordAccountRoutes } from "../../../issuers/vc/discord-account/index.js";
 import { verifyCredentialEP } from "@sybil-center/sdk/util";
 import { credentialSchema } from "../../schemas/credential.schema.js";
 

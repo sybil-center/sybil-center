@@ -1,34 +1,31 @@
-import { CredentialRoutes } from "../../../../base/types/route.js";
-import { canIssueEP, challengeEP, issueEP } from "@sybil-center/sdk/util";
-import { discordAccountProps, prefixList } from "@sybil-center/sdk/types";
-import { subjectIdRegExp } from "../../../../util/route.util.js";
+import { CredentialRoutes } from "../../../base/types/route.js";
+import { challengeEP, issueEP, canIssueEP } from "@sybil-center/sdk/util";
+import { ethAccountProps } from "@sybil-center/sdk/types";
+import { subjectIdRegExp } from "../../../util/route.util.js";
 
-
-const tags = ["Discord account ownership verifiable credential"];
-const prefixes = prefixList;
-export const discordAccountRoutes: CredentialRoutes = {
-
-  credentialType: "DiscordAccount",
+const tags = ["Ethereum account ownership verifiable credential"];
+export const ethereumAccountRoutes: CredentialRoutes = {
+  credentialType: "EthereumAccount",
 
   issue: {
     method: ["POST"],
-    url: issueEP("DiscordAccount"),
+    url: issueEP("EthereumAccount"),
     schema: {
       tags: tags,
       body: {
         type: "object",
         properties: {
           sessionId: { type: "string" },
-          signature: { type: "string" }
+          signature: { type: "string" },
         },
         required: ["sessionId", "signature"]
-      }
+      },
     }
   },
 
   canIssue: {
     method: ["GET"],
-    url: canIssueEP("DiscordAccount"),
+    url: canIssueEP("EthereumAccount"),
     schema: {
       tags: tags,
       querystring: {
@@ -51,7 +48,7 @@ export const discordAccountRoutes: CredentialRoutes = {
 
   challenge: {
     method: ["POST"],
-    url: challengeEP("DiscordAccount"),
+    url: challengeEP("EthereumAccount"),
     schema: {
       tags: tags,
       body: {
@@ -60,12 +57,7 @@ export const discordAccountRoutes: CredentialRoutes = {
         properties: {
           subjectId: {
             type: "string",
-            pattern: subjectIdRegExp(prefixes.concat())
-          },
-          redirectUrl: {
-            type: "string",
-            format: "uri",
-            nullable: true
+            pattern: subjectIdRegExp(["did:pkh:eip155:1", "eip155:1", "ethereum"])
           },
           custom: {
             type: "object",
@@ -79,19 +71,9 @@ export const discordAccountRoutes: CredentialRoutes = {
           props: {
             type: "array",
             items: {
-              "enum": discordAccountProps
+              "enum": ethAccountProps
             },
             nullable: true
-          }
-        },
-      },
-      response: {
-        200: {
-          type: "object",
-          properties: {
-            authUrl: { type: "string" },
-            sessionId: { type: "string" },
-            issueMessage: { type: "string" }
           }
         }
       }
