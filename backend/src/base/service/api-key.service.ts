@@ -3,10 +3,8 @@ import { hash as sha256 } from "@stablelib/sha256";
 import * as u8a from "uint8arrays";
 import crypto from "node:crypto";
 import { ClientError } from "../../backbone/errors.js";
-import { CredentialType, EthAccountVC } from "@sybil-center/sdk";
+import { EthAccountVC } from "@sybil-center/sdk";
 import { APIKeys } from "@sybil-center/sdk/types";
-import { CredentialVerifier } from "./credential-verifivator.js";
-import { ICaptchaService } from "./captcha.service.js";
 
 /** Result of verifying key */
 export type KeyVerifyResult = {
@@ -18,7 +16,6 @@ export type KeyVerifyResult = {
 
 export type ApiKeyGenerate = {
   credential: EthAccountVC;
-  captchaToken?: string;
 }
 
 /** Service for generating and validating API KEYS */
@@ -33,16 +30,12 @@ export class ApiKeyService {
 
   static inject = tokens(
     "config",
-    "credentialVerifier",
-    "captchaService",
   );
   constructor(
     private readonly config: {
       secret: string,
       apiKeysCredentialTTL: number,
     },
-    private readonly verifier: CredentialVerifier,
-    private readonly captchaService: ICaptchaService
   ) {
     const secretBytes = u8a.fromString(this.config.secret, "utf-8");
     const forIV = u8a.fromString(`for iv: ${this.config.secret}`, "utf-8");
@@ -65,11 +58,7 @@ export class ApiKeyService {
    * @param captchaToken If captchaToken is defined CAPTCHA
    *                     will be validated on the humanity
    */
-  async generate({ credential, captchaToken }: ApiKeyGenerate): Promise<APIKeys> {
-    this.#validateCredential(credential);
-    if (captchaToken) await this.#validateCaptcha(captchaToken);
-    const { isVerified } = await this.verifier.verify(credential);
-    if (!isVerified) throw new ClientError("Credential is not verified");
+  async generate({ credential }: ApiKeyGenerate): Promise<APIKeys> {
     const { chainId, address } = credential.credentialSubject.ethereum;
     const forKeys = `${chainId}:${address}`;
     const apikeySign = this.#signAES(forKeys, "apikey");
@@ -78,32 +67,6 @@ export class ApiKeyService {
       apiKey: `ak_${apikeySign}`,
       secretKey: `sk_${secretkeySign}`
     };
-  }
-
-  /** Validates captcha if config.captchaRequired === true, else pass validation */
-  async #validateCaptcha(captchaToken: string): Promise<void> {
-    // set "auth" when invoke captcha request on frontend
-    const isHumanResult = await this.captchaService.isHuman(captchaToken, "auth");
-    if (!isHumanResult.isHuman) {
-      throw new ClientError("Non human actions are detected")
-    }
-  }
-
-  /** Validate credential properties before API KEYS generating */
-  #validateCredential(credential: EthAccountVC) {
-    const ethAccountVCType: CredentialType = "EthereumAccount";
-    if (credential.type[1] !== ethAccountVCType) {
-      throw new ClientError(`Credential must have '${ethAccountVCType}' type`);
-    }
-    const ttlRange = this.config.apiKeysCredentialTTL;
-    const expirationDate = credential.expirationDate?.getTime();
-    const issuanceDate = credential.issuanceDate.getTime();
-    if (!expirationDate) {
-      throw new ClientError(`Credential must has 'expirationDate'`);
-    }
-    if (expirationDate - issuanceDate > ttlRange) {
-      throw new ClientError(`Credential TTL must be less then ${ttlRange} MS`);
-    }
   }
 
   /** Verify API KEY, returns object with key and 'is secret' flag */
