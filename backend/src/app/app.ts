@@ -71,21 +71,14 @@ export class App {
 
       .provideClass("issuerContainer", IssuerContainer);
     const httpServer = app.context.resolve("httpServer");
-    const issuerContainer = app.context.resolve("issuerContainer");
-    const config = app.context.resolve("config");
-    const verifier = app.context.resolve("credentialVerifier");
-    const apiKeyService = app.context.resolve("apiKeyService");
     await httpServer.register();
-    credentialController(
-      httpServer.fastify,
-      issuerContainer,
-      config,
-      verifier,
-      apiKeyService
-    );
+
+    // Controllers
+    credentialController(app.context);
     oauthPageController(app.context);
     apiKeyController(app.context);
     configController(app.context);
+
     const didService = app.context.resolve("didService");
     await didService.init();
     return app;

@@ -1,5 +1,4 @@
 import type { IssuerContainer } from "../service/issuer-container.js";
-import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { OAuthQueryCallBack } from "../service/credentials.js";
 import { genVCRotes, verifyCredentialRoute } from "./routes/credential.route.js";
 import { vcOAuthCallback } from "./routes/callback.route.js";
@@ -12,64 +11,71 @@ import { ChallengeReq } from "../types/challenge.js";
 import { Credential } from "../types/credential.js";
 import { CredentialVerifier } from "../service/credential-verifivator.js";
 import { Config } from "../../backbone/config.js";
-import { ApiKeyService } from "../service/api-key.service.js";
+import { HttpServer } from "../../backbone/http-server.js";
+import { Injector } from "typed-inject";
+import { contextUtil } from "../../util/context.util.js";
+import { IGateService, OpenResult } from "../service/gate.service.js";
 
-function validateCustomSize(custom: object, sizeLimit: number): void {
-  const customSize = new Uint8Array(Buffer.from(JSON.stringify(custom))).length;
-  const customOutOfLimit = customSize > sizeLimit;
-  if (customOutOfLimit) throw new ClientError(
-    `"custom" property is too large. Bytes limit is ${sizeLimit}`
-  );
+type Dependencies = {
+  httpServer: HttpServer;
+  issuerContainer: IssuerContainer;
+  config: Config;
+  credentialVerifier: CredentialVerifier;
+  gateService: IGateService;
 }
 
-export function credentialController(
-  fastify: FastifyInstance,
-  issuerContainer: IssuerContainer,
-  config: Config,
-  verifier: CredentialVerifier,
-  apiKeyService: ApiKeyService
-): FastifyInstance {
+const tokens: (keyof Dependencies)[] = [
+  "httpServer",
+  "issuerContainer",
+  "config",
+  "credentialVerifier",
+  "gateService"
+];
 
-  const isFrontend = async (req: FastifyRequest): Promise<boolean> => {
-    try {
-      const frontendDomain = config.frontendOrigin.origin;
-      const referer = req.headers.referer;
-      if (!referer) return false;
-      const refererDomain = new URL(referer).origin;
-      return refererDomain === frontendDomain;
-    } catch (e) {
-      return false;
+export function credentialController(injector: Injector<Dependencies>): void {
+  const {
+    httpServer: { fastify },
+    config,
+    issuerContainer,
+    credentialVerifier: verifier,
+    gateService: gate
+  } = contextUtil.from(tokens, injector);
+
+  function validateCustomSize(custom: object): OpenResult {
+    const customSize = new Uint8Array(Buffer.from(JSON.stringify(custom))).length;
+    const customOutOfLimit = customSize > config.customSizeLimit;
+    if (customOutOfLimit) {
+      return {
+        opened: false,
+        reason: `"custom" property is too large. Bytes limit is ${config.customSizeLimit}`,
+        errStatus: 400
+      };
     }
-  };
-
-  const isAPIkey = async (req: FastifyRequest): Promise<boolean> => {
-    const authorization = req.headers.authorization;
-    if (!authorization) return false;
-    const key = authorization.split(" ")[1];
-    if (!key) return false;
-    await apiKeyService.verify(key);
-    return true;
-  };
-
-  const authorize = async (req: FastifyRequest): Promise<void> => {
-    const isAuthorized = await isFrontend(req) || await isAPIkey(req);
-    if (!isAuthorized) throw new ClientError("Forbidden", 403);
-  };
+    return { opened: true, reason: "" };
+  }
 
   genVCRotes.forEach((routes) => {
 
     // initialize payload endpoints
     const challengeRoute = routes.challenge;
     if (challengeRoute) {
-      // @ts-ignore
       fastify.route<{ Body: ChallengeReq }>({
-        method: challengeRoute.method,
-        url: challengeRoute.url,
-        schema: challengeRoute.schema,
+        ...challengeRoute,
         preHandler: async (req) => {
-          await authorize(req);
-          const custom = req.body.custom;
-          if (custom) validateCustomSize(custom, config.customSizeLimit);
+          await gate.build()
+            .checkFrontend(req)
+            .checkApikey(req)
+            .openOne(({ reason, errStatus }) => {
+              throw new ClientError(reason, errStatus);
+            });
+          await gate.build()
+            .setLock(async () => {
+              const custom = req.body.custom;
+              if (custom) return validateCustomSize(custom);
+              return { opened: true, reason: ""}
+            }).openAll(({reason, errStatus}) => {
+              throw new ClientError(reason, errStatus)
+          })
           req.body = ThrowDecoder
             .decode(ChallengeReq, req.body, new ClientError("Bad request"));
         },
@@ -89,7 +95,14 @@ export function credentialController(
         schema: canIssueRoute.schema,
         // FUTURE COMMENT: `Can Issue` endpoint has to be accepted with `apikey`
         // even if `only secret key` flag set to `true`
-        preHandler: async (req) => await authorize(req),
+        preHandler: async (req) => {
+          await gate.build()
+            .checkFrontend(req)
+            .checkApikey(req)
+            .openOne(({ reason, errStatus }) => {
+              throw new ClientError(reason, errStatus);
+            });
+        },
         handler: async (req) => {
           const canIssueEntry = req.query;
           return issuerContainer.canIssue(routes.credentialType, canIssueEntry);
@@ -104,7 +117,14 @@ export function credentialController(
       method: issueRoute.method,
       url: issueRoute.url,
       schema: issueRoute.schema,
-      preHandler: async (req) => await authorize(req),
+      preHandler: async (req) => {
+        await gate.build()
+          .checkFrontend(req)
+          .checkApikey(req)
+          .openOne(({reason, errStatus}) => {
+            throw new ClientError(reason, errStatus);
+          })
+      ;},
       handler: (req) => {
         const credentialRequest = req.body;
         return issuerContainer.issue(routes.credentialType, credentialRequest);
@@ -150,8 +170,6 @@ export function credentialController(
       return await verifier.verify(req.body);
     }
   });
-
-  return fastify;
 }
 
 
