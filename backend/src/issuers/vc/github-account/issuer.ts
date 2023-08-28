@@ -1,5 +1,5 @@
-import type { ICredentialIssuer, IOAuthCallback, } from "../../../base/service/credentials.js";
-import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../base/service/credentials.js";
+import type { ICredentialIssuer, IOAuthCallback, } from "../../../base/types/issuer.js";
+import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../base/types/issuer.js";
 import { type Disposable, tokens } from "typed-inject";
 import { GitHubService, type GitHubUser } from "../../../base/service/external/github.service.js";
 import { ProofService } from "../../../base/service/proof.service.js";

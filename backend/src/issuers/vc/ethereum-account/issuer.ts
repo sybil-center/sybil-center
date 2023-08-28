@@ -2,7 +2,7 @@ import {
   DEFAULT_CREDENTIAL_CONTEXT,
   DEFAULT_CREDENTIAL_TYPE,
   ICredentialIssuer,
-} from "../../../base/service/credentials.js";
+} from "../../../base/types/issuer.js";
 import { type Disposable, tokens } from "typed-inject";
 import { ProofService } from "../../../base/service/proof.service.js";
 import { DIDService } from "../../../base/service/did.service.js";

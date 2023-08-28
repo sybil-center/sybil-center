@@ -1,5 +1,5 @@
 import type { IssuerContainer } from "../service/issuer-container.js";
-import type { OAuthQueryCallBack } from "../service/credentials.js";
+import type { OAuthQueryCallBack } from "../types/issuer.js";
 import { genVCRotes, verifyCredentialRoute } from "./routes/credential.route.js";
 import { vcOAuthCallback } from "./routes/callback.route.js";
 
