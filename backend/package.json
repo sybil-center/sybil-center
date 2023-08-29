@@ -53,6 +53,7 @@
     "key-did-resolver": "^3.0.0",
     "pino": "^8.10.0",
     "pino-pretty": "^9.3.0",
+    "snarkyjs": "^0.12.1",
     "sort-keys": "^5.0.0",
     "twitter-api-v2": "^1.14.0",
     "typed-inject": "^3.0.1",
