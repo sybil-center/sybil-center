@@ -14,7 +14,7 @@ export type ZkcProof = {
   key: string;
   type: string;
   target: string;
-  transformSchema: string;
+  transformSchema: Record<string, any>;
   sign: string;
 }
 
