@@ -1,4 +1,4 @@
-import { GraphLink, GraphNode, Preparator } from "@sybil-center/zkc-preparator";
+import { GraphLink, GraphNode, Preparator, TransformationGraph } from "@sybil-center/zkc-preparator";
 import { Field, PublicKey } from "snarkyjs";
 import { ZkCredential } from "../base/types/zkc.credential.js";
 import sortKeys from "sort-keys";
@@ -10,7 +10,6 @@ const numTypes = [
   "uint128",
   "uint256",
 ];
-
 
 const extendNodes: GraphNode[] = [
   {
@@ -64,6 +63,11 @@ const extendLinks: GraphLink[] = [
 const preparator = new Preparator();
 preparator.extendGraph(extendNodes, extendLinks);
 
+if (!("graph" in preparator)) {
+  throw new Error(`Transformation graph reference as "graph" is not in ZKC Preparator`);
+}
+
+
 export const zkc = {
   prepare: preparator.prepare,
   sort<T extends (ZkCredential) = ZkCredential>(credential: T): T {
@@ -95,5 +99,7 @@ export const zkc = {
       ...sortKeys(sbjProps, { deep: true })
     };
     return target as T;
-  }
+  },
+  // @ts-ignore
+  transGraph: preparator.graph as TransformationGraph
 };
