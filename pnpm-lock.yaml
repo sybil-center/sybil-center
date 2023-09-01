@@ -32,6 +32,7 @@ importers:
       io-ts: ^2.2.20
       key-did-provider-ed25519: ^3.0.0
       key-did-resolver: ^3.0.0
+      mina-signer: ^2.1.0
       pino: ^8.10.0
       pino-pretty: ^9.3.0
       prettier: ^2.8.3
@@ -69,6 +70,7 @@ importers:
       io-ts: 2.2.20_fp-ts@2.13.1
       key-did-provider-ed25519: 3.0.0
       key-did-resolver: 3.0.0
+      mina-signer: 2.1.0
       pino: 8.11.0
       pino-pretty: 9.4.0
       snarkyjs: 0.12.1
@@ -10020,6 +10022,13 @@ packages:
   /min-indent/1.0.1:
     resolution: {integrity: sha512-I9jwMn07Sy/IwOj3zVkVik2JTvgpaykDZEigL6Rx6N9LbMywwUSMtxET+7lVoDLLd3O3IXwJwvuuns8UB/HeAg==}
     engines: {node: '>=4'}
+    dev: false
+
+  /mina-signer/2.1.0:
+    resolution: {integrity: sha512-IYSAfkQyd2Qewc4Mf5mTSgz+nAJjJn8ShsHx+BI6gpPLJSlkujdkBEX3iUBKctOeC0clW8tsDosCrkiww2i/kA==}
+    dependencies:
+      blakejs: 1.2.1
+      js-sha256: 0.9.0
     dev: false
 
   /mini-css-extract-plugin/2.7.5_webpack@5.77.0:

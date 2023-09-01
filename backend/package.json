@@ -51,6 +51,7 @@
     "io-ts": "^2.2.20",
     "key-did-provider-ed25519": "^3.0.0",
     "key-did-resolver": "^3.0.0",
+    "mina-signer": "^2.1.0",
     "pino": "^8.10.0",
     "pino-pretty": "^9.3.0",
     "snarkyjs": "^0.12.1",
