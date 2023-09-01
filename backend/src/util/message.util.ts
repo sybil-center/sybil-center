@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { ClientError, ServerError } from "../../backbone/errors.js";
-import { AnyObj } from "../../util/model.util.js";
+import { ClientError, ServerError } from "../backbone/errors.js";
+import { AnyObj } from "./model.util.js";
 import { CredentialType } from "@sybil-center/sdk/types";
 import * as t from "io-ts";
-import { ThrowDecoder } from "../../util/throw-decoder.util.js";
+import { ThrowDecoder } from "./throw-decoder.util.js";
 
 export type IssueMessageOpt = {
   subjectId: string;
@@ -206,3 +206,5 @@ export function toIssueMessage(opt: IssueMessageOpt): string {
 export function fromIssueMessage(challenge: string): IssueMessageObj {
   return ThrowDecoder.decode(messageAsObject, challenge);
 }
+
+

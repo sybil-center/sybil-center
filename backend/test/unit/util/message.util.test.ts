@@ -1,7 +1,7 @@
 import { suite } from "uvu";
 import * as a from "uvu/assert";
-import { ethereumSupport } from "../../../support/chain/ethereum.js";
-import { fromIssueMessage, toIssueMessage } from "../../../../src/base/service/message.service.js";
+import { ethereumSupport } from "../../support/chain/ethereum.js";
+import { fromIssueMessage, toIssueMessage } from "../../../src/util/message.util.js";
 import { CredentialType } from "@sybil-center/sdk";
 
 const test = suite("UNIT: challenge service test");

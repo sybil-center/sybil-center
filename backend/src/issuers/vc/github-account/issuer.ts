@@ -6,7 +6,7 @@ import { ProofService } from "../../../base/service/proof.service.js";
 import { DIDService } from "../../../base/service/did.service.js";
 import { ClientError } from "../../../backbone/errors.js";
 import type { IMultiSignService } from "../../../base/service/multi-sign.service.js";
-import { fromIssueMessage, toIssueMessage } from "../../../base/service/message.service.js";
+import { fromIssueMessage, toIssueMessage } from "../../../util/message.util.js";
 import { TimedCache } from "../../../base/service/timed-cache.js";
 import { absoluteId } from "../../../util/id.util.js";
 import sortKeys from "sort-keys";

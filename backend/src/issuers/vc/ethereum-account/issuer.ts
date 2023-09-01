@@ -7,7 +7,7 @@ import { type Disposable, tokens } from "typed-inject";
 import { ProofService } from "../../../base/service/proof.service.js";
 import { DIDService } from "../../../base/service/did.service.js";
 import { MultiSignService } from "../../../base/service/multi-sign.service.js";
-import { fromIssueMessage, toIssueMessage } from "../../../base/service/message.service.js";
+import { fromIssueMessage, toIssueMessage } from "../../../util/message.util.js";
 import { absoluteId } from "../../../util/id.util.js";
 import { TimedCache } from "../../../base/service/timed-cache.js";
 import sortKeys from "sort-keys";
