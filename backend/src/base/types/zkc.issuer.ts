@@ -1,8 +1,8 @@
-import { ZkCredProofed } from "./zkc.credential.js";
+import { ZkcId, ZkCredProofed } from "./zkc.credential.js";
 
 export type ZkcChallengeReq = {
   exd?: number;
-  sbjId: number;
+  sbjId: ZkcId;
 }
 
 export type ZkcChallenge = {

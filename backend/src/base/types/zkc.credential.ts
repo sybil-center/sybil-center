@@ -1,12 +1,17 @@
+export type ZkcId = {
+  t: number,
+  k: string
+}
+
 export type ZkCredential = {
   isr: {
-    id: { t: number, k: string }
+    id: ZkcId;
   }
   sch: number;
   isd: number;
   exd: number; // 0 if expiration date is undefined
   sbj: {
-    id: { t: number, k: string }
+    id: ZkcId;
   } & Record<string, any>
 }
 
@@ -19,5 +24,5 @@ export type ZkcProof = {
 }
 
 export interface ZkCredProofed extends ZkCredential {
-  proof: ZkcProof[]
+  proof: ZkcProof[];
 }
