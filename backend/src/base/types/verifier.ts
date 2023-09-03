@@ -5,5 +5,6 @@ export type SignEntry = {
 }
 
 export interface IVerifier {
+  /** Verify signature */
   verify(signEntry: SignEntry): Promise<boolean>
 }

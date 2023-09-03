@@ -69,6 +69,7 @@ type LinkReq = {
   sessionId: string;
   credentialType: CredentialType;
   scope: string[];
+  isZKC?: boolean;
 };
 
 /**
@@ -110,11 +111,15 @@ export class GitHubService implements IOAuthService<LinkReq, URL, string> {
     }
   }
 
-  getOAuthLink({ sessionId, credentialType, scope }: LinkReq): URL {
+  getOAuthLink({ sessionId, credentialType, scope, isZKC }: LinkReq): URL {
     return makeURL("https://github.com/login/oauth/authorize", {
       redirect_uri: credentialOAuthCallbackURL(this.pathToExposeDomain).href,
       client_id: this.gitHubClientId,
-      state: OAuthState.encode({ sessionId: sessionId, credentialType: credentialType }),
+      state: OAuthState.encode({
+        sessionId: sessionId,
+        credentialType: credentialType,
+        isZKC: isZKC
+      }),
       scope: scope.join("%20"),
     });
   }

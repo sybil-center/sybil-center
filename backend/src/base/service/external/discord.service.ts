@@ -1,11 +1,11 @@
 import * as t from "io-ts";
 import { ServerError } from "../../../backbone/errors.js";
 import type { IOAuthService } from "../../types/oauth.js";
-import { credentialOAuthCallbackURL } from "../../../util/route.util.js";
 import { AccessTokenResponse, OAuthState } from "../../types/oauth.js";
+import { credentialOAuthCallbackURL } from "../../../util/route.util.js";
 import { rest } from "../../../util/fetch.util.js";
 import { makeURL } from "../../../util/make-url.util.js";
-import { CredentialType } from "@sybil-center/sdk/types"
+import { CredentialType } from "@sybil-center/sdk/types";
 
 type LinkReq = {
   sessionId: string;
@@ -72,7 +72,8 @@ export class DiscordService implements IOAuthService<LinkReq, URL, string> {
       response_type: "code",
       state: OAuthState.encode({
         sessionId: sessionId,
-        credentialType: credentialType
+        credentialType: credentialType,
+        isZKC: false
       }),
       prompt: "consent",
       scope: scope.join("%20"),

@@ -1,13 +1,17 @@
 import { ZkcId, ZkCredProofed } from "./zkc.credential.js";
 
+export const zkcIdAliases = ["mina", "1"] as const;
+
+export type ZkcIdAlias = typeof zkcIdAliases[number]
+
 export type ZkcChallengeReq = {
   exd?: number;
-  sbjId: ZkcId;
+  sbjId: Omit<ZkcId, "t"> & { t: ZkcIdAlias };
 }
 
 export type ZkcChallenge = {
- sessionId: string;
- message: string;
+  sessionId: string;
+  message: string;
 }
 
 export type ZkcCanIssueReq = {
@@ -32,5 +36,6 @@ export interface IZkcIssuer<
 > {
   getChallenge(challengeReq: TChallengeReq): Promise<TChallenge>;
   canIssue(entry: TCanReq): Promise<TCanResp>;
-  issue(issueReq: TZkcIssueReq): Promise<ZkCredProofed>
+  issue(issueReq: TZkcIssueReq): Promise<ZkCredProofed>;
+  providedSchema: number;
 }

@@ -15,11 +15,29 @@ export type ZkCredential = {
   } & Record<string, any>
 }
 
+type TransCredSchema = {
+  isr: {
+    id: {
+      t: string[];
+      k: string[];
+    };
+  };
+  sch: string[];
+  isd: string[];
+  exd: string[];
+  sbj: {
+    id: {
+      t: string[];
+      k: string[];
+    };
+  } & Record<string, any>;
+};
+
 export type ZkcProof = {
   key: string;
   type: string;
   target: string;
-  transformSchema: Record<string, any>;
+  transformSchema: TransCredSchema;
   sign: string;
 }
 

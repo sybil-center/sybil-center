@@ -11,6 +11,7 @@ export const OAuthState = t.string
     t.type({
       sessionId: t.string,
       credentialType: t.string,
+      isZKC: t.union([t.boolean, t.undefined])
     })
   );
 export type OAuthState = t.TypeOf<typeof OAuthState>;

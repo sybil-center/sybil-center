@@ -73,7 +73,11 @@ export class TwitterService
       credentialOAuthCallbackURL(this.pathToExposeDomain).href,
       {
         scope: scope,
-        state: OAuthState.encode({ sessionId: sessionId, credentialType: credentialType }),
+        state: OAuthState.encode({
+          sessionId: sessionId,
+          credentialType: credentialType,
+          isZKC: false
+        }),
       }
     );
     return {
