@@ -1,21 +1,13 @@
-import { tokens } from "typed-inject";
 import { Config } from "../../../backbone/config.js";
 import { ZkCredential, ZkCredProofed } from "../../types/zkc.credential.js";
 import { TransCredSchema } from "@sybil-center/zkc-preparator";
 import { zkc } from "../../../util/zk-credentials.util.js";
 import { Field, Poseidon, PrivateKey, PublicKey, Signature } from "snarkyjs";
+import { IZkcSigner } from "../../types/zkc.signer.js";
 
-export interface IMinaSigner {
-  identifier: { t: number; k: string };
-  signZkCred(
-    props: Omit<ZkCredential, "isr">,
-    transSchema: TransCredSchema
-  ): ZkCredProofed;
-}
 
-export class MinaSigner implements IMinaSigner {
+export class MinaSigner implements IZkcSigner {
 
-  static inject = tokens("config");
   constructor(
     config: Config,
     private readonly privateKey: PrivateKey = PrivateKey.fromBase58(config.minaPrivateKey),
@@ -29,24 +21,24 @@ export class MinaSigner implements IMinaSigner {
     };
   }
 
-  signZkCred(
+  async signZkCred(
     props: Omit<ZkCredential, "isr">,
     transSchema: TransCredSchema
-  ): ZkCredProofed {
+  ): Promise<ZkCredProofed> {
     const zkCred: ZkCredential = {
       isr: { id: this.identifier },
       ...props
     };
-    const values = zkc.prepare<Field[]>(zkCred, transSchema);
+    let values = zkc.preparator.prepare<Field[]>(zkCred, transSchema)
     const hash = Poseidon.hash(values);
     const signature = Signature.create(this.privateKey, [hash]);
     return {
       ...zkc.sort(zkCred),
       proof: [
         {
-          target: "Mina",
+          target: "mina",
           key: this.publicKey.toBase58(),
-          type: "Mina:Poseidon-BabyJubJub",
+          type: "mina:Poseidon-BabyJubJub",
           transformSchema: transSchema,
           sign: signature.toBase58()
         }
