@@ -36,7 +36,7 @@
     "@solana/web3.js": "^1.73.3",
     "@stablelib/sha256": "^1.0.1",
     "@sybil-center/sdk": "workspace:*",
-    "@sybil-center/zkc-preparator": "^0.0.1",
+    "@sybil-center/zkc-preparator": "^0.0.3",
     "bitcoinjs-message": "^2.2.0",
     "bs58": "^5.0.0",
     "cache-clock": "^1.5.0",

@@ -15,7 +15,7 @@ importers:
       '@solana/web3.js': ^1.73.3
       '@stablelib/sha256': ^1.0.1
       '@sybil-center/sdk': workspace:*
-      '@sybil-center/zkc-preparator': ^0.0.1
+      '@sybil-center/zkc-preparator': ^0.0.3
       '@types/node': ^18.11.10
       '@types/sinon': ^10.0.13
       bitcoinjs-message: ^2.2.0
@@ -55,7 +55,7 @@ importers:
       '@solana/web3.js': 1.74.0
       '@stablelib/sha256': 1.0.1
       '@sybil-center/sdk': link:../sybil
-      '@sybil-center/zkc-preparator': 0.0.1
+      '@sybil-center/zkc-preparator': 0.0.3
       bitcoinjs-message: 2.2.0
       bs58: 5.0.0
       cache-clock: 1.5.0
@@ -3259,8 +3259,8 @@ packages:
       - supports-color
     dev: false
 
-  /@sybil-center/zkc-preparator/0.0.1:
-    resolution: {integrity: sha512-VsjlCCS5DYCO55uImx53rEzGqRX9tT0C8oUmBfatbWnQTmJhJtFpl4Yy3voTfxJLJ6AP8TIZRbCSyq7ffO8b2w==}
+  /@sybil-center/zkc-preparator/0.0.3:
+    resolution: {integrity: sha512-ULwRWCArXW+8rW3b2z3rmTT89J46SyisV7K61PvADblR8K5Te415qkY0PSfUrbspeumLSpyzGHo4hhkQorWmsg==}
     dependencies:
       ieee754: 1.2.1
       sort-keys: 5.0.0
