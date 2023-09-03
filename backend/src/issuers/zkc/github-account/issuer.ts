@@ -6,7 +6,7 @@ import {
   ZkcChallengeReq,
   ZkcIssueReq
 } from "../../../base/types/zkc.issuer.js";
-import { ZkcId, ZkCredProofed } from "../../../base/types/zkc.credential.js";
+import { ZkcId, ZkCredProofed, ZkcSchemaNums } from "../../../base/types/zkc.credential.js";
 import { IOAuthCallback } from "../../../base/types/issuer.js";
 import { OAuthState } from "../../../base/types/oauth.js";
 import { Disposable, tokens } from "typed-inject";
@@ -140,7 +140,7 @@ export class ZkcGithubAccountIssuer
     );
   }
 
-  get providedSchema(): number { return 1;};
+  get providedSchema(): ZkcSchemaNums { return 1;};
 
   dispose(): void {
     this.sessionCache.dispose();

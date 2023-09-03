@@ -1,6 +1,6 @@
 import { GraphLink, GraphNode, Preparator, TransCredSchema, TransformationGraph } from "@sybil-center/zkc-preparator";
 import { Field, PublicKey } from "snarkyjs";
-import { ZkCredential } from "../base/types/zkc.credential.js";
+import { schemaNames, schemaNums, ZkCredential, ZkcSchemaNames, ZkcSchemaNums } from "../base/types/zkc.credential.js";
 import sortKeys from "sort-keys";
 import { ZkcIdAlias, zkcIdAliases } from "../base/types/zkc.issuer.js";
 
@@ -83,6 +83,7 @@ if (!("graph" in preparator)) {
   throw new Error(`Transformation graph reference as "graph" is not in ZKC Preparator`);
 }
 
+
 /* Supported Transformations Schemas */
 
 type ZkcTypeValue = Record<string, TransCredSchema>;
@@ -127,6 +128,16 @@ const TRANS_SCHEMAS: Record<string, ZkcTypeValue> = {
 const ZKC_IDS: Record<ZkcIdAlias, number> = {
   mina: 1,
   1: 1,
+};
+
+/* Supported ZKC Schemas */
+
+const SCHEMA_NAME_TO_NUM: Record<ZkcSchemaNames, ZkcSchemaNums> = {
+  "GitHubAccount": 1
+};
+
+const SCHEMA_NUM_TO_NAME: Record<ZkcSchemaNums, ZkcSchemaNames> = {
+  1: "GitHubAccount"
 };
 
 /* Entry Point Object */
@@ -183,5 +194,27 @@ export const zkc = {
   isIdAlias(alias: string | number): alias is ZkcIdAlias {
     // @ts-ignore
     return zkcIdAliases.includes(typeof alias === "number" ? alias.toString() : alias);
+  },
+
+  isSchemaName(alias: string): alias is ZkcSchemaNames {
+    // @ts-ignore
+    return schemaNames.includes(alias);
+  },
+
+  toSchemaNum<T = ZkcSchemaNums>(alias: string): T {
+    const isName = zkc.isSchemaName(alias);
+    if (isName) return SCHEMA_NAME_TO_NUM[alias] as T;
+    throw new Error(`ZKC schema name ${alias} is not supported`);
+  },
+
+  isSchemaNum(alias: number): alias is ZkcSchemaNums {
+    // @ts-ignore
+    return schemaNums.includes(alias);
+  },
+
+  toSchemaName<T = ZkcSchemaNames>(alias: number): T {
+    const isNum = zkc.isSchemaNum(alias);
+    if (isNum) return SCHEMA_NUM_TO_NAME[alias] as T;
+    throw new Error(`ZKC schema num ${alias} is not supported`);
   }
 };

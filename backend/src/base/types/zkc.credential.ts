@@ -44,3 +44,12 @@ export type ZkcProof = {
 export interface ZkCredProofed extends ZkCredential {
   proof: ZkcProof[];
 }
+
+/* Schemas */
+
+export const schemaNames = ["GitHubAccount"] as const;
+export type ZkcSchemaNames = typeof schemaNames[number];
+
+export const schemaNums = [1] as const;
+export type ZkcSchemaNums = typeof schemaNums[number];
+

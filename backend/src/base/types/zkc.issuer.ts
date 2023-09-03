@@ -1,4 +1,4 @@
-import { ZkcId, ZkCredProofed } from "./zkc.credential.js";
+import { ZkcId, ZkCredProofed, ZkcSchemaNums } from "./zkc.credential.js";
 
 export const zkcIdAliases = ["mina", "1"] as const;
 
@@ -37,5 +37,5 @@ export interface IZkcIssuer<
   getChallenge(challengeReq: TChallengeReq): Promise<TChallenge>;
   canIssue(entry: TCanReq): Promise<TCanResp>;
   issue(issueReq: TZkcIssueReq): Promise<ZkCredProofed>;
-  providedSchema: number;
+  providedSchema: ZkcSchemaNums;
 }
