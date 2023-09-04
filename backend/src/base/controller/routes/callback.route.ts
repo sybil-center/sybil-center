@@ -2,7 +2,7 @@ import { Route } from "../../types/route.js";
 import { oauthCallbackEP } from "../../../util/route.util.js";
 
 
-export const vcOAuthCallback: Route = {
+export const oauthCallbackRoute: Route = {
   method: ["GET"],
   url: oauthCallbackEP(),
   schema: {

@@ -13,7 +13,7 @@ import {
   IssueReq
 } from "@sybil-center/sdk/types";
 
-type UnknownCredentialIssuer = ICredentialIssuer<
+  type UnknownCredentialIssuer = ICredentialIssuer<
   IssueReq,
   Credential,
   ChallengeReq,

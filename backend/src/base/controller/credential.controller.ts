@@ -1,9 +1,5 @@
 import type { IssuerContainer } from "../service/issuer-container.js";
-import type { OAuthQueryCallBack } from "../types/issuer.js";
 import { genVCRotes, verifyCredentialRoute } from "./routes/credential.route.js";
-import { vcOAuthCallback } from "./routes/callback.route.js";
-
-import { OAuthState } from "../types/oauth.js";
 import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 import { CanIssueReq, IssueReq } from "@sybil-center/sdk/types";
 import { ClientError } from "../../backbone/errors.js";
@@ -72,10 +68,10 @@ export function credentialController(injector: Injector<Dependencies>): void {
             .setLock(async () => {
               const custom = req.body.custom;
               if (custom) return validateCustomSize(custom);
-              return { opened: true, reason: ""}
-            }).openAll(({reason, errStatus}) => {
-              throw new ClientError(reason, errStatus)
-          })
+              return { opened: true, reason: "" };
+            }).openAll(({ reason, errStatus }) => {
+              throw new ClientError(reason, errStatus);
+            });
           req.body = ThrowDecoder
             .decode(ChallengeReq, req.body, new ClientError("Bad request"));
         },
@@ -121,40 +117,16 @@ export function credentialController(injector: Injector<Dependencies>): void {
         await gate.build()
           .checkFrontend(req)
           .checkApikey(req)
-          .openOne(({reason, errStatus}) => {
+          .openOne(({ reason, errStatus }) => {
             throw new ClientError(reason, errStatus);
           })
-      ;},
+        ;
+      },
       handler: (req) => {
         const credentialRequest = req.body;
         return issuerContainer.issue(routes.credentialType, credentialRequest);
       }
     });
-  });
-
-  // Init oauth callback endpoint
-  fastify.route<{ Querystring: OAuthQueryCallBack }>({
-    method: vcOAuthCallback.method,
-    url: vcOAuthCallback.url,
-    schema: vcOAuthCallback.schema,
-    handler: async (req, resp) => {
-      const query = req.query;
-      const defaultRedirect = new URL(
-        "/oauth/authorized",
-        config.pathToExposeDomain
-      );
-      try {
-        const state = ThrowDecoder.decode(OAuthState, query.state);
-        const redirectUrl = await issuerContainer.handleOAuthCallback(
-          query.code,
-          state
-        );
-        const redirectTo = redirectUrl ? redirectUrl : defaultRedirect;
-        resp.redirect(redirectTo.href);
-      } catch (e) {
-        resp.redirect(defaultRedirect.href);
-      }
-    }
   });
 
   // Init verify credential endpoint

@@ -3,13 +3,14 @@ import { App } from "../../../../src/app/app.js";
 import { ethereumSupport } from "../../../support/chain/ethereum.js";
 import * as a from "uvu/assert";
 import { configDotEnv } from "../../../../src/util/dotenv.util.js";
+import { support } from "../../../support/index.js";
 
 const test = suite("INTEGRATION: credential verifier test");
 
 let app: App;
 
 test.before(async () => {
-  const testConfig = new URL("../env-config/test.env", import.meta.url);
+  const testConfig = support.configPath
   configDotEnv({ path: testConfig, override: true });
   app = await App.init()
 });

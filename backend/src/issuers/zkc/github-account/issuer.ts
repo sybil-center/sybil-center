@@ -36,7 +36,7 @@ interface GitSession {
   code?: string;
 }
 
-export class ZkcGithubAccountIssuer
+export class ZkcGitHubAccountIssuer
   implements IZkcIssuer<
     GitChallengeReq,
     GitChallenge
@@ -46,7 +46,7 @@ export class ZkcGithubAccountIssuer
 
   static inject = tokens(
     "config",
-    "signerManager",
+    "zkcSignerManager",
     "verifierManager"
   );
   constructor(
@@ -113,6 +113,7 @@ export class ZkcGithubAccountIssuer
     if (!code) {
       throw new ClientError("GitHub processing your authorization. Wait!");
     }
+    this.sessionCache.delete(sessionId);
     const { expirationDate } = fromIssueMessage(message);
     const verified = await this.verifierManager.verify(sbjId.t, {
       sign: signature,
@@ -142,7 +143,7 @@ export class ZkcGithubAccountIssuer
 
   get providedSchema(): ZkcSchemaNums { return 1;};
 
-  dispose(): void {
+  async dispose() {
     this.sessionCache.dispose();
   }
 }

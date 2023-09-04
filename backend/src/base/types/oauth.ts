@@ -1,6 +1,11 @@
 import * as t from "io-ts";
 import { bytesAsB64U, jsonAsBytes } from "./io-ts-extra.js";
 
+export interface OAuthQueryCallBack {
+  code: string;
+  state: string;
+}
+
 /**
  * OAuth "state" passed from requestor all the way to our callback.
  */

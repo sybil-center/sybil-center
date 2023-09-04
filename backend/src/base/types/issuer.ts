@@ -13,11 +13,6 @@ export const DEFAULT_CREDENTIAL_CONTEXT =
   "https://www.w3.org/2018/credentials/v1";
 export const DEFAULT_CREDENTIAL_TYPE: CredentialType = "VerifiableCredential";
 
-export interface OAuthQueryCallBack {
-  code: string;
-  state: string;
-}
-
 /**
  * Generate Verifiable Credentials
  * Each service HAVE TO implement this interface if it creates VC

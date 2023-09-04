@@ -9,7 +9,7 @@ import { DIDService } from "../../../../src/base/service/did.service.js";
 
 const test = suite("INTEGRATION: proofService test");
 
-const PATH_TO_CONFIG = new URL("../env-config/test.env", import.meta.url);
+const PATH_TO_CONFIG = new URL("../../../env-config/test.env", import.meta.url);
 let injector: Injector<{ didService: DIDService; proofService: ProofService }>;
 
 test.before(async () => {

@@ -6,61 +6,26 @@ import {
   ZkcChallengeReq,
   ZkcIssueReq
 } from "../../base/types/zkc.issuer.js";
-import { Injector, INJECTOR_TOKEN, tokens } from "typed-inject";
-import { ILogger } from "../../backbone/logger.js";
+import { Disposable, tokens } from "typed-inject";
 import { zkc } from "../../util/zk-credentials.util.js";
 import { ClientError } from "../../backbone/errors.js";
 import { IOAuthCallback } from "../../base/types/issuer.js";
 import { OAuthState } from "../../base/types/oauth.js";
 import { ZkCredProofed } from "../../base/types/zkc.credential.js";
+import { ZkcGitHubAccountIssuer } from "./github-account/index.js";
 
-export interface IZkcIssuerManager {
-  issuer(alias: string | number): IZkcIssuer & Partial<IOAuthCallback>;
-
-  getChallenge(
-    alias: string | number,
-    challengeReq: ZkcChallengeReq
-  ): Promise<ZkcChallenge>;
-
-  callbackOAuth(
-    code: string,
-    oauthState: OAuthState
-  ): Promise<URL | undefined>;
-
-  canIssue(
-    alias: string | number,
-    canReq: ZkcCanIssueReq
-  ): Promise<ZkcCanIssueResp>;
-
-  issue(
-    alias: string | number,
-    issueReq: ZkcIssueReq
-  ): Promise<ZkCredProofed>;
-}
-
-const issuersTokens = [
-  "zkcGithubAccountIssuer"
-] as const;
-
-type Dependencies = Record<typeof issuersTokens[number], IZkcIssuer>
-
-export class ZkcIssuerManager implements IZkcIssuerManager {
+export class ZkcIssuerManager implements Disposable {
 
   private readonly issuers: Map<number, IZkcIssuer>;
 
-  static inject = tokens(INJECTOR_TOKEN, "logger");
+  static inject = tokens("zkcGitHubAccountIssuer");
 
   constructor(
-    injector: Injector<Dependencies>,
-    logger: ILogger
+    zkcGitHubAccountIssuer: ZkcGitHubAccountIssuer,
   ) {
-    this.issuers = new Map();
-    issuersTokens.forEach((token) => {
-      const issuer = injector.resolve(token);
-      const schema = issuer.providedSchema;
-      this.issuers.set(schema, issuer);
-      logger.info(`Added ZKC ${zkc.toSchemaName(schema)} issuer`);
-    });
+    this.issuers = new Map([
+      [zkcGitHubAccountIssuer.providedSchema, zkcGitHubAccountIssuer]
+    ]);
   }
 
   issuer(alias: string | number): IZkcIssuer & Partial<IOAuthCallback> {
@@ -98,5 +63,13 @@ export class ZkcIssuerManager implements IZkcIssuerManager {
     issueReq: ZkcIssueReq
   ): Promise<ZkCredProofed> {
     return this.issuer(alias).issue(issueReq);
+  }
+
+  async dispose() {
+    for (const issuer of this.issuers.values()) {
+      if ("dispose" in issuer && typeof issuer.dispose === "function") {
+        await issuer.dispose();
+      }
+    }
   }
 }
