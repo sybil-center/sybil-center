@@ -21,11 +21,11 @@ import { IZkcSignerManager } from "../../../base/service/signers/zkc.signer-mana
 import { IVerifierManager } from "../../../base/service/verifiers/verifier.manager.js";
 
 
-interface GitChallengeReq extends ZkcChallengeReq {
+export interface GitChallengeReq extends ZkcChallengeReq {
   readonly redirectUrl?: string;
 }
 
-interface GitChallenge extends ZkcChallenge {
+export interface GitChallenge extends ZkcChallenge {
   readonly authUrl: string;
 }
 
@@ -80,7 +80,8 @@ export class ZkcGitHubAccountIssuer
     const authURL = this.githubService.getOAuthLink({
       sessionId: sessionId,
       credentialType: "GitHubAccount",
-      scope: ["read:user"]
+      scope: ["read:user"],
+      isZKC: true
     });
     return {
       sessionId: sessionId,

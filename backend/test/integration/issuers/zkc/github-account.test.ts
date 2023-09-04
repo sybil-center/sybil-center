@@ -16,13 +16,14 @@ import { zkc } from "../../../../src/util/zk-credentials.util.js";
 const test = suite(`INTEGRATION: test Github Account ZKC issuer`);
 
 const accessToken = "token";
+const redirectURL = "https://example.com/";
 const githubUser = {
   username: "username",
   id: 1337,
   userPage: "https://github/username",
 };
 let issuer: ZkcGitHubAccountIssuer;
-let config: Config
+let config: Config;
 
 test.before(async () => {
   configDotEnv({ path: support.configPath, override: true });
@@ -52,13 +53,15 @@ test("Issue & verify credential", async () => {
   const exd = new Date();
   const { message, sessionId } = await issuer.getChallenge({
     sbjId: { t: "mina", k: sbjPubkey.toBase58() },
-    exd: exd.getTime()
+    exd: exd.getTime(),
+    redirectUrl: redirectURL
   });
-  await issuer.handleOAuthCallback("simple_code", {
+  const redirectTo = await issuer.handleOAuthCallback("simple_code", {
     sessionId: sessionId,
     isZKC: true,
     credentialType: "GitHubAccount"
   });
+  a.is(redirectTo?.href, redirectURL, `redirect url is not matched after oauth callback handle`);
   const {
     signature: {
       field,
@@ -74,14 +77,14 @@ test("Issue & verify credential", async () => {
     signature: sign
   });
 
-  const proof = credProofed.proof[0]!
+  const proof = credProofed.proof[0]!;
   //@ts-ignore
-  credProofed.proof = undefined
+  credProofed.proof = undefined;
   const prepared = zkc.preparator.prepare<Field[]>(credProofed, proof.transformSchema);
-  const msg = Poseidon.hash(prepared)
+  const msg = Poseidon.hash(prepared);
   const signature = Signature.fromBase58(proof.sign);
   const verified = signature.verify(PublicKey.fromBase58(proof.key), [msg]);
-  a.is(verified.toJSON(), true, `Signature is not verified`)
+  a.is(verified.toJSON(), true, `Signature is not verified`);
 
 });
 

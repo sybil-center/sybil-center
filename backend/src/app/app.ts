@@ -22,6 +22,7 @@ import { ZkcGitHubAccountIssuer } from "../issuers/zkc/github-account/index.js";
 import { ZkcSignerManager } from "../base/service/signers/zkc.signer-manager.js";
 import { VerifierManager } from "../base/service/verifiers/verifier.manager.js";
 import { ZkcIssuerManager } from "../issuers/zkc/zkc.issuer-manager.js";
+import { zkCredentialController } from "../base/controller/zk-credential.controller.js";
 
 type DI = {
   logger: ILogger;
@@ -104,6 +105,7 @@ export class App {
     oauthController(app.context);
     apiKeyController(app.context);
     configController(app.context);
+    zkCredentialController(app.context);
 
     const didService = app.context.resolve("didService");
     await didService.init();

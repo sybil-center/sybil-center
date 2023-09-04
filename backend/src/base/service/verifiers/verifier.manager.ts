@@ -27,7 +27,7 @@ export class VerifierManager implements IVerifierManager {
     const minaVerifier = new MinaVerifier();
     this.verifiers = {
       "mina": minaVerifier,
-      1: minaVerifier
+      0: minaVerifier
     };
   }
 

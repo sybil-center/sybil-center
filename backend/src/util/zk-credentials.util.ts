@@ -115,7 +115,7 @@ const minaGitAccountTransSchema: TransCredSchema = {
 
 const githubAccountTransSchema: Record<ZkcIdAlias, TransCredSchema> = {
   mina: minaGitAccountTransSchema,
-  1: minaGitAccountTransSchema,
+  0: minaGitAccountTransSchema,
 };
 
 const TRANS_SCHEMAS: Record<string, ZkcTypeValue> = {
@@ -126,8 +126,8 @@ const TRANS_SCHEMAS: Record<string, ZkcTypeValue> = {
 /* Supported ZKC Identifiers Aliases */
 
 const ZKC_IDS: Record<ZkcIdAlias, number> = {
-  mina: 1,
-  1: 1,
+  mina: 0,
+  0: 0,
 };
 
 /* Supported ZKC Schemas */
@@ -139,6 +139,15 @@ const SCHEMA_NAME_TO_NUM: Record<ZkcSchemaNames, ZkcSchemaNums> = {
 const SCHEMA_NUM_TO_NAME: Record<ZkcSchemaNums, ZkcSchemaNames> = {
   1: "GitHubAccount"
 };
+
+/* ZKC schema name to URL name */
+
+function schemaToURL(name: ZkcSchemaNames) {
+  return name
+    .toString()
+    .replace(/([a-z0–9])([A-Z])/g, "$1-$2")
+    .toLowerCase();
+}
 
 /* Entry Point Object */
 
@@ -187,7 +196,7 @@ export const zkc = {
 
   toId(aliasId: ZkcIdAlias): number {
     const zkcid = ZKC_IDS[aliasId];
-    if (zkcid) return zkcid;
+    if (zkcid !== undefined) return zkcid;
     throw new Error(`ZKC identifier with alias name ${aliasId} not found`);
   },
 
@@ -216,5 +225,17 @@ export const zkc = {
     const isNum = zkc.isSchemaNum(alias);
     if (isNum) return SCHEMA_NUM_TO_NAME[alias] as T;
     throw new Error(`ZKC schema num ${alias} is not supported`);
+  },
+
+  EPs: {
+    v1: (schemaName: ZkcSchemaNames) => {
+      const baseURL = `/api/v1/zkc/${schemaToURL(schemaName)}`;
+      return {
+        challenge: `${baseURL}/challenge`,
+        canIssue: `${baseURL}/can-issue`,
+        issue: `${baseURL}/issue`
+      };
+    }
   }
+
 };

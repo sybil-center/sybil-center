@@ -28,7 +28,7 @@ export class ZkcSignerManager implements IZkcSignerManager {
     const minaSigner = new MinaSigner(config);
     this.signers = {
       "mina": minaSigner,
-      "1": minaSigner
+      "0": minaSigner
     };
   }
 

@@ -1,6 +1,6 @@
 import { ZkcId, ZkCredProofed, ZkcSchemaNums } from "./zkc.credential.js";
 
-export const zkcIdAliases = ["mina", "1"] as const;
+export const zkcIdAliases = ["mina", "0"] as const;
 
 export type ZkcIdAlias = typeof zkcIdAliases[number]
 

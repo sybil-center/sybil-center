@@ -16,7 +16,7 @@ test("issue challenge message create and parse without props", () => {
   });
   const challenge = fromIssueMessage(msg);
   a.is(
-    challenge.description, `Sign the message to prove your Discord account ownership and issue appropriate verifiable credential`,
+    challenge.description, `Sign the message to prove your Discord account ownership and issue appropriate credential`,
     "incorrect description"
   );
   a.is(challenge.type, type, "Challenge credential type is not matched");

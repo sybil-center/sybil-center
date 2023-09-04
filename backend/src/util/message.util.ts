@@ -33,19 +33,19 @@ export type IssueMessageObj = {
 const credentialTypeDescription = new Map<CredentialType, string>([
   [
     "DiscordAccount",
-    "Sign the message to prove your Discord account ownership and issue appropriate verifiable credential"
+    "Sign the message to prove your Discord account ownership and issue appropriate credential"
   ],
   [
     "EthereumAccount",
-    "Sign the message to prove your Ethereum account ownership and issue appropriate verifiable credential"
+    "Sign the message to prove your Ethereum account ownership and issue appropriate credential"
   ],
   [
     "GitHubAccount",
-    "Sign the message to prove your Github account ownership and issue appropriate verifiable credential"
+    "Sign the message to prove your Github account ownership and issue appropriate credential"
   ],
   [
     "TwitterAccount",
-    "Sign the message to prove your Twitter account ownership and issue appropriate verifiable credential"
+    "Sign the message to prove your Twitter account ownership and issue appropriate credential"
   ],
 ]);
 
