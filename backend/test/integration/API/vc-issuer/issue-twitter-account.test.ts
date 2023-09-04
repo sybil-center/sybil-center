@@ -14,6 +14,7 @@ import { CanIssueResp, TwitterAccountChallenge, TwitterAccountProps, TwitterAcco
 import { AnyObj } from "../../../../src/util/model.util.js";
 import { appSup } from "../../../support/app/index.js";
 import { delay } from "../../../../src/util/delay.util.js";
+import { support } from "../../../support/index.js";
 
 const test = suite("INTEGRATION API: issue Twitter account credential test");
 
@@ -26,8 +27,7 @@ const accessToken = "access_token";
 const twitterUsername = `test-${Math.floor(Math.random() * 1000)}`;
 
 test.before(async () => {
-  const config = new URL("../../../env-config/test.env", import.meta.url);
-  configDotEnv({ path: config, override: true });
+  configDotEnv({ path: support.configPath, override: true });
 
   app = await App.init();
   const keys = await appSup.apiKeys(app);

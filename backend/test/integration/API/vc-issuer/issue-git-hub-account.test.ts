@@ -15,6 +15,7 @@ import { AnyObj } from "../../../../src/util/model.util.js";
 import { appSup } from "../../../support/app/index.js";
 import { rest } from "../../../../src/util/fetch.util.js";
 import { delay } from "../../../../src/util/delay.util.js";
+import { support } from "../../../support/index.js";
 
 const test = suite("INTEGRATION API: issue GitHub account credential test");
 
@@ -28,8 +29,7 @@ const username = `test-${Math.floor(Math.random() * 1000)}`;
 const gitHubUserUrl = `https://api.github.com/${username}`;
 
 test.before(async () => {
-  const configUrl = new URL("../../../env-config/test.env", import.meta.url);
-  configDotEnv({ path: configUrl, override: true });
+  configDotEnv({ path: support.configPath, override: true });
   app = await App.init();
   const keys = await appSup.apiKeys(app);
   apiKey = keys.apiKey;

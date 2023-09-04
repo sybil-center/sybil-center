@@ -14,6 +14,7 @@ import { oauthCallbackEP } from "../../../../src/util/route.util.js";
 import { appSup } from "../../../support/app/index.js";
 import { bitcoinSupport } from "../../../support/chain/bitcoin.js";
 import { delay } from "../../../../src/util/delay.util.js";
+import { support } from "../../../support/index.js";
 
 const test = suite("INTEGRATION API: issue Discord account credential test");
 
@@ -31,7 +32,7 @@ const discordUser = {
 };
 
 test.before(async () => {
-  const config = new URL("../../../env-config/test.env", import.meta.url);
+  const config = support.configPath;
   configDotEnv({ path: config, override: true });
   app = await App.init();
   const keys = await appSup.apiKeys(app);

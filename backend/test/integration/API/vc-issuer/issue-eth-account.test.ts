@@ -10,6 +10,7 @@ import { AnyObj } from "../../../../src/util/model.util.js";
 import { LightMyRequestResponse } from "fastify";
 import { appSup } from "../../../support/app/index.js";
 import { delay } from "../../../../src/util/delay.util.js";
+import { support } from "../../../support/index.js";
 
 const test = suite("INTEGRATION API: issue Ethereum account credential test");
 
@@ -17,8 +18,7 @@ let app: App;
 let apiKey: string;
 
 test.before(async () => {
-  const config = new URL("../../../env-config/test.env", import.meta.url);
-  configDotEnv({ path: config, override: true });
+  configDotEnv({ path: support.configPath, override: true });
   app = await App.init();
   const keys = await appSup.apiKeys(app);
   apiKey = keys.apiKey;
