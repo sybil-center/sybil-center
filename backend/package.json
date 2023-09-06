@@ -36,6 +36,7 @@
     "@solana/web3.js": "^1.73.3",
     "@stablelib/sha256": "^1.0.1",
     "@sybil-center/sdk": "workspace:*",
+    "@sybil-center/zkc-preparator": "^0.0.3",
     "bitcoinjs-message": "^2.2.0",
     "bs58": "^5.0.0",
     "cache-clock": "^1.5.0",
@@ -50,11 +51,13 @@
     "io-ts": "^2.2.20",
     "key-did-provider-ed25519": "^3.0.0",
     "key-did-resolver": "^3.0.0",
+    "mina-signer": "^2.1.0",
     "pino": "^8.10.0",
     "pino-pretty": "^9.3.0",
+    "snarkyjs": "^0.12.1",
     "sort-keys": "^5.0.0",
     "twitter-api-v2": "^1.14.0",
-    "typed-inject": "^3.0.1",
+    "typed-inject": "^4.0.0",
     "uint8arrays": "^4.0.3"
   },
   "files": [

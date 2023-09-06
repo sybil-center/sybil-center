@@ -21,7 +21,7 @@ const ordered = sortKeys(unordered, { deep: true });
  * Therefore, you MUST order VC when issue it
  */
 test("should order payload from jws", async () => {
-  const pathToConfig = new URL("../env-config/test.env", import.meta.url);
+  const pathToConfig = new URL("../../../env-config/test.env", import.meta.url);
 
   const didService = createInjector()
     .provideValue("config", new Config(pathToConfig))

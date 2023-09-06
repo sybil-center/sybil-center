@@ -1,5 +1,5 @@
 import { suite } from "uvu";
-import { GitHubService } from "../../../../src/mates/github/github.service.js";
+import { GitHubService } from "../../../../src/base/service/external/github.service.js";
 import sinon, { stub } from "sinon";
 import { rest } from "../../../../src/util/fetch.util.js";
 import * as a from "uvu/assert";

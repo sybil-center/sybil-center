@@ -1,4 +1,4 @@
-import type { ICredentialIssuer, IOAuthCallback } from "./credentials.js";
+import type { ICredentialIssuer, IOAuthCallback } from "../types/issuer.js";
 import type { ILogger } from "../../backbone/logger.js";
 import type { OAuthState } from "../types/oauth.js";
 import { type Disposable, type Injector, INJECTOR_TOKEN, tokens } from "typed-inject";
@@ -13,7 +13,7 @@ import {
   IssueReq
 } from "@sybil-center/sdk/types";
 
-type UnknownCredentialIssuer = ICredentialIssuer<
+  type UnknownCredentialIssuer = ICredentialIssuer<
   IssueReq,
   Credential,
   ChallengeReq,

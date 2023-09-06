@@ -50,6 +50,9 @@ export class Config {
    */
   readonly captchaValidScore: number;
 
+  /** Mina private key as base58 encoding*/
+  readonly minaPrivateKey: string;
+
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -88,6 +91,7 @@ export class Config {
     this.captchaSiteKey = getStrOrThrow("CAPTCHA_SITE_KEY");
     this.captchaRequired = getBoolOrElse("CAPTCHA_REQUIRED", false);
     this.captchaValidScore = getCaptchaValidScore("CAPTCHA_VALID_SCORE", 0.7);
+    this.minaPrivateKey = getStrOrThrow("MINA_PRIVATE_KEY");
   }
 }
 

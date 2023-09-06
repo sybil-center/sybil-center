@@ -1,6 +1,11 @@
 import * as t from "io-ts";
 import { bytesAsB64U, jsonAsBytes } from "./io-ts-extra.js";
 
+export interface OAuthQueryCallBack {
+  code: string;
+  state: string;
+}
+
 /**
  * OAuth "state" passed from requestor all the way to our callback.
  */
@@ -11,6 +16,7 @@ export const OAuthState = t.string
     t.type({
       sessionId: t.string,
       credentialType: t.string,
+      isZKC: t.union([t.boolean, t.undefined])
     })
   );
 export type OAuthState = t.TypeOf<typeof OAuthState>;
