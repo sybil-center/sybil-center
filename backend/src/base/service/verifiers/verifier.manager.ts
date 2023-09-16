@@ -15,8 +15,9 @@ export interface IVerifierManager {
    *  Verify signature by alias and sign entry
    * @param alias
    * @param signEntry
+   * @param opt - verify options
    */
-  verify(alias: string | number, signEntry: SignEntry): Promise<boolean>;
+  verify(alias: string | number, signEntry: SignEntry, opt?: Record<string, any>): Promise<boolean>;
 }
 
 export class VerifierManager implements IVerifierManager {
@@ -35,12 +36,11 @@ export class VerifierManager implements IVerifierManager {
     const isAlias = zkc.isIdAlias(alias);
     if (!isAlias) throw new ClientError(`Chain namespace ${alias} is not supported`);
     return this.verifiers[alias];
-
   }
 
-  verify(alias: string | number, entry: SignEntry): Promise<boolean> {
+  verify(alias: string | number, entry: SignEntry, opt?: Record<string, any>): Promise<boolean> {
     const verifier = this.verifier(alias);
-    return verifier.verify(entry);
+    return verifier.verify(entry, opt);
   }
 
 }

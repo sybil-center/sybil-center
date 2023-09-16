@@ -1,4 +1,4 @@
-import { ZkCredential, ZkCredProofed } from "./zkc.credential.js";
+import { ZkCredential, ZkCredProved } from "./zkc.credential.js";
 import { TransCredSchema } from "@sybil-center/zkc-preparator";
 
 /** Sign ZKC or message by private */
@@ -11,5 +11,5 @@ export interface IZkcSigner {
   signZkCred(
     props: Omit<ZkCredential, "isr">,
     transSchema: TransCredSchema
-  ): Promise<ZkCredProofed>;
+  ): Promise<ZkCredProved>;
 }

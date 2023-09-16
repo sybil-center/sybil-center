@@ -11,7 +11,7 @@ import { zkc } from "../../util/zk-credentials.util.js";
 import { ClientError } from "../../backbone/errors.js";
 import { IOAuthCallback } from "../../base/types/issuer.js";
 import { OAuthState } from "../../base/types/oauth.js";
-import { ZkCredProofed } from "../../base/types/zkc.credential.js";
+import { ZkCredProved } from "../../base/types/zkc.credential.js";
 import { ZkcGitHubAccountIssuer } from "./github-account/index.js";
 
 export class ZkcIssuerManager implements Disposable {
@@ -61,7 +61,7 @@ export class ZkcIssuerManager implements Disposable {
   issue(
     alias: string | number,
     issueReq: ZkcIssueReq
-  ): Promise<ZkCredProofed> {
+  ): Promise<ZkCredProved> {
     return this.issuer(alias).issue(issueReq);
   }
 

@@ -1,5 +1,5 @@
 import { Config } from "../../../backbone/config.js";
-import { ZkCredential, ZkCredProofed } from "../../types/zkc.credential.js";
+import { ZkCredential, ZkCredProved } from "../../types/zkc.credential.js";
 import { TransCredSchema } from "@sybil-center/zkc-preparator";
 import { zkc } from "../../../util/zk-credentials.util.js";
 import { Field, Poseidon, PrivateKey, PublicKey, Signature } from "snarkyjs";
@@ -16,7 +16,7 @@ export class MinaSigner implements IZkcSigner {
 
   get identifier(): { t: number, k: string } {
     return {
-      t: 1,
+      t: 0,
       k: this.publicKey.toBase58()
     };
   }
@@ -24,12 +24,12 @@ export class MinaSigner implements IZkcSigner {
   async signZkCred(
     props: Omit<ZkCredential, "isr">,
     transSchema: TransCredSchema
-  ): Promise<ZkCredProofed> {
+  ): Promise<ZkCredProved> {
     const zkCred: ZkCredential = {
       isr: { id: this.identifier },
       ...props
     };
-    let values = zkc.preparator.prepare<Field[]>(zkCred, transSchema)
+    let values = zkc.preparator.prepare<Field[]>(zkCred, transSchema);
     const hash = Poseidon.hash(values);
     const signature = Signature.create(this.privateKey, [hash]);
     return {

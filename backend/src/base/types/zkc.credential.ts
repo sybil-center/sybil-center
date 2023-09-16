@@ -41,7 +41,7 @@ export type ZkcProof = {
   sign: string;
 }
 
-export interface ZkCredProofed extends ZkCredential {
+export interface ZkCredProved extends ZkCredential {
   proof: ZkcProof[];
 }
 

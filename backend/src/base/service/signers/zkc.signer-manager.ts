@@ -1,5 +1,5 @@
 import { IZkcSigner } from "../../types/zkc.signer.js";
-import { ZkCredential, ZkCredProofed } from "../../types/zkc.credential.js";
+import { ZkCredential, ZkCredProved } from "../../types/zkc.credential.js";
 import { TransCredSchema } from "@sybil-center/zkc-preparator";
 import { Config } from "../../../backbone/config.js";
 import { tokens } from "typed-inject";
@@ -14,7 +14,7 @@ export interface IZkcSignerManager {
     alias: string | number,
     props: Omit<ZkCredential, "isr">,
     transSchema: TransCredSchema
-  ): Promise<ZkCredProofed>;
+  ): Promise<ZkCredProved>;
 }
 
 export class ZkcSignerManager implements IZkcSignerManager {
@@ -42,7 +42,7 @@ export class ZkcSignerManager implements IZkcSignerManager {
     alias: string,
     props: Omit<ZkCredential, "isr">,
     transSchema: TransCredSchema
-  ): Promise<ZkCredProofed> {
+  ): Promise<ZkCredProved> {
     const signer = this.signer(alias);
     return signer.signZkCred(props, transSchema)
   }

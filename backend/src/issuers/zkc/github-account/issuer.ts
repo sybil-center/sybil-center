@@ -6,7 +6,7 @@ import {
   ZkcChallengeReq,
   ZkcIssueReq
 } from "../../../base/types/zkc.issuer.js";
-import { ZkcId, ZkCredProofed, ZkcSchemaNums } from "../../../base/types/zkc.credential.js";
+import { ZkcId, ZkCredProved, ZkcSchemaNums } from "../../../base/types/zkc.credential.js";
 import { IOAuthCallback } from "../../../base/types/issuer.js";
 import { OAuthState } from "../../../base/types/oauth.js";
 import { Disposable, tokens } from "typed-inject";
@@ -34,6 +34,7 @@ interface GitSession {
   message: string;
   sbjId: ZkcId;
   code?: string;
+  opt?: Record<string, any>;
 }
 
 export class ZkcGitHubAccountIssuer
@@ -60,7 +61,8 @@ export class ZkcGitHubAccountIssuer
   async getChallenge({
     sbjId,
     redirectUrl,
-    exd
+    exd,
+    opt
   }: GitChallengeReq): Promise<GitChallenge> {
     const sessionId = absoluteId();
     const redirectURL = redirectUrl
@@ -76,6 +78,7 @@ export class ZkcGitHubAccountIssuer
       sbjId: { t: zkc.toId(sbjId.t), k: sbjId.k },
       redirectURL: redirectURL,
       message: message,
+      opt: opt
     });
     const authURL = this.githubService.getOAuthLink({
       sessionId: sessionId,
@@ -109,8 +112,8 @@ export class ZkcGitHubAccountIssuer
   async issue({
     sessionId,
     signature
-  }: ZkcIssueReq): Promise<ZkCredProofed> {
-    const { message, code, sbjId } = this.sessionCache.get(sessionId);
+  }: ZkcIssueReq): Promise<ZkCredProved> {
+    const { message, code, sbjId, opt } = this.sessionCache.get(sessionId);
     if (!code) {
       throw new ClientError("GitHub processing your authorization. Wait!");
     }
@@ -120,7 +123,7 @@ export class ZkcGitHubAccountIssuer
       sign: signature,
       msg: message,
       publickey: sbjId.k
-    });
+    }, opt);
     if (!verified) {
       throw new ClientError(`Signature for sessionId = ${sessionId} is not verified`);
     }

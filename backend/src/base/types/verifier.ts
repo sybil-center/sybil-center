@@ -4,7 +4,9 @@ export type SignEntry = {
   publickey: string;
 }
 
-export interface IVerifier {
+export interface IVerifier<
+  TOpt extends {} = {}
+> {
   /** Verify signature */
-  verify(signEntry: SignEntry): Promise<boolean>
+  verify(signEntry: SignEntry, opt?:TOpt): Promise<boolean>;
 }

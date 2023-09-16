@@ -13,7 +13,7 @@ import { minaSupport } from "../../../support/chain/mina.js";
 import { oauthCallbackEP } from "../../../../src/util/route.util.js";
 import { ZkcCanIssueResp, ZkcIssueReq } from "../../../../src/base/types/zkc.issuer.js";
 import Client from "mina-signer";
-import { ZkCredProofed } from "../../../../src/base/types/zkc.credential.js";
+import { ZkCredProved } from "../../../../src/base/types/zkc.credential.js";
 
 const test = suite("INTEGRATION API: issue Github Account ZKC test");
 
@@ -48,15 +48,24 @@ test.after(async () => {
   await app.close();
 });
 
+type PreIssueArgs = {
+  network?: "mainnet" | "testnet";
 
-test(`Issue Github account zkc & verify for Mina`, async () => {
+}
 
+async function preIssue({ network }: PreIssueArgs): Promise<{
+  sessionId: string;
+  signature: string;
+}> {
   const challengeReq: GitChallengeReq = {
     sbjId: {
       t: "mina",
       k: minaSupport.publicKey
     },
-    redirectUrl: redirectURL
+    redirectUrl: redirectURL,
+    opt: {
+      network: network
+    }
   };
 
   const challengeResp = await fastify.inject({
@@ -123,15 +132,27 @@ test(`Issue Github account zkc & verify for Mina`, async () => {
     JSON.parse(canIssueResp.body) as ZkcCanIssueResp;
   a.is(canIssueAfter, true, `can issue after callback is not true`);
 
-  const client = new Client({ network: "mainnet" });
+  const client = new Client({ network: network ? network : "mainnet" });
   const sign = client.signMessage(challenge.message, minaSupport.privateKey);
+  const signature = Signature.fromObject({
+    r: Field.fromJSON(sign.signature.field),
+    s: Scalar.fromJSON(sign.signature.scalar)
+  }).toBase58();
+
+  return {
+    sessionId: challenge.sessionId,
+    signature: signature
+  };
+}
+
+
+test(`Issue Github account zkc & verify for Mina (Main net)`, async () => {
+
+  const { sessionId, signature } = await preIssue({});
 
   const issueReq: ZkcIssueReq = {
-    sessionId: challenge.sessionId,
-    signature: Signature.fromObject({
-      r: Field.fromJSON(sign.signature.field),
-      s: Scalar.fromJSON(sign.signature.scalar)
-    }).toBase58()
+    sessionId: sessionId,
+    signature: signature
   };
 
   const issueResp = await fastify.inject({
@@ -143,17 +164,44 @@ test(`Issue Github account zkc & verify for Mina`, async () => {
     issueResp.statusCode, 200,
     `issue response status code is not 200. error: ${issueResp.body}`
   );
-  const credProofed = JSON.parse(issueResp.body) as ZkCredProofed;
+  const credProofed = JSON.parse(issueResp.body) as ZkCredProved;
+  a.is(credProofed.isr.id.t, 0, "Issuer Mina id type is not matched");
   const proof = credProofed.proof[0]!;
 
   //@ts-ignore
   credProofed.proof = undefined;
   const prepared = zkc.preparator.prepare<Field[]>(credProofed, proof.transformSchema);
   const msg = Poseidon.hash(prepared);
-  const signature = Signature.fromBase58(proof.sign);
-  const verified = signature.verify(PublicKey.fromBase58(proof.key), [msg]);
+  const sign = Signature.fromBase58(proof.sign);
+  const verified = sign.verify(PublicKey.fromBase58(proof.key), [msg]);
   a.is(verified.toJSON(), true, `Signature is not verified`);
 });
 
+test(`Issue Github account zkc & verify for Mina (Test net)`, async () => {
+  const { sessionId, signature } = await preIssue({ network: "testnet" });
+  const issueReq: ZkcIssueReq = {
+    sessionId: sessionId,
+    signature: signature
+  };
+  const issueResp = await fastify.inject({
+    method: "POST",
+    url: zkc.EPs.v1("GitHubAccount").issue,
+    payload: issueReq
+  });
+  a.is(
+    issueResp.statusCode, 200,
+    "Issue resp status code is not 200"
+  );
+  const credProved: ZkCredProved = JSON.parse(issueResp.body);
+  const proof = credProved.proof[0]!;
+  a.ok(proof, "Proof in Zk credential is undefined");
+  // @ts-ignore
+  credProved.proof = undefined;
+  const prepared = zkc.preparator.prepare<Field[]>(credProved, proof.transformSchema);
+  const msg = Poseidon.hash(prepared);
+  const sign = Signature.fromBase58(proof.sign);
+  const verified = sign.verify(PublicKey.fromBase58(proof.key), [msg]);
+  a.is(verified.toJSON(), true, `Signature is not verified`);
+});
 
 test.run();

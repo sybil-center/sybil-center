@@ -48,12 +48,13 @@ test.after(async () => {
 
 test("Issue & verify credential", async () => {
   const client = new Client({ network: "mainnet" });
-  const sbjPrivkey = PrivateKey.random();
+  const sbjPrivkey = PrivateKey.fromBase58("EKFaFAx6LmKZvb1LvUiT2m9JVwcnquq8UL8M5N8c1ETY8aKB9F7X");
   const sbjPubkey = sbjPrivkey.toPublicKey();
-  const exd = new Date();
+  // const exd = new Date();
   const { message, sessionId } = await issuer.getChallenge({
     sbjId: { t: "mina", k: sbjPubkey.toBase58() },
-    exd: exd.getTime(),
+    exd: new Date().getTime() - 10000000000,
+    // exd: exd.getTime(),
     redirectUrl: redirectURL
   });
   const redirectTo = await issuer.handleOAuthCallback("simple_code", {

@@ -36,6 +36,10 @@ export const zkcGithubAccountRoutes: ZkCredRoutes = {
             type: "string",
             format: "uri",
             nullable: true
+          },
+          opt: {
+            type: "object",
+            nullable: true
           }
         }
       }
