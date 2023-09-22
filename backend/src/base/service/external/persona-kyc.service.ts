@@ -7,6 +7,9 @@ import * as t from "io-ts";
 import crypto from "node:crypto";
 import { ClientError, ServerError } from "../../../backbone/errors.js";
 import { ThrowDecoder } from "../../../util/throw-decoder.util.js";
+import { rest } from "../../../util/fetch.util.js";
+import { FastifyRequest } from "fastify";
+import { jsonAsString } from "../../types/io-ts-extra.js";
 
 const AccountCreateResp = t.exact(
   t.type({
@@ -89,6 +92,12 @@ type Inquiry = {
     }
   };
   Hook: {
+    Args: {
+      headers: FastifyRequest["headers"] & { "Persona-Signature"?: string };
+      rawBody: FastifyRequest["rawBody"];
+      body: FastifyRequest["body"];
+      query: FastifyRequest["query"];
+    }
     Return: {
       firstName: string;
       lastName: string;
@@ -146,6 +155,10 @@ const InqEvent = t.exact(
 );
 
 type InqEvent = t.TypeOf<typeof InqEvent>
+
+const ToInqEvent = t.string
+  .pipe(jsonAsString)
+  .pipe(InqEvent);
 
 const InqCompletedEvent = t.exact(
   t.type({
@@ -212,128 +225,114 @@ export class PersonaKYC {
   async createAccount(
     args: Account["Create"]["Args"]
   ): Promise<Account["Create"]["Return"]> {
-    const resp = await fetch(new URL("https://withpersona.com/api/v1/accounts"), {
-      method: "POST",
-      headers: {
-        "Persona-Version": "2023-01-05",
-        "accept": "application/json",
-        "authorization": `Bearer ${this.config.personaApiKey}`,
-        "content-type": "application/json"
-      },
-      body: JSON.stringify({
-        "data": {
-          "attributes": {
-            "reference-id": `${args.referenceId}`
-          }
+    try {
+      const { data } = await rest.fetchDecode(new URL("https://withpersona.com/api/v1/accounts"),
+        AccountCreateResp,
+        {
+          method: "POST",
+          headers: {
+            "Persona-Version": "2023-01-05",
+            "accept": "application/json",
+            "authorization": `Bearer ${this.config.personaApiKey}`,
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({
+            "data": {
+              "attributes": {
+                "reference-id": `${args.referenceId}`
+              }
+            }
+          })
         }
-      })
-    });
-    if (resp.status !== 201) {
-      throw new ServerError("Internal service error", {
+      );
+      return {
+        referenceId: data.attributes["reference-id"],
+        createdAt: new Date(data.attributes["created-at"]),
+        updatedAt: new Date(data.attributes["updated-at"])
+      };
+    } catch (e) {
+      throw new ServerError("Internal server error", {
         props: {
           _place: this.constructor.name,
-          _log: `Persona KYC account create resp error. ${await (resp.json())}`
+          _log: `Fetch Persona create account error. Details: ${String(e)}`
         }
       });
     }
-    const body = await resp.json();
-    const result = ThrowDecoder.decode(AccountCreateResp, body,
-      new ServerError("Internal server error", {
-        props: {
-          _place: this.constructor.name,
-          _log: `Invalid create account response body: ${JSON.stringify(body)}`
-        }
-      })
-    ).data;
-    return {
-      referenceId: result.attributes["reference-id"],
-      createdAt: new Date(result.attributes["created-at"]),
-      updatedAt: new Date(result.attributes["updated-at"])
-    };
   }
 
   async findAccount(
     args: Account["FindOne"]["Args"]
   ): Promise<Account["FindOne"]["Return"]> {
-    const url = new URL("https://withpersona.com/api/v1/accounts");
-    url.searchParams.set("filter[reference-id]", args.referenceId);
-    const resp = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Persona-Version": "2023-01-05",
-        "accept": "application/json",
-        "authorization": `Bearer ${this.config.personaApiKey}`,
-      }
-    });
-    if (resp.status !== 200) {
+    try {
+      const url = new URL("https://withpersona.com/api/v1/accounts");
+      url.searchParams.set("filter[reference-id]", args.referenceId);
+      const result = await rest.fetchDecode(url, AccountFindResp, {
+        method: "GET",
+        headers: {
+          "Persona-Version": "2023-01-05",
+          "accept": "application/json",
+          "authorization": `Bearer ${this.config.personaApiKey}`,
+        }
+      });
+      const attributes = result[0]?.data?.attributes;
+      return attributes ? {
+        referenceId: attributes["reference-id"],
+        createdAt: new Date(attributes["created-at"]),
+        updatedAt: new Date(attributes["updated-at"])
+      } : undefined;
+    } catch (e) {
       throw new ServerError("Internal server error", {
         props: {
           _place: this.constructor.name,
-          _log: `Persona KYC account create resp error. ${await (resp.json())}`
+          _log: `Fetch Persona find account error. Details: ${String(e)}`
         }
       });
     }
-    const body = await resp.json();
-    const result = ThrowDecoder.decode(AccountFindResp, body,
-      new ServerError("Internal server error", {
-        props: {
-          _place: this.constructor.name,
-          _log: `Invalid find account response body: ${JSON.stringify(body)}`
-        }
-      })
-    );
-    const attributes = result[0]?.data?.attributes;
-    return attributes ? {
-      referenceId: attributes["reference-id"],
-      createdAt: new Date(attributes["created-at"]),
-      updatedAt: new Date(attributes["updated-at"])
-    } : undefined;
   }
 
   async createInquiry(
     args: Inquiry["Create"]["Args"]
   ): Promise<Inquiry["Create"]["Return"]> {
-    const resp = await fetch(new URL("https://withpersona.com/api/v1/inquiries"), {
-      headers: {
-        "Persona-Version": "2023-01-05",
-        "accept": "application/json",
-        "authorization": `Bearer ${this.config.personaApiKey}`,
-        "content-type": "application/json"
-      },
-      body: JSON.stringify({
-        data: {
-          attributes: {
-            "reference-id": args.referenceId,
-            "inquiry-template-id": this.config.personaTemplateId
-          }
+    try {
+      const { data } = await rest.fetchDecode(new URL("https://withpersona.com/api/v1/inquiries"),
+        InquiryCreateResp,
+        {
+          headers: {
+            "Persona-Version": "2023-01-05",
+            "accept": "application/json",
+            "authorization": `Bearer ${this.config.personaApiKey}`,
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({
+            data: {
+              attributes: {
+                "reference-id": args.referenceId,
+                "inquiry-template-id": this.config.personaTemplateId
+              }
+            }
+          })
         }
-      })
-    });
-    if (resp.status !== 201) {
+      );
+      const inquiryId = data.id;
+      return {
+        inquiryId: inquiryId,
+        verifyURL: `https://withpersona.com/verify?inquiry-id=${inquiryId}`
+      };
+    } catch (e) {
       throw new ServerError("Internal server error", {
         props: {
           _place: this.constructor.name,
-          _log: `Create inquiry response status is not 200. ${JSON.stringify(await resp.json())}`
+          _log: `Fetch Persona create inquiry error. Details: ${String(e)}`
         }
       });
     }
-    const body = await resp.json();
-    const result = ThrowDecoder.decode(InquiryCreateResp, body,
-      new ServerError("Internal server error", {
-        props: {
-          _place: this.constructor.name,
-          _log: `Create inquiry response body is invalid: ${JSON.stringify(body)}`
-        }
-      })
-    );
-    const inquiryId = result.data.id;
-    return {
-      inquiryId: inquiryId,
-      verifyURL: `https://withpersona.com/verify?inquiry-id=${inquiryId}`
-    };
   }
 
-  async inquiryHook({ data }: InqEvent): Promise<Inquiry["Hook"]["Return"]> {
+  async handleCallback(req: Inquiry["Hook"]["Args"]): Promise<Inquiry["Hook"]["Return"]> {
+    this.verifyCallback(req);
+    const { data } = ThrowDecoder.decode(ToInqEvent, req.rawBody,
+      new ClientError("Invalid type of inquiry webhook")
+    );
     this.checkHook({ data });
     if (data.type === "inquiry.failed") return {
       ...emptyUser,
@@ -357,6 +356,29 @@ export class PersonaKYC {
       completed: true
     };
   }
+
+  private verifyCallback({
+    headers,
+    rawBody
+  }: Inquiry["Hook"]["Args"]) {
+    const personaSign = headers["Persona-Signature"];
+    if (!personaSign) throw new ClientError("No webhook signature in header");
+    const signParams: Record<string, string | undefined> = {};
+    personaSign.split(",")
+      .forEach(pair => {
+        const [key, value] = pair.split("=");
+        signParams[key!] = value;
+      });
+    if (!signParams.t || !signParams.v1) {
+      throw new ClientError("Invalid Persona-Signature header");
+    }
+    const hmac = crypto.createHmac("sha256", this.config.personaHookSecret)
+      .update(`${signParams.t}.${rawBody}`)
+      .digest("hex");
+    if (!crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(signParams.v1))) {
+      throw new ClientError("Signature is invalid or secret is expired");
+    }
+  };
 
   private checkHook({ data }: InqEvent) {
     if (data.type !== "event") throw new ClientError("Invalid entity type");
