@@ -6,7 +6,7 @@ import { ZkcSchemaNames } from "./zkc.credential.js";
 export type Route = Omit<RouteOptions, "handler">
 
 export type CredentialRoutes = {
-  credentialType: CredentialType | ZkcSchemaNames,
+  credentialType: CredentialType,
   issue: Route,
   challenge?: Route,
   canIssue?: Route,

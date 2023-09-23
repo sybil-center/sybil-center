@@ -65,6 +65,9 @@ export class Config {
   /** Persona WebHook secret to verify callbacks from persona */
   readonly personaHookSecret: string;
 
+  /** KYC session ttl in MS */
+  readonly kycSessionTtl: number;
+
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -108,6 +111,8 @@ export class Config {
     this.personaSecret = getStrOrThrow("PERSONA_SECRET");
     this.personaTemplateId = getStrOrThrow("PERSONA_TEMPLATE_ID");
     this.personaHookSecret = getStrOrThrow("PERSONA_HOOK_SECRET");
+
+    this.kycSessionTtl = getNumOrThrow("KYC_SESSION_TTL");
   }
 }
 

@@ -47,7 +47,6 @@
     "ethers": "^5.7.2",
     "fastify": "^4.23.2",
     "fastify-cors": "^6.1.0",
-    "fastify-raw-body": "^4.2.2",
     "fp-ts": "^2.13.1",
     "io-ts": "^2.2.20",
     "key-did-provider-ed25519": "^3.0.0",

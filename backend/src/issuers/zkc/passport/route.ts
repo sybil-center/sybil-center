@@ -1,14 +1,14 @@
 import { ZkCredRoutes } from "../../../base/types/route.js";
 import { zkc } from "../../../util/zk-credentials.util.js";
 
-const tags = ["ZKC GitHub account ownership Zero Knowledge Credential"];
+const tags = ["ZKC Passport Zero Knowledge Credential"];
 
-export const ZkcGithubAccountRoutes: ZkCredRoutes = {
-  schemaName: "GitHubAccount",
+export const ZkcPassportRoutes: ZkCredRoutes = {
+  schemaName: "Passport",
 
   challenge: {
     method: ["POST"],
-    url: zkc.EPs.v1("GitHubAccount").challenge,
+    url: zkc.EPs.v1("Passport").challenge,
     schema: {
       tags: tags,
       body: {
@@ -32,11 +32,6 @@ export const ZkcGithubAccountRoutes: ZkCredRoutes = {
             type: "number",
             nullable: true
           },
-          redirectUrl: {
-            type: "string",
-            format: "uri",
-            nullable: true
-          },
           opt: {
             type: "object",
             nullable: true
@@ -48,7 +43,7 @@ export const ZkcGithubAccountRoutes: ZkCredRoutes = {
 
   canIssue: {
     method: ["GET"],
-    url: zkc.EPs.v1("GitHubAccount").canIssue,
+    url: zkc.EPs.v1("Passport").canIssue,
     schema: {
       tags: tags,
       querystring: {
@@ -71,7 +66,7 @@ export const ZkcGithubAccountRoutes: ZkCredRoutes = {
 
   issue: {
     method: ["POST"],
-    url: zkc.EPs.v1("GitHubAccount").issue,
+    url: zkc.EPs.v1("Passport").issue,
     schema: {
       tags: tags,
       body: {
@@ -84,4 +79,5 @@ export const ZkcGithubAccountRoutes: ZkCredRoutes = {
       }
     }
   }
+
 };

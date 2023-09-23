@@ -80,7 +80,22 @@ const InquiryCreateResp = t.exact(
   })
 );
 
-type Inquiry = {
+export const PersonaUser = t.exact(
+  t.type({
+    firstName: t.string,
+    lastName: t.string,
+    birthdate: t.number,
+    countryCode: t.string,
+    document: t.type({
+      type: t.string,
+      id: t.string
+    })
+  })
+);
+
+export type PersonaUser = t.TypeOf<typeof PersonaUser>
+
+export type Inquiry = {
   Create: {
     Args: {
       referenceId: string;
@@ -92,21 +107,9 @@ type Inquiry = {
     }
   };
   Hook: {
-    Args: {
-      headers: FastifyRequest["headers"] & { "Persona-Signature"?: string };
-      rawBody: FastifyRequest["rawBody"];
-      body: FastifyRequest["body"];
-      query: FastifyRequest["query"];
-    }
     Return: {
-      firstName: string;
-      lastName: string;
-      birthdate: number;
-      countryCode: string;
-      document: {
-        type: string;
-        id: string;
-      }
+      referenceId: string
+      user: PersonaUser;
       // event is inquiry.completed
       completed: boolean;
       // if not completed reason must be
@@ -128,7 +131,7 @@ const InqEvent = t.exact(
             id: t.string,
             attributes: t.type({
               status: t.string,
-              "reference-id": t.union([t.string, t.null]),
+              "reference-id": t.string,
               "name-first": t.union([t.string, t.null]),
               "name-last": t.union([t.string, t.null]),
               birthdate: t.union([t.string, t.null]),
@@ -328,14 +331,15 @@ export class PersonaKYC {
     }
   }
 
-  async handleCallback(req: Inquiry["Hook"]["Args"]): Promise<Inquiry["Hook"]["Return"]> {
+  async handleWebhook(req: FastifyRequest): Promise<Inquiry["Hook"]["Return"]> {
     this.verifyCallback(req);
-    const { data } = ThrowDecoder.decode(ToInqEvent, req.rawBody,
+    const { data } = ThrowDecoder.decode(ToInqEvent, req.body,
       new ClientError("Invalid type of inquiry webhook")
     );
     this.checkHook({ data });
     if (data.type === "inquiry.failed") return {
-      ...emptyUser,
+      referenceId: data.attributes.payload.data.attributes["reference-id"],
+      user: emptyUser,
       completed: false,
       reason: `User verification failed`
     };
@@ -345,13 +349,16 @@ export class PersonaKYC {
     );
     const user = completedEvent.data.attributes.payload.data.attributes;
     return {
-      firstName: user["name-first"],
-      lastName: user["name-last"],
-      birthdate: new Date(user.birthdate).getTime(),
-      countryCode: user.fields["address-country-code"].value,
-      document: {
-        type: user.fields["identification-class"].value,
-        id: user.fields["identification-number"].value
+      referenceId: user["reference-id"],
+      user: {
+        firstName: user["name-first"],
+        lastName: user["name-last"],
+        birthdate: new Date(user.birthdate).getTime(),
+        countryCode: user.fields["address-country-code"].value,
+        document: {
+          type: user.fields["identification-class"].value,
+          id: user.fields["identification-number"].value
+        }
       },
       completed: true
     };
@@ -359,9 +366,12 @@ export class PersonaKYC {
 
   private verifyCallback({
     headers,
-    rawBody
-  }: Inquiry["Hook"]["Args"]) {
-    const personaSign = headers["Persona-Signature"];
+    body
+  }: FastifyRequest) {
+    const personaSign = (headers["Persona-Signature"]
+        ? headers["Persona-Signature"]
+        : headers["persona-signature"]
+    ) as string;
     if (!personaSign) throw new ClientError("No webhook signature in header");
     const signParams: Record<string, string | undefined> = {};
     personaSign.split(",")
@@ -373,7 +383,7 @@ export class PersonaKYC {
       throw new ClientError("Invalid Persona-Signature header");
     }
     const hmac = crypto.createHmac("sha256", this.config.personaHookSecret)
-      .update(`${signParams.t}.${rawBody}`)
+      .update(`${signParams.t}.${body}`)
       .digest("hex");
     if (!crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(signParams.v1))) {
       throw new ClientError("Signature is invalid or secret is expired");
@@ -395,7 +405,7 @@ export class PersonaKYC {
   }
 }
 
-const emptyUser: Inquiry["Hook"]["Return"] = {
+const emptyUser: PersonaUser = {
   firstName: "",
   lastName: "",
   birthdate: 0,
@@ -404,5 +414,4 @@ const emptyUser: Inquiry["Hook"]["Return"] = {
     type: "",
     id: ""
   },
-  completed: false
 };
