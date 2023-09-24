@@ -9,7 +9,6 @@ import { ClientError, ServerError } from "../../../backbone/errors.js";
 import { ThrowDecoder } from "../../../util/throw-decoder.util.js";
 import { rest } from "../../../util/fetch.util.js";
 import { FastifyRequest } from "fastify";
-import { jsonAsString } from "../../types/io-ts-extra.js";
 
 const AccountCreateResp = t.exact(
   t.type({
@@ -159,8 +158,7 @@ const InqEvent = t.exact(
 
 type InqEvent = t.TypeOf<typeof InqEvent>
 
-const ToInqEvent = t.string
-  .pipe(jsonAsString)
+const ToInqEvent = t.any
   .pipe(InqEvent);
 
 const InqCompletedEvent = t.exact(
@@ -384,7 +382,7 @@ export class PersonaKYC {
       throw new ClientError("Invalid Persona-Signature header");
     }
     const hmac = crypto.createHmac("sha256", this.config.personaHookSecret)
-      .update(`${signParams.t}.${body}`)
+      .update(`${signParams.t}.${JSON.stringify(body)}`)
       .digest("hex");
     if (!crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(signParams.v1))) {
       throw new ClientError("Signature is invalid or secret is expired");
