@@ -28,6 +28,7 @@ importers:
       ethers: ^5.7.2
       fastify: ^4.23.2
       fastify-cors: ^6.1.0
+      fastify-raw-body: ^4.2.2
       fp-ts: ^2.13.1
       io-ts: ^2.2.20
       key-did-provider-ed25519: ^3.0.0
@@ -66,6 +67,7 @@ importers:
       ethers: 5.7.2
       fastify: 4.23.2
       fastify-cors: 6.1.0
+      fastify-raw-body: 4.2.2
       fp-ts: 2.13.1
       io-ts: 2.2.20_fp-ts@2.13.1
       key-did-provider-ed25519: 3.0.0
@@ -7556,6 +7558,15 @@ packages:
 
   /fastify-plugin/4.5.0:
     resolution: {integrity: sha512-79ak0JxddO0utAXAQ5ccKhvs6vX2MGyHHMMsmZkBANrq3hXc1CHzvNPHOcvTsVMEPl5I+NT+RO4YKMGehOfSIg==}
+    dev: false
+
+  /fastify-raw-body/4.2.2:
+    resolution: {integrity: sha512-6l4fXtxNn7WOQiylu5fv9/JfUTvWCg1ED4gF44hqnVesgttOXEUMnNkdV8ZxwufCstRyUYaYSBIN4VuRHDbJkw==}
+    engines: {node: '>= 10'}
+    dependencies:
+      fastify-plugin: 4.5.0
+      raw-body: 2.5.1
+      secure-json-parse: 2.7.0
     dev: false
 
   /fastify/4.23.2:

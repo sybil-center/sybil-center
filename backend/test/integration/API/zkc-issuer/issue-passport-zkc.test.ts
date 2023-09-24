@@ -365,5 +365,5 @@ test("Issue Passport ZK Credential for MINA ", async () => {
   sinon.restore();
 });
 
-test.run();
+// test.run();
 

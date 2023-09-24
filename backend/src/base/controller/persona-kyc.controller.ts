@@ -23,8 +23,8 @@ export function personaKYCController(injector: Injector<Dependencies>) {
 
   fastify.route({
     ...personaWebhookRoute,
+    config: { rawBody: true },
     handler: async (req: FastifyRequest, resp) => {
-      req.raw
       await zkcIssuerManager.handleWebhook("Passport", req);
       resp.statusCode = 200;
       resp.send({ message: "ok" });

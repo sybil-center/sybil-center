@@ -365,7 +365,7 @@ export class PersonaKYC {
 
   private verifyCallback({
     headers,
-    body
+    rawBody
   }: FastifyRequest) {
     const personaSign = (headers["Persona-Signature"]
         ? headers["Persona-Signature"]
@@ -382,7 +382,7 @@ export class PersonaKYC {
       throw new ClientError("Invalid Persona-Signature header");
     }
     const hmac = crypto.createHmac("sha256", this.config.personaHookSecret)
-      .update(`${signParams.t}.${JSON.stringify(body)}`)
+      .update(`${signParams.t}.${rawBody}`)
       .digest("hex");
     if (!crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(signParams.v1))) {
       throw new ClientError("Signature is invalid or secret is expired");

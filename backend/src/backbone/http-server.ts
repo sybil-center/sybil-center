@@ -70,6 +70,9 @@ export class HttpServer implements Disposable {
         "public"
       ),
     });
+    await this.fastify.register(import("fastify-raw-body"), {
+      global: false,
+    });
   }
 
   async listen(): Promise<void> {
