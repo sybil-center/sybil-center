@@ -36,6 +36,20 @@ export const jsonAsBytes = new t.Type<any, Uint8Array, Uint8Array>(
   }
 );
 
+export const jsonAsString = new t.Type<any, string, string>(
+  "JSON-as-UTF8",
+  // @ts-ignore
+  (input: unknown): input is any => true,
+  (input, context) => {
+    try {
+      return t.success(JSON.parse(input));
+    } catch (e) {
+      return t.failure(input, context, String(e));
+    }
+  },
+  (json) => JSON.stringify(json)
+);
+
 export const jwsAsDagJWS = new t.Type<DagJWS, string, string>(
   "JWS-as-DagJWS",
   (runtime: any): runtime is DagJWS => {
@@ -63,10 +77,10 @@ export const jwsAsDagJWS = new t.Type<DagJWS, string, string>(
   (dagJWS: DagJWS) => {
     const header = dagJWS.signatures[0]!.protected;
     const signature = dagJWS.signatures[0]!.signature;
-    const payload = dagJWS.payload
-    return `${header}.${payload}.${signature}`
+    const payload = dagJWS.payload;
+    return `${header}.${payload}.${signature}`;
   }
-)
+);
 
 export const dagJWSAsEncodedJWS = new t.Type<DecodedJWS, DagJWS, DagJWS>(
   "DagJWS-as-EncodedJWS",
@@ -127,6 +141,6 @@ export const dagJWSAsEncodedJWS = new t.Type<DecodedJWS, DagJWS, DagJWS>(
 
 export const jwsAsDecodedJWS = t.string
   .pipe(jwsAsDagJWS)
-  .pipe(dagJWSAsEncodedJWS)
+  .pipe(dagJWSAsEncodedJWS);
 
 

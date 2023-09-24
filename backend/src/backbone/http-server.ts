@@ -41,7 +41,7 @@ export class HttpServer implements Disposable {
         info: {
           title: "Sybil Center",
           description: "Sybil Center - Verifiable Credential Issuer." +
-                       "See https://github.com/sybil-center/sybil",
+            "See https://github.com/sybil-center/sybil",
           version: "1.0.0",
         },
         host: this.pathToExposeDomain.host,

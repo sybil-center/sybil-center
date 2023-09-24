@@ -26,7 +26,7 @@ test.before(async () => {
 
 test.after(async () => {
   sinon.restore();
-  await app.close();
+  await app?.close();
 });
 
 test("should generate and verify app key and secret", async () => {

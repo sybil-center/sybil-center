@@ -23,6 +23,8 @@ import { ZkcSignerManager } from "../base/service/signers/zkc.signer-manager.js"
 import { VerifierManager } from "../base/service/verifiers/verifier.manager.js";
 import { ZkcIssuerManager } from "../issuers/zkc/zkc.issuer-manager.js";
 import { zkCredentialController } from "../base/controller/zk-credential.controller.js";
+import { ZkcPassportIssuer } from "../issuers/zkc/passport/issuer.js";
+import { personaKYCController } from "../base/controller/persona-kyc.controller.js";
 
 type DI = {
   logger: ILogger;
@@ -40,7 +42,8 @@ type DI = {
   captchaService: ICaptchaService;
   gateService: IGateService;
   zkcGitHubAccountIssuer: ZkcGitHubAccountIssuer;
-  zkcIssuerManager: ZkcIssuerManager
+  zkcPassportIssuer: ZkcPassportIssuer;
+  zkcIssuerManager: ZkcIssuerManager;
 };
 
 export class App {
@@ -93,6 +96,7 @@ export class App {
 
       // Zkc Issuers
       .provideClass("zkcGitHubAccountIssuer", ZkcGitHubAccountIssuer)
+      .provideClass("zkcPassportIssuer", ZkcPassportIssuer)
       // Zkc Issuer Manager
       .provideClass("zkcIssuerManager", ZkcIssuerManager);
 
@@ -106,6 +110,7 @@ export class App {
     apiKeyController(app.context);
     configController(app.context);
     zkCredentialController(app.context);
+    personaKYCController(app.context)
 
     const didService = app.context.resolve("didService");
     await didService.init();

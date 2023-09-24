@@ -47,9 +47,9 @@ export interface ZkCredProved extends ZkCredential {
 
 /* Schemas */
 
-export const schemaNames = ["GitHubAccount"] as const;
+export const schemaNames = ["GitHubAccount", "Passport"] as const;
 export type ZkcSchemaNames = typeof schemaNames[number];
 
-export const schemaNums = [1] as const;
+export const schemaNums = [0, 1] as const;
 export type ZkcSchemaNums = typeof schemaNums[number];
 

@@ -1,5 +1,5 @@
 import { GraphLink, GraphNode, Preparator, TransCredSchema, TransformationGraph } from "@sybil-center/zkc-preparator";
-import { Field, PublicKey } from "snarkyjs";
+import { Field, Poseidon, PublicKey } from "snarkyjs";
 import { schemaNames, schemaNums, ZkCredential, ZkcSchemaNames, ZkcSchemaNums } from "../base/types/zkc.credential.js";
 import sortKeys from "sort-keys";
 import { ZkcIdAlias, zkcIdAliases } from "../base/types/zkc.issuer.js";
@@ -12,6 +12,7 @@ const numTypes = [
   "uint64",
   "uint128",
   "uint256",
+  "number"
 ];
 
 const extendNodes: GraphNode[] = [
@@ -30,6 +31,10 @@ const extendNodes: GraphNode[] = [
     name: "mina:publickey",
     isType: (value: any) => value instanceof PublicKey
   },
+  {
+    name: "number",
+    isType: (value: any) => typeof value === "number" || typeof value === "bigint"
+  }
 ];
 
 function numsToField(): GraphLink[] {
@@ -72,8 +77,42 @@ const extendLinks: GraphLink[] = [
     outputType: "mina:fields",
     transform: (pk: PublicKey) => pk.toFields()
   },
+  {
+    name: "mina:hash-poseidon",
+    inputType: "mina:field",
+    outputType: "mina:field",
+    transform: (value: Field) => Poseidon.hash([value])
+  },
   ...numsToField(),
-  ...numsModMinaOrder()
+  ...numsModMinaOrder(),
+  {
+    name: "number-bytes",
+    inputType: "number",
+    outputType: "bytes",
+    transform: (value: number | bigint) => {
+      let target = typeof value === "number" ? BigInt(value) : value;
+      const bytes: number[] = [];
+      let count = 0;
+      while (target !== 0n) {
+        bytes[count] = Number(target % 256n);
+        count++;
+        target = target / 256n;
+      }
+      return new Uint8Array(bytes);
+    }
+  },
+  {
+    name: "bytes-number",
+    inputType: "bytes",
+    outputType: "number",
+    transform: (bytes: Uint8Array) => {
+      let result = BigInt(0);
+      for (let i = bytes.length - 1; i >= 0; i--) {
+        result = result * BigInt(256) + BigInt(bytes[i]!);
+      }
+      return result;
+    }
+  }
 ];
 
 const preparator = new Preparator();
@@ -113,12 +152,79 @@ const minaGitAccountTransSchema: TransCredSchema = {
   }
 };
 
+const minaPassportTransSchema: TransCredSchema = {
+  isr: {
+    id: {
+      t: ["mina:uint64-field"],
+      k: [
+        "mina:base58-publickey",
+        "mina:publickey-fields",
+      ]
+    }
+  },
+  sch: ["mina:uint64-field"],
+  isd: ["mina:uint128-field"],
+  exd: ["mina:uint128-field"],
+  sbj: {
+    id: {
+      t: ["mina:uint64-field"],
+      k: [
+        "mina:base58-publickey",
+        "mina:publickey-fields",
+      ]
+    },
+    fn: [
+      "utf8-bytes",
+      "bytes-number",
+      "mina:number-field.order",
+      "mina:number-field"
+    ],
+    ln: [
+      "utf8-bytes",
+      "bytes-number",
+      "mina:number-field.order",
+      "mina:number-field"
+    ],
+    bd: [
+      "mina:number-field"
+    ],
+    cc: [
+      "utf8-bytes",
+      "bytes-number",
+      "mina:number-field.order",
+      "mina:number-field"
+    ],
+    doc: {
+      t: [
+        "utf8-bytes",
+        "bytes-number",
+        "mina:number-field.order",
+        "mina:number-field"
+      ],
+      id: [
+        "utf8-bytes",
+        "bytes-number",
+        "mina:number-field.order",
+        "mina:number-field"
+      ]
+    }
+  }
+};
+
 const githubAccountTransSchema: Record<ZkcIdAlias, TransCredSchema> = {
   mina: minaGitAccountTransSchema,
   0: minaGitAccountTransSchema,
 };
 
+const passportTransSchema: Record<ZkcIdAlias, TransCredSchema> = {
+  mina: minaPassportTransSchema,
+  0: minaPassportTransSchema
+};
+
+
 const TRANS_SCHEMAS: Record<string, ZkcTypeValue> = {
+  "Passport": passportTransSchema,
+  0: passportTransSchema,
   "GitHubAccount": githubAccountTransSchema,
   1: githubAccountTransSchema,
 };
@@ -133,11 +239,13 @@ const ZKC_IDS: Record<ZkcIdAlias, number> = {
 /* Supported ZKC Schemas */
 
 const SCHEMA_NAME_TO_NUM: Record<ZkcSchemaNames, ZkcSchemaNums> = {
-  "GitHubAccount": 1
+  "GitHubAccount": 1,
+  "Passport": 0,
 };
 
 const SCHEMA_NUM_TO_NAME: Record<ZkcSchemaNums, ZkcSchemaNames> = {
-  1: "GitHubAccount"
+  1: "GitHubAccount",
+  0: "Passport"
 };
 
 /* ZKC schema name to URL name */
