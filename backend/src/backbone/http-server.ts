@@ -5,7 +5,6 @@ import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import fastifyStatic from "@fastify/static";
-import fastifyRawBody from "fastify-raw-body";
 import { ClientError, ServerError } from "./errors.js";
 import type { Config } from "./config.js";
 import path, { dirname } from "path";
@@ -71,8 +70,6 @@ export class HttpServer implements Disposable {
         "public"
       ),
     });
-
-    this.fastify.register(fastifyRawBody);
   }
 
   async listen(): Promise<void> {
