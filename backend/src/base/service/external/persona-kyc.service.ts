@@ -300,6 +300,7 @@ export class PersonaKYC {
       const { data } = await rest.fetchDecode(new URL("https://withpersona.com/api/v1/inquiries"),
         InquiryCreateResp,
         {
+          method: "POST",
           headers: {
             "Persona-Version": "2023-01-05",
             "accept": "application/json",
