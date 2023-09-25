@@ -256,7 +256,7 @@ test("Issue Passport ZK Credential for MINA ", async () => {
     user: {
       firstName: "ALEXANDER J",
       lastName: "SAMPLE",
-      birthdate: new Date("1977-07-17").getTime(),
+      birthdate: new Date("1977-07-17"),
       countryCode: "US",
       document: {
         id: "I1234562",
@@ -361,7 +361,7 @@ test("Issue Passport ZK Credential for MINA ", async () => {
         t: 0,
         k: minaSupport.publicKey
       },
-      bd: 237945600000,
+      bd: 2208988800000 + new Date("1977-07-17").getTime(),
       cc: "US",
       doc: {
         id: "I1234562",

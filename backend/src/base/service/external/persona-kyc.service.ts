@@ -79,20 +79,16 @@ const InquiryCreateResp = t.exact(
   })
 );
 
-export const PersonaUser = t.exact(
-  t.type({
-    firstName: t.string,
-    lastName: t.string,
-    birthdate: t.number,
-    countryCode: t.string,
-    document: t.type({
-      type: t.string,
-      id: t.string
-    })
-  })
-);
-
-export type PersonaUser = t.TypeOf<typeof PersonaUser>
+export type PersonaUser = {
+  firstName: string;
+  lastName: string;
+  birthdate: Date;
+  countryCode: string;
+  document: {
+    type: string;
+    id: string;
+  }
+}
 
 export type Inquiry = {
   Create: {
@@ -343,7 +339,8 @@ export class PersonaKYC {
       reason: `User verification failed`
     };
     const completedEvent = ThrowDecoder.decode(
-      InqCompletedEvent, { data },
+      InqCompletedEvent,
+      { data },
       new ClientError("Inquiry completed event haven't required fields")
     );
     const user = completedEvent.data.attributes.payload.data.attributes;
@@ -352,7 +349,7 @@ export class PersonaKYC {
       user: {
         firstName: user["name-first"],
         lastName: user["name-last"],
-        birthdate: new Date(user.birthdate).getTime(),
+        birthdate: new Date(user.birthdate),
         countryCode: user.fields["address-country-code"].value,
         document: {
           type: user.fields["identification-class"].value,
@@ -407,7 +404,7 @@ export class PersonaKYC {
 const emptyUser: PersonaUser = {
   firstName: "",
   lastName: "",
-  birthdate: 0,
+  birthdate: new Date(0),
   countryCode: "",
   document: {
     type: "",

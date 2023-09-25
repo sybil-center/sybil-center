@@ -31,6 +31,8 @@ type PassportSession = {
   opt?: Record<string, any>;
 }
 
+const MS_FROM_1900_TO_1970 = -(new Date("1900-01-01T00:00:00.000Z").getTime());
+
 export class ZkcPassportIssuer
   implements IZkcIssuer<
     ZkcChallengeReq,
@@ -119,7 +121,7 @@ export class ZkcPassportIssuer
         id: sbjId,
         fn: user.firstName,
         ln: user.lastName,
-        bd: user.birthdate,
+        bd: (user.birthdate.getTime() + MS_FROM_1900_TO_1970),
         cc: user.countryCode,
         doc: {
           t: user.document.type,
@@ -128,6 +130,7 @@ export class ZkcPassportIssuer
       }
     }, transSchema);
     this.sessionCache.delete(refId);
+
     return zkCred;
   }
 
