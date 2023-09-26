@@ -12,7 +12,7 @@ const numTypes = [
   "uint64",
   "uint128",
   "uint256",
-  "number"
+  "uint"
 ];
 
 const extendNodes: GraphNode[] = [
@@ -31,10 +31,6 @@ const extendNodes: GraphNode[] = [
     name: "mina:publickey",
     isType: (value: any) => value instanceof PublicKey
   },
-  {
-    name: "number",
-    isType: (value: any) => typeof value === "number" || typeof value === "bigint"
-  }
 ];
 
 function numsToField(): GraphLink[] {
@@ -85,34 +81,6 @@ const extendLinks: GraphLink[] = [
   },
   ...numsToField(),
   ...numsModMinaOrder(),
-  {
-    name: "number-bytes",
-    inputType: "number",
-    outputType: "bytes",
-    transform: (value: number | bigint) => {
-      let target = typeof value === "number" ? BigInt(value) : value;
-      const bytes: number[] = [];
-      let count = 0;
-      while (target !== 0n) {
-        bytes[count] = Number(target % 256n);
-        count++;
-        target = target / 256n;
-      }
-      return new Uint8Array(bytes);
-    }
-  },
-  {
-    name: "bytes-number",
-    inputType: "bytes",
-    outputType: "number",
-    transform: (bytes: Uint8Array) => {
-      let result = BigInt(0);
-      for (let i = bytes.length - 1; i >= 0; i--) {
-        result = result * BigInt(256) + BigInt(bytes[i]!);
-      }
-      return result;
-    }
-  }
 ];
 
 const preparator = new Preparator();
@@ -175,18 +143,18 @@ const minaPassportTransSchema: TransCredSchema = {
     },
     fn: [
       "utf8-bytes",
-      "bytes-number",
-      "mina:number-field.order",
-      "mina:number-field"
+      "bytes-uint",
+      "mina:uint-field.order",
+      "mina:uint-field"
     ],
     ln: [
       "utf8-bytes",
-      "bytes-number",
-      "mina:number-field.order",
-      "mina:number-field"
+      "bytes-uint",
+      "mina:uint-field.order",
+      "mina:uint-field"
     ],
     bd: [
-      "mina:number-field"
+      "mina:uint-field"
     ],
     cc: [
       "mina:uint32-field"
@@ -197,9 +165,9 @@ const minaPassportTransSchema: TransCredSchema = {
       ],
       id: [
         "utf8-bytes",
-        "bytes-number",
-        "mina:number-field.order",
-        "mina:number-field"
+        "bytes-uint",
+        "mina:uint-field.order",
+        "mina:uint-field"
       ]
     }
   }
