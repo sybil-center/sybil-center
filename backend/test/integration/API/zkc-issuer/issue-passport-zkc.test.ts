@@ -362,10 +362,10 @@ test("Issue Passport ZK Credential for MINA ", async () => {
         k: minaSupport.publicKey
       },
       bd: 2208988800000 + new Date("1977-07-17").getTime(),
-      cc: "US",
+      cc: 840,
       doc: {
         id: "I1234562",
-        t: "dl"
+        t: 2
       },
       fn: "ALEXANDER J",
       ln: "SAMPLE"

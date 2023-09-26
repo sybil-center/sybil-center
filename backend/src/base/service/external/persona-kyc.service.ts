@@ -411,3 +411,34 @@ const emptyUser: PersonaUser = {
     id: ""
   },
 };
+
+export const PERSONA_GOV_ID_TYPES = [
+  "cct",
+  "cid",
+  "dl",
+  "foid",
+  "hic",
+  "id",
+  "ipp",
+  "keyp",
+  "ltpass",
+  "munid",
+  "myn",
+  "nbi",
+  "nric",
+  "ofw",
+  "rp",
+  "pan",
+  "pid",
+  "pp",
+  "ppc",
+  "pr",
+  "sss",
+  "td",
+  "umid",
+  "vid",
+  "visa",
+  "wp"
+] as const;
+
+export type PersonaGovIdTypes = typeof PERSONA_GOV_ID_TYPES[number];

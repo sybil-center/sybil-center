@@ -8,7 +8,12 @@ import {
 } from "../../../base/types/zkc.issuer.js";
 import { IWebhookHandler } from "../../../base/types/webhook-handler.js";
 import { ZkcId, ZkCredProved, ZkcSchemaNums } from "../../../base/types/zkc.credential.js";
-import { Inquiry, PersonaKYC } from "../../../base/service/external/persona-kyc.service.js";
+import {
+  Inquiry,
+  PERSONA_GOV_ID_TYPES,
+  PersonaGovIdTypes,
+  PersonaKYC
+} from "../../../base/service/external/persona-kyc.service.js";
 import { Disposable, tokens } from "typed-inject";
 import { zkc } from "../../../util/zk-credentials.util.js";
 import { TimedCache } from "../../../base/service/timed-cache.js";
@@ -17,7 +22,8 @@ import { IZkcSignerManager } from "../../../base/service/signers/zkc.signer-mana
 import { IVerifierManager } from "../../../base/service/verifiers/verifier.manager.js";
 import { randomUUID } from "node:crypto";
 import { FastifyRequest } from "fastify";
-import { ClientError } from "../../../backbone/errors.js";
+import { ClientError, ServerError } from "../../../backbone/errors.js";
+import { ISO3166 } from "../../../util/iso-3166.js";
 
 export interface PassportChallenge extends ZkcChallenge {
   verifyURL: string;
@@ -113,6 +119,15 @@ export class ZkcPassportIssuer
     if (!transSchema) {
       throw new ClientError(`Subject ZKC id with type ${sbjId.t} is not supported`);
     }
+    const countryCode = ISO3166.numeric(user.countryCode);
+    if (!countryCode) {
+      throw new ServerError("Internal server error", {
+        props: {
+          _place: this.constructor.name,
+          _log: `Received alphabet ${user.countryCode} country code has not numeric representation`
+        }
+      });
+    }
     const zkCred = this.signerManager.signZkCred(sbjId.t, {
       sch: this.providedSchema,
       isd: new Date().getTime(),
@@ -122,9 +137,9 @@ export class ZkcPassportIssuer
         fn: user.firstName,
         ln: user.lastName,
         bd: (user.birthdate.getTime() + MS_FROM_1900_TO_1970),
-        cc: user.countryCode,
+        cc: countryCode,
         doc: {
-          t: user.document.type,
+          t: toCredDocType(user.document.type),
           id: user.document.id
         }
       }
@@ -156,4 +171,58 @@ function getMessage({
     "Issuer:" + "\n" + "Sybil Center",
     "nonce:" + "\n" + nonce
   ].join("\n\n");
+}
+
+const DOC_TYPES = [
+  1, // Passport
+  2, // Driver license
+  3, // Identification card
+  4, // Passport card
+  0, // OTHER - something that we do not support now
+] as const;
+
+export type DocTypes = typeof DOC_TYPES[number]
+
+
+/** Adapt Persona Government ID type to Passport Credential document type*/
+const DOC_TYPE_ADAPTOR: Record<PersonaGovIdTypes, DocTypes> = {
+  pp: 1,
+  ipp: 1,
+  dl: 2,
+  id: 3,
+  ppc: 4,
+  visa: 0,
+  cct: 0,
+  cid: 0,
+  foid: 0,
+  hic: 0,
+  keyp: 0,
+  ltpass: 0,
+  munid: 0,
+  myn: 0,
+  nbi: 0,
+  nric: 0,
+  ofw: 0,
+  rp: 0,
+  pan: 0,
+  pid: 0,
+  pr: 0,
+  sss: 0,
+  td: 0,
+  umid: 0,
+  vid: 0,
+  wp: 0
+};
+
+function toCredDocType(docType: string): DocTypes {
+  function isPersonaDocType(pDocType: string): pDocType is PersonaGovIdTypes {
+    return PERSONA_GOV_ID_TYPES
+      // @ts-ignore
+      .includes(pDocType);
+  }
+  const typeOfPersona = isPersonaDocType(docType);
+  if (typeOfPersona) {
+    return DOC_TYPE_ADAPTOR[docType];
+  }
+  throw new ClientError("Invalid persona Government ID document type");
 }

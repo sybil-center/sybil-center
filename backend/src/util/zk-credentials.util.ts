@@ -189,17 +189,11 @@ const minaPassportTransSchema: TransCredSchema = {
       "mina:number-field"
     ],
     cc: [
-      "utf8-bytes",
-      "bytes-number",
-      "mina:number-field.order",
-      "mina:number-field"
+      "mina:uint32-field"
     ],
     doc: {
       t: [
-        "utf8-bytes",
-        "bytes-number",
-        "mina:number-field.order",
-        "mina:number-field"
+        "mina:uint32-field"
       ],
       id: [
         "utf8-bytes",
