@@ -7,9 +7,8 @@ import { PersonaKYC } from "../../../../src/base/service/external/persona-kyc.se
 import sinon from "sinon";
 import { rest } from "../../../../src/util/fetch.util.js";
 import { FastifyInstance } from "fastify";
-import { zkc } from "../../../../src/util/zk-credentials.util.js";
 import * as a from "uvu/assert";
-import { ZkcCanIssueResp, ZkcChallengeReq, ZkcIssueReq } from "../../../../src/base/types/zkc.issuer.js";
+import { Raw, ZkcCanIssueResp, ZkcChallengeReq, ZkcIssueReq } from "../../../../src/base/types/zkc.issuer.js";
 import { PassportChallenge, ZkcPassportIssuer } from "../../../../src/issuers/zkc/passport/issuer.js";
 import { Config } from "../../../../src/backbone/config.js";
 import crypto from "node:crypto";
@@ -17,6 +16,7 @@ import { personaWebhookEP } from "../../../../src/base/controller/routes/persona
 import Client from "mina-signer";
 import { Field, Poseidon, PrivateKey, PublicKey, Scalar, Signature } from "snarkyjs";
 import { ZkCredProved } from "../../../../src/base/types/zkc.credential.js";
+import { Zkc } from "../../../../src/util/zk-credentials/index.js";
 
 const test = suite("INTEGRATION API: Passport ZKC issuer");
 
@@ -216,15 +216,15 @@ test("Issue Passport ZK Credential for MINA ", async () => {
     }
   };
   sinon.stub(rest, "fetchJson").resolves(inqCreateResp);
-  const challengeReq: ZkcChallengeReq = {
-    sbjId: {
-      t: "0",
+  const challengeReq: Raw<ZkcChallengeReq> = {
+    subjectId: {
+      t: 0,
       k: minaSupport.publicKey
     },
   };
   const challengeResp = await fastify.inject({
     method: "POST",
-    url: zkc.EPs.v1("Passport").challenge,
+    url: Zkc.EPs.v1("Passport").challenge,
     payload: challengeReq
   });
   a.is(
@@ -241,7 +241,7 @@ test("Issue Passport ZK Credential for MINA ", async () => {
 
   const canIssueBeforeResp = await fastify.inject({
     method: "GET",
-    url: zkc.EPs.v1("Passport").canIssue,
+    url: Zkc.EPs.v1("Passport").canIssue,
     query: { sessionId: refId }
   });
   a.is(
@@ -294,7 +294,7 @@ test("Issue Passport ZK Credential for MINA ", async () => {
 
   const canIssueAfterResp = await fastify.inject({
     method: "GET",
-    url: zkc.EPs.v1("Passport").canIssue,
+    url: Zkc.EPs.v1("Passport").canIssue,
     query: { sessionId: refId }
   });
   a.is(
@@ -327,7 +327,7 @@ test("Issue Passport ZK Credential for MINA ", async () => {
   };
   const issueResp = await fastify.inject({
     method: "POST",
-    url: zkc.EPs.v1("Passport").issue,
+    url: Zkc.EPs.v1("Passport").issue,
     payload: issueReq
   });
   a.is(
@@ -339,7 +339,7 @@ test("Issue Passport ZK Credential for MINA ", async () => {
   a.ok(proof, "Passport credential does not contains proof");
   // @ts-ignore
   zkCred.proof = undefined;
-  const prepared = zkc.preparator.prepare<Field[]>(zkCred, proof.transformSchema);
+  const prepared = Zkc.preparator.prepare<Field[]>(zkCred, proof.transformSchema);
   a.equal({
     isr: {
       id: zkCred.isr.id

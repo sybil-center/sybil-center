@@ -3,10 +3,10 @@ import { ZkCredential, ZkCredProved } from "../../types/zkc.credential.js";
 import { TransCredSchema } from "@sybil-center/zkc-preparator";
 import { Config } from "../../../backbone/config.js";
 import { tokens } from "typed-inject";
-import { ZkcIdAlias } from "../../types/zkc.issuer.js";
+import { ZkcIdTypeAlias } from "../../types/zkc.issuer.js";
 import { MinaSigner } from "./mina-signer.service.js";
-import { zkc } from "../../../util/zk-credentials.util.js";
 import { ClientError } from "../../../backbone/errors.js";
+import { Zkc } from "../../../util/zk-credentials/index.js";
 
 export interface IZkcSignerManager {
   signer(alias: string): IZkcSigner;
@@ -19,7 +19,7 @@ export interface IZkcSignerManager {
 
 export class ZkcSignerManager implements IZkcSignerManager {
 
-  private readonly signers: Record<ZkcIdAlias, IZkcSigner>;
+  private readonly signers: Record<ZkcIdTypeAlias, IZkcSigner>;
 
   static inject = tokens("config");
   constructor(
@@ -33,7 +33,7 @@ export class ZkcSignerManager implements IZkcSignerManager {
   }
 
   signer(alias: string): IZkcSigner {
-    const isAlias = zkc.isIdAlias(alias);
+    const isAlias = Zkc.idType.isAlias(alias);
     if (!isAlias) throw new ClientError(`Chain namespace ${alias} is not supported`);
     return this.signers[alias];
   }
@@ -44,6 +44,6 @@ export class ZkcSignerManager implements IZkcSignerManager {
     transSchema: TransCredSchema
   ): Promise<ZkCredProved> {
     const signer = this.signer(alias);
-    return signer.signZkCred(props, transSchema)
+    return signer.signZkCred(props, transSchema);
   }
 }

@@ -1,5 +1,6 @@
 import { ZkCredRoutes } from "../../../base/types/route.js";
-import { zkc } from "../../../util/zk-credentials.util.js";
+import { ZKC_ID_TYPE_ALIASES } from "../../../base/types/zkc.issuer.js";
+import { Zkc } from "../../../util/zk-credentials/index.js";
 
 const tags = ["ZKC Passport Zero Knowledge Credential"];
 
@@ -8,31 +9,31 @@ export const ZkcPassportRoutes: ZkCredRoutes = {
 
   challenge: {
     method: ["POST"],
-    url: zkc.EPs.v1("Passport").challenge,
+    url: Zkc.EPs.v1("Passport").challenge,
     schema: {
       tags: tags,
       body: {
         type: "object",
         required: [
-          "sbjId"
+          "subjectId"
         ],
         properties: {
-          sbjId: {
+          subjectId: {
             type: "object",
             required: [
               "t",
               "k"
             ],
             properties: {
-              t: { type: "string" },
+              t: { enum: ZKC_ID_TYPE_ALIASES},
               k: { type: "string" }
             }
           },
-          exd: {
+          expirationDate: {
             type: "number",
             nullable: true
           },
-          opt: {
+          options: {
             type: "object",
             nullable: true
           }
@@ -43,7 +44,7 @@ export const ZkcPassportRoutes: ZkCredRoutes = {
 
   canIssue: {
     method: ["GET"],
-    url: zkc.EPs.v1("Passport").canIssue,
+    url: Zkc.EPs.v1("Passport").canIssue,
     schema: {
       tags: tags,
       querystring: {
@@ -66,7 +67,7 @@ export const ZkcPassportRoutes: ZkCredRoutes = {
 
   issue: {
     method: ["POST"],
-    url: zkc.EPs.v1("Passport").issue,
+    url: Zkc.EPs.v1("Passport").issue,
     schema: {
       tags: tags,
       body: {

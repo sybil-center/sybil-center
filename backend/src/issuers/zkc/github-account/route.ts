@@ -1,5 +1,6 @@
 import { ZkCredRoutes } from "../../../base/types/route.js";
-import { zkc } from "../../../util/zk-credentials.util.js";
+import { ZKC_ID_TYPE_ALIASES } from "../../../base/types/zkc.issuer.js";
+import { Zkc } from "../../../util/zk-credentials/index.js";
 
 const tags = ["ZKC GitHub account ownership Zero Knowledge Credential"];
 
@@ -8,27 +9,27 @@ export const ZkcGithubAccountRoutes: ZkCredRoutes = {
 
   challenge: {
     method: ["POST"],
-    url: zkc.EPs.v1("GitHubAccount").challenge,
+    url: Zkc.EPs.v1("GitHubAccount").challenge,
     schema: {
       tags: tags,
       body: {
         type: "object",
         required: [
-          "sbjId"
+          "subjectId"
         ],
         properties: {
-          sbjId: {
+          subjectId: {
             type: "object",
             required: [
               "t",
               "k"
             ],
             properties: {
-              t: { type: "string" },
+              t: { enum: ZKC_ID_TYPE_ALIASES },
               k: { type: "string" }
             }
           },
-          exd: {
+          expirationDate: {
             type: "number",
             nullable: true
           },
@@ -37,7 +38,7 @@ export const ZkcGithubAccountRoutes: ZkCredRoutes = {
             format: "uri",
             nullable: true
           },
-          opt: {
+          options: {
             type: "object",
             nullable: true
           }
@@ -48,7 +49,7 @@ export const ZkcGithubAccountRoutes: ZkCredRoutes = {
 
   canIssue: {
     method: ["GET"],
-    url: zkc.EPs.v1("GitHubAccount").canIssue,
+    url: Zkc.EPs.v1("GitHubAccount").canIssue,
     schema: {
       tags: tags,
       querystring: {
@@ -71,7 +72,7 @@ export const ZkcGithubAccountRoutes: ZkCredRoutes = {
 
   issue: {
     method: ["POST"],
-    url: zkc.EPs.v1("GitHubAccount").issue,
+    url: Zkc.EPs.v1("GitHubAccount").issue,
     schema: {
       tags: tags,
       body: {

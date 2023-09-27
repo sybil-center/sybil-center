@@ -1,7 +1,11 @@
+export const ZKC_ID_TYPES = [0] as const
+export type ZkcIdType = typeof ZKC_ID_TYPES[number]
+
 export type ZkcId = {
-  t: number,
+  t: ZkcIdType,
   k: string
 }
+
 
 export type ZkCredential = {
   isr: {
@@ -47,9 +51,9 @@ export interface ZkCredProved extends ZkCredential {
 
 /* Schemas */
 
-export const schemaNames = ["GitHubAccount", "Passport"] as const;
-export type ZkcSchemaNames = typeof schemaNames[number];
+export const ZKC_SCHEMA_NAMES = ["GitHubAccount", "Passport"] as const;
+export type ZkcSchemaNames = typeof ZKC_SCHEMA_NAMES[number];
 
-export const schemaNums = [0, 1] as const;
-export type ZkcSchemaNums = typeof schemaNums[number];
+export const ZKC_SCHEMA_NUMS = [0, 1] as const;
+export type ZkcSchemaNums = typeof ZKC_SCHEMA_NUMS[number];
 

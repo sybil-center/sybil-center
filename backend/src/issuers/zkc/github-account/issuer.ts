@@ -16,9 +16,9 @@ import { absoluteId } from "../../../util/id.util.js";
 import { fromIssueMessage, toIssueMessage } from "../../../util/message.util.js";
 import { GitHubService } from "../../../base/service/external/github.service.js";
 import { ClientError } from "../../../backbone/errors.js";
-import { zkc } from "../../../util/zk-credentials.util.js";
 import { IZkcSignerManager } from "../../../base/service/signers/zkc.signer-manager.js";
 import { IVerifierManager } from "../../../base/service/verifiers/verifier.manager.js";
+import { Zkc } from "../../../util/zk-credentials/index.js";
 
 
 export interface GitChallengeReq extends ZkcChallengeReq {
@@ -32,7 +32,7 @@ export interface GitChallenge extends ZkcChallenge {
 interface GitSession {
   redirectURL?: URL;
   message: string;
-  sbjId: ZkcId;
+  subjectId: ZkcId;
   code?: string;
   opt?: Record<string, any>;
 }
@@ -59,26 +59,26 @@ export class ZkcGitHubAccountIssuer
   ) {}
 
   async getChallenge({
-    sbjId,
+    subjectId,
     redirectUrl,
-    exd,
-    opt
+    expirationDate,
+    options
   }: GitChallengeReq): Promise<GitChallenge> {
     const sessionId = absoluteId();
     const redirectURL = redirectUrl
       ? new URL(redirectUrl)
       : undefined;
     const message = toIssueMessage({
-      subjectId: sbjId.k,
+      subjectId: subjectId.k,
       type: "GitHubAccount",
       githubProps: { value: ["id"], default: ["id"] },
-      expirationDate: exd ? new Date(exd) : undefined
+      expirationDate: expirationDate ? new Date(expirationDate) : undefined
     });
     this.sessionCache.set(sessionId, {
-      sbjId: { t: zkc.toId(sbjId.t), k: sbjId.k },
+      subjectId: subjectId,
       redirectURL: redirectURL,
       message: message,
-      opt: opt
+      opt: options
     });
     const authURL = this.githubService.getOAuthLink({
       sessionId: sessionId,
@@ -113,32 +113,32 @@ export class ZkcGitHubAccountIssuer
     sessionId,
     signature
   }: ZkcIssueReq): Promise<ZkCredProved> {
-    const { message, code, sbjId, opt } = this.sessionCache.get(sessionId);
+    const { message, code, subjectId, opt } = this.sessionCache.get(sessionId);
     if (!code) {
       throw new ClientError("GitHub processing your authorization. Wait!");
     }
     this.sessionCache.delete(sessionId);
     const { expirationDate } = fromIssueMessage(message);
-    const verified = await this.verifierManager.verify(sbjId.t, {
+    const verified = await this.verifierManager.verify(subjectId.t, {
       sign: signature,
       msg: message,
-      publickey: sbjId.k
+      publickey: subjectId.k
     }, opt);
     if (!verified) {
       throw new ClientError(`Signature for sessionId = ${sessionId} is not verified`);
     }
     const token = await this.githubService.getAccessToken(code);
     const { id: githubId } = await this.githubService.getUser(token);
-    const transSchema = zkc.transSchemas(this.providedSchema)[sbjId.t];
+    const transSchema = Zkc.transSchemas[subjectId.t][this.providedSchema];
     if (!transSchema) {
-      throw new ClientError(`Subject ZKC id with type ${sbjId.t} is not supported`);
+      throw new ClientError(`Subject ZKC id with type ${subjectId.t} is not supported`);
     }
-    return this.signerManager.signZkCred(sbjId.t, {
+    return this.signerManager.signZkCred(subjectId.t, {
         sch: this.providedSchema,
         isd: new Date().getTime(),
         exd: expirationDate ? expirationDate.getTime() : 0,
         sbj: {
-          id: sbjId,
+          id: subjectId,
           git: { id: githubId }
         }
       }, transSchema

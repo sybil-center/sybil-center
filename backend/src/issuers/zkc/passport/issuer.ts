@@ -15,7 +15,6 @@ import {
   PersonaKYC
 } from "../../../base/service/external/persona-kyc.service.js";
 import { Disposable, tokens } from "typed-inject";
-import { zkc } from "../../../util/zk-credentials.util.js";
 import { TimedCache } from "../../../base/service/timed-cache.js";
 import { Config } from "../../../backbone/config.js";
 import { IZkcSignerManager } from "../../../base/service/signers/zkc.signer-manager.js";
@@ -24,6 +23,7 @@ import { randomUUID } from "node:crypto";
 import { FastifyRequest } from "fastify";
 import { ClientError, ServerError } from "../../../backbone/errors.js";
 import { ISO3166 } from "../../../util/iso-3166.js";
+import { Zkc } from "../../../util/zk-credentials/index.js";
 
 export interface PassportChallenge extends ZkcChallenge {
   verifyURL: string;
@@ -31,10 +31,9 @@ export interface PassportChallenge extends ZkcChallenge {
 
 type PassportSession = {
   message: string;
-  sbjId: ZkcId;
+  subjectId: ZkcId;
   challengeReq: ZkcChallengeReq;
   webhookResult?: Inquiry["Hook"]["Return"]
-  opt?: Record<string, any>;
 }
 
 const MS_FROM_1900_TO_1970 = -(new Date("1900-01-01T00:00:00.000Z").getTime());
@@ -63,18 +62,14 @@ export class ZkcPassportIssuer
   get providedSchema(): ZkcSchemaNums { return 0;};
 
   async getChallenge(challengeReq: ZkcChallengeReq): Promise<PassportChallenge> {
-    const sbjId = {
-      t: zkc.toId(challengeReq.sbjId.t),
-      k: challengeReq.sbjId.k
-    };
+    const sbjId = challengeReq.subjectId;
     const refId = this.personaKYC.refId(sbjId);
     const { verifyURL } = await this.personaKYC.createInquiry({ referenceId: refId });
     const message = getMessage(challengeReq);
     this.sessionCache.set(refId, {
       message: message,
-      sbjId: sbjId,
+      subjectId: sbjId,
       challengeReq: challengeReq,
-      opt: challengeReq.opt
     });
     return {
       verifyURL: verifyURL,
@@ -101,23 +96,22 @@ export class ZkcPassportIssuer
     const {
       message,
       webhookResult,
-      sbjId,
-      challengeReq: { exd },
-      opt
+      subjectId,
+      challengeReq: { expirationDate, options }
     } = this.sessionCache.get(refId);
     if (!webhookResult || !webhookResult.completed) {
       throw new ClientError("Your Government ID is not verified");
     }
-    const verified = await this.verifierManager.verify(sbjId.t, {
+    const verified = await this.verifierManager.verify(subjectId.t, {
       sign: signature,
       msg: message,
-      publickey: sbjId.k
-    }, opt);
+      publickey: subjectId.k
+    }, options);
     if (!verified) throw new ClientError("Signature is not verified");
     const { user } = webhookResult;
-    const transSchema = zkc.transSchemas(this.providedSchema)[sbjId.t];
+    const transSchema = Zkc.transSchemas[subjectId.t][this.providedSchema];
     if (!transSchema) {
-      throw new ClientError(`Subject ZKC id with type ${sbjId.t} is not supported`);
+      throw new ClientError(`Subject ZKC id with type ${subjectId.t} is not supported`);
     }
     const countryCode = ISO3166.numeric(user.countryCode);
     if (!countryCode) {
@@ -128,12 +122,12 @@ export class ZkcPassportIssuer
         }
       });
     }
-    const zkCred = this.signerManager.signZkCred(sbjId.t, {
+    const zkCred = this.signerManager.signZkCred(subjectId.t, {
       sch: this.providedSchema,
       isd: new Date().getTime(),
-      exd: exd ? exd : 0,
+      exd: expirationDate ? expirationDate : 0,
       sbj: {
-        id: sbjId,
+        id: subjectId,
         fn: user.firstName,
         ln: user.lastName,
         bd: (user.birthdate.getTime() + MS_FROM_1900_TO_1970),
@@ -155,19 +149,19 @@ export class ZkcPassportIssuer
 }
 
 function getMessage({
-  sbjId,
-  exd,
+  subjectId,
+  expirationDate,
 }: ZkcChallengeReq): string {
   const nonce = randomUUID();
   const description = `Sign the message to prove your Government ID and get Passport Zero-Knowledge Credential`;
-  const address = sbjId.k;
-  const expirationDate = exd
-    ? new Date(exd).toISOString()
+  const address = subjectId.k;
+  const targetExDate = expirationDate
+    ? new Date(expirationDate).toISOString()
     : "Without an expiration date";
   return [
     "Description:" + "\n" + description,
     "Address:" + "\n" + address,
-    "Expiration date:" + "\n" + expirationDate,
+    "Expiration date:" + "\n" + targetExDate,
     "Issuer:" + "\n" + "Sybil Center",
     "nonce:" + "\n" + nonce
   ].join("\n\n");

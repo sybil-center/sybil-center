@@ -1,13 +1,19 @@
 import { ZkcId, ZkCredProved, ZkcSchemaNums } from "./zkc.credential.js";
 
-export const zkcIdAliases = ["mina", "0"] as const;
+export const ZKC_ID_TYPE_ALIASES = ["mina", 0] as const;
 
-export type ZkcIdAlias = typeof zkcIdAliases[number]
+export type ZkcIdTypeAlias = typeof ZKC_ID_TYPE_ALIASES[number]
 
 export type ZkcChallengeReq = {
-  exd?: number;
-  sbjId: Omit<ZkcId, "t"> & { t: ZkcIdAlias };
-  opt?: Record<string, any>
+  expirationDate?: number;
+  subjectId: ZkcId;
+  options?: Record<string, any>
+}
+
+export type Raw<
+  T extends ZkcChallengeReq
+> = Omit<T, "subjectId"> & {
+  subjectId: Omit<ZkcId, "t"> & { t: ZkcIdTypeAlias}
 }
 
 export type ZkcChallenge = {

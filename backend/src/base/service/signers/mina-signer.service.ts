@@ -1,9 +1,9 @@
 import { Config } from "../../../backbone/config.js";
-import { ZkCredential, ZkCredProved } from "../../types/zkc.credential.js";
+import { ZkcIdType, ZkCredential, ZkCredProved } from "../../types/zkc.credential.js";
 import { TransCredSchema } from "@sybil-center/zkc-preparator";
-import { zkc } from "../../../util/zk-credentials.util.js";
 import { Field, Poseidon, PrivateKey, PublicKey, Signature } from "snarkyjs";
 import { IZkcSigner } from "../../types/zkc.signer.js";
+import { Zkc } from "../../../util/zk-credentials/index.js";
 
 
 export class MinaSigner implements IZkcSigner {
@@ -14,7 +14,7 @@ export class MinaSigner implements IZkcSigner {
     private readonly publicKey: PublicKey = privateKey.toPublicKey()
   ) {}
 
-  get identifier(): { t: number, k: string } {
+  get identifier(): { t: ZkcIdType, k: string } {
     return {
       t: 0,
       k: this.publicKey.toBase58()
@@ -29,11 +29,11 @@ export class MinaSigner implements IZkcSigner {
       isr: { id: this.identifier },
       ...props
     };
-    let values = zkc.preparator.prepare<Field[]>(zkCred, transSchema);
+    let values = Zkc.preparator.prepare<Field[]>(zkCred, transSchema);
     const hash = Poseidon.hash(values);
     const signature = Signature.create(this.privateKey, [hash]);
     return {
-      ...zkc.sort(zkCred),
+      ...Zkc.sortCred(zkCred),
       proof: [
         {
           target: "mina",

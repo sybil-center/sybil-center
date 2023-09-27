@@ -3,7 +3,8 @@ import { ZkcIssuerManager } from "../../issuers/zkc/zkc.issuer-manager.js";
 import { contextUtil } from "../../util/context.util.js";
 import { ZkcRoutes } from "./routes/zkc.routes.js";
 import { HttpServer } from "../../backbone/http-server.js";
-import { ZkcCanIssueReq, ZkcChallengeReq, ZkcIssueReq } from "../types/zkc.issuer.js";
+import { Raw, ZkcCanIssueReq, ZkcChallengeReq, ZkcIssueReq } from "../types/zkc.issuer.js";
+import { Zkc } from "../../util/zk-credentials/index.js";
 
 type Dependencies = {
   httpServer: HttpServer
@@ -29,10 +30,19 @@ export function zkCredentialController(injector: Injector<Dependencies>) {
     schemaName
   }) => {
     if (challengeRoute) {
-      fastify.route<{ Body: ZkcChallengeReq }>({
+      fastify.route<{ Body: Raw<ZkcChallengeReq> }>({
         ...challengeRoute,
-        handler: async ({ body }) =>
-          issuerManager.getChallenge(schemaName, body)
+        handler: async ({ body }) => {
+          const subjectId = {
+            k: body.subjectId.k,
+            t: Zkc.idType.fromAlias(body.subjectId.t)
+          };
+          const challengeReq: ZkcChallengeReq = {
+            ...body,
+            subjectId: subjectId
+          };
+          return await issuerManager.getChallenge(schemaName, challengeReq);
+        }
       });
     }
 
