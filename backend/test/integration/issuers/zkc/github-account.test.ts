@@ -11,7 +11,7 @@ import { TimedCache } from "../../../../src/base/service/timed-cache.js";
 import { GitHubService } from "../../../../src/base/service/external/github.service.js";
 import Client from "mina-signer";
 import { Field, Poseidon, PrivateKey, PublicKey, Scalar, Signature } from "snarkyjs";
-import { Zkc } from "../../../../src/util/zk-credentials/index.js";
+import { ZKC } from "../../../../src/util/zk-credentials/index.js";
 
 const test = suite(`INTEGRATION: test Github Account ZKC issuer`);
 
@@ -53,7 +53,7 @@ test("Issue & verify credential", async () => {
   // const exd = new Date();
   const { message, sessionId } = await issuer.getChallenge({
     subjectId: {
-      t: Zkc.idType.fromAlias("mina"),
+      t: ZKC.idType.fromAlias("mina"),
       k: sbjPubkey.toBase58()
     },
     expirationDate: new Date().getTime() - 10000000000,
@@ -84,7 +84,7 @@ test("Issue & verify credential", async () => {
   const proof = credProofed.proof[0]!;
   //@ts-ignore
   credProofed.proof = undefined;
-  const prepared = Zkc.preparator.prepare<Field[]>(credProofed, proof.transformSchema);
+  const prepared = ZKC.preparator.prepare<Field[]>(credProofed, proof.transformSchema);
   const msg = Poseidon.hash(prepared);
   const signature = Signature.fromBase58(proof.sign);
   const verified = signature.verify(PublicKey.fromBase58(proof.key), [msg]);

@@ -1,13 +1,6 @@
-import {
-  IZkcIssuer,
-  ZkcCanIssueReq,
-  ZkcCanIssueResp,
-  ZkcChallenge,
-  ZkcChallengeReq,
-  ZkcIssueReq
-} from "../../../base/types/zkc.issuer.js";
+import { IssuerTypes, IZkcIssuer, ZkcChallenge, ZkcChallengeReq } from "../../../base/types/zkc.issuer.js";
 import { IWebhookHandler } from "../../../base/types/webhook-handler.js";
-import { ZkcId, ZkCredProved, ZkcSchemaNums } from "../../../base/types/zkc.credential.js";
+import { Proved, ZkcId, ZkCred, ZkcSchemaNums } from "../../../base/types/zkc.credential.js";
 import {
   Inquiry,
   PERSONA_GOV_ID_TYPES,
@@ -23,11 +16,22 @@ import { randomUUID } from "node:crypto";
 import { FastifyRequest } from "fastify";
 import { ClientError, ServerError } from "../../../backbone/errors.js";
 import { ISO3166 } from "../../../util/iso-3166.js";
-import { Zkc } from "../../../util/zk-credentials/index.js";
+import { ZKC } from "../../../util/zk-credentials/index.js";
 
 export interface PassportChallenge extends ZkcChallenge {
   verifyURL: string;
 }
+
+export type ZkPassportCred = ZkCred<{
+  fn: string;
+  ln: string;
+  bd: number;
+  cc: number;
+  doc: {
+    t: DocTypes;
+    id: string;
+  }
+}>
 
 type PassportSession = {
   message: string;
@@ -38,11 +42,13 @@ type PassportSession = {
 
 const MS_FROM_1900_TO_1970 = -(new Date("1900-01-01T00:00:00.000Z").getTime());
 
+interface IT extends IssuerTypes {
+  Cred: Proved<ZkPassportCred>;
+  Challenge: PassportChallenge;
+}
+
 export class ZkcPassportIssuer
-  implements IZkcIssuer<
-    ZkcChallengeReq,
-    PassportChallenge
-  >,
+  implements IZkcIssuer<IT>,
     IWebhookHandler,
     Disposable {
 
@@ -61,7 +67,7 @@ export class ZkcPassportIssuer
 
   get providedSchema(): ZkcSchemaNums { return 0;};
 
-  async getChallenge(challengeReq: ZkcChallengeReq): Promise<PassportChallenge> {
+  async getChallenge(challengeReq: IT["ChallengeReq"]): Promise<IT["Challenge"]> {
     const sbjId = challengeReq.subjectId;
     const refId = this.personaKYC.refId(sbjId);
     const { verifyURL } = await this.personaKYC.createInquiry({ referenceId: refId });
@@ -78,6 +84,13 @@ export class ZkcPassportIssuer
     };
   }
 
+  async canIssue({ sessionId: refId }: IT["CanIssueReq"]): Promise<IT["CanIssueResp"]> {
+    const { webhookResult } = this.sessionCache.get(refId);
+    if (!webhookResult) return { canIssue: false };
+    if (!webhookResult.completed) throw new ClientError(webhookResult.reason!);
+    return { canIssue: true };
+  }
+
   async handleWebhook(req: FastifyRequest): Promise<any> {
     const hookResult = await this.personaKYC.handleWebhook(req);
     const refId = hookResult.referenceId;
@@ -85,14 +98,7 @@ export class ZkcPassportIssuer
     session.webhookResult = hookResult;
   }
 
-  async canIssue({ sessionId: refId }: ZkcCanIssueReq): Promise<ZkcCanIssueResp> {
-    const { webhookResult } = this.sessionCache.get(refId);
-    if (!webhookResult) return { canIssue: false };
-    if (!webhookResult.completed) throw new ClientError(webhookResult.reason!);
-    return { canIssue: true };
-  }
-
-  async issue({ sessionId: refId, signature }: ZkcIssueReq): Promise<ZkCredProved> {
+  async issue({ sessionId: refId, signature }: IT["IssueReq"]): Promise<IT["Cred"]> {
     const {
       message,
       webhookResult,
@@ -109,7 +115,7 @@ export class ZkcPassportIssuer
     }, options);
     if (!verified) throw new ClientError("Signature is not verified");
     const { user } = webhookResult;
-    const transSchema = Zkc.transSchemas[subjectId.t][this.providedSchema];
+    const transSchema = ZKC.transSchemas[subjectId.t][this.providedSchema];
     if (!transSchema) {
       throw new ClientError(`Subject ZKC id with type ${subjectId.t} is not supported`);
     }
@@ -122,7 +128,7 @@ export class ZkcPassportIssuer
         }
       });
     }
-    const zkCred = this.signerManager.signZkCred(subjectId.t, {
+    const zkCred = this.signerManager.signZkCred<ZkPassportCred>(subjectId.t, {
       sch: this.providedSchema,
       isd: new Date().getTime(),
       exd: expirationDate ? expirationDate : 0,
@@ -139,7 +145,6 @@ export class ZkcPassportIssuer
       }
     }, transSchema);
     this.sessionCache.delete(refId);
-
     return zkCred;
   }
 

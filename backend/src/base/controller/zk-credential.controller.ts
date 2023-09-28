@@ -4,7 +4,7 @@ import { contextUtil } from "../../util/context.util.js";
 import { ZkcRoutes } from "./routes/zkc.routes.js";
 import { HttpServer } from "../../backbone/http-server.js";
 import { Raw, ZkcCanIssueReq, ZkcChallengeReq, ZkcIssueReq } from "../types/zkc.issuer.js";
-import { Zkc } from "../../util/zk-credentials/index.js";
+import { ZKC } from "../../util/zk-credentials/index.js";
 
 type Dependencies = {
   httpServer: HttpServer
@@ -35,7 +35,7 @@ export function zkCredentialController(injector: Injector<Dependencies>) {
         handler: async ({ body }) => {
           const subjectId = {
             k: body.subjectId.k,
-            t: Zkc.idType.fromAlias(body.subjectId.t)
+            t: ZKC.idType.fromAlias(body.subjectId.t)
           };
           const challengeReq: ZkcChallengeReq = {
             ...body,

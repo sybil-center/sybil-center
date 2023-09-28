@@ -15,8 +15,8 @@ import crypto from "node:crypto";
 import { personaWebhookEP } from "../../../../src/base/controller/routes/persona-kyc.route.js";
 import Client from "mina-signer";
 import { Field, Poseidon, PrivateKey, PublicKey, Scalar, Signature } from "snarkyjs";
-import { ZkCredProved } from "../../../../src/base/types/zkc.credential.js";
-import { Zkc } from "../../../../src/util/zk-credentials/index.js";
+import { ZKC } from "../../../../src/util/zk-credentials/index.js";
+import { Proved, ZkCred } from "../../../../src/base/types/zkc.credential.js";
 
 const test = suite("INTEGRATION API: Passport ZKC issuer");
 
@@ -224,7 +224,7 @@ test("Issue Passport ZK Credential for MINA ", async () => {
   };
   const challengeResp = await fastify.inject({
     method: "POST",
-    url: Zkc.EPs.v1("Passport").challenge,
+    url: ZKC.EPs.v1("Passport").challenge,
     payload: challengeReq
   });
   a.is(
@@ -241,7 +241,7 @@ test("Issue Passport ZK Credential for MINA ", async () => {
 
   const canIssueBeforeResp = await fastify.inject({
     method: "GET",
-    url: Zkc.EPs.v1("Passport").canIssue,
+    url: ZKC.EPs.v1("Passport").canIssue,
     query: { sessionId: refId }
   });
   a.is(
@@ -294,7 +294,7 @@ test("Issue Passport ZK Credential for MINA ", async () => {
 
   const canIssueAfterResp = await fastify.inject({
     method: "GET",
-    url: Zkc.EPs.v1("Passport").canIssue,
+    url: ZKC.EPs.v1("Passport").canIssue,
     query: { sessionId: refId }
   });
   a.is(
@@ -327,19 +327,19 @@ test("Issue Passport ZK Credential for MINA ", async () => {
   };
   const issueResp = await fastify.inject({
     method: "POST",
-    url: Zkc.EPs.v1("Passport").issue,
+    url: ZKC.EPs.v1("Passport").issue,
     payload: issueReq
   });
   a.is(
     issueResp.statusCode, 200,
     `Issue response status code is not 200. error ${issueResp.body}`
   );
-  const zkCred: ZkCredProved = JSON.parse(issueResp.body);
+  const zkCred: Proved<ZkCred> = JSON.parse(issueResp.body);
   const proof = zkCred.proof[0]!;
   a.ok(proof, "Passport credential does not contains proof");
   // @ts-ignore
   zkCred.proof = undefined;
-  const prepared = Zkc.preparator.prepare<Field[]>(zkCred, proof.transformSchema);
+  const prepared = ZKC.preparator.prepare<Field[]>(zkCred, proof.transformSchema);
   a.equal({
     isr: {
       id: zkCred.isr.id

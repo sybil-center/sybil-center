@@ -1,8 +1,8 @@
 import { IVerifier, SignEntry } from "../../types/verifier.js";
 import { MinaVerifier } from "./mina-verifier.service.js";
 import { ClientError } from "../../../backbone/errors.js";
-import { ZkcIdTypeAlias } from "../../types/zkc.issuer.js";
-import { Zkc } from "../../../util/zk-credentials/index.js";
+import { ZkcChallengeReq, ZkcIdTypeAlias } from "../../types/zkc.issuer.js";
+import { ZKC } from "../../../util/zk-credentials/index.js";
 
 /** Manage Signature Verifiers */
 export interface IVerifierManager {
@@ -17,7 +17,11 @@ export interface IVerifierManager {
    * @param signEntry
    * @param opt - verify options
    */
-  verify(alias: string | number, signEntry: SignEntry, opt?: Record<string, any>): Promise<boolean>;
+  verify(
+    alias: string | number,
+    signEntry: SignEntry,
+    options?: ZkcChallengeReq["options"]
+  ): Promise<boolean>;
 }
 
 export class VerifierManager implements IVerifierManager {
@@ -33,7 +37,7 @@ export class VerifierManager implements IVerifierManager {
   }
 
   verifier(alias: string | number): IVerifier {
-    const isAlias = Zkc.idType.isAlias(alias);
+    const isAlias = ZKC.idType.isAlias(alias);
     if (!isAlias) throw new ClientError(`Chain namespace ${alias} is not supported`);
     return this.verifiers[alias];
   }

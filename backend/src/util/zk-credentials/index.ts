@@ -2,16 +2,16 @@ import { IdType, Schema } from "./adapters.js";
 import { preparator } from "./preparator.js";
 import { EPs } from "./endpoints.js";
 import { transSchemas } from "./transfomr-schemas.js";
-import { ZkCredential } from "../../base/types/zkc.credential.js";
+import { ZkCred } from "../../base/types/zkc.credential.js";
 import sortKeys from "sort-keys";
 
-export const Zkc = {
+export const ZKC = {
   schema: Schema,
   idType: IdType,
   EPs: EPs,
   preparator: preparator,
   transSchemas: transSchemas,
-  sortCred<T extends (ZkCredential) = ZkCredential>(credential: T): T {
+  sortCred<T extends (ZkCred) = ZkCred>(credential: T): T {
     const target: Record<string, any> = {};
     target.isr = {
       id: {

@@ -1,6 +1,6 @@
 import { ZkCredRoutes } from "../../../base/types/route.js";
 import { ZKC_ID_TYPE_ALIASES } from "../../../base/types/zkc.issuer.js";
-import { Zkc } from "../../../util/zk-credentials/index.js";
+import { ZKC } from "../../../util/zk-credentials/index.js";
 
 const tags = ["ZKC GitHub account ownership Zero Knowledge Credential"];
 
@@ -9,7 +9,7 @@ export const ZkcGithubAccountRoutes: ZkCredRoutes = {
 
   challenge: {
     method: ["POST"],
-    url: Zkc.EPs.v1("GitHubAccount").challenge,
+    url: ZKC.EPs.v1("GitHubAccount").challenge,
     schema: {
       tags: tags,
       body: {
@@ -49,7 +49,7 @@ export const ZkcGithubAccountRoutes: ZkCredRoutes = {
 
   canIssue: {
     method: ["GET"],
-    url: Zkc.EPs.v1("GitHubAccount").canIssue,
+    url: ZKC.EPs.v1("GitHubAccount").canIssue,
     schema: {
       tags: tags,
       querystring: {
@@ -72,7 +72,7 @@ export const ZkcGithubAccountRoutes: ZkCredRoutes = {
 
   issue: {
     method: ["POST"],
-    url: Zkc.EPs.v1("GitHubAccount").issue,
+    url: ZKC.EPs.v1("GitHubAccount").issue,
     schema: {
       tags: tags,
       body: {

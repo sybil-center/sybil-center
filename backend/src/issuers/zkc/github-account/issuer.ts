@@ -1,12 +1,5 @@
-import {
-  IZkcIssuer,
-  ZkcCanIssueReq,
-  ZkcCanIssueResp,
-  ZkcChallenge,
-  ZkcChallengeReq,
-  ZkcIssueReq
-} from "../../../base/types/zkc.issuer.js";
-import { ZkcId, ZkCredProved, ZkcSchemaNums } from "../../../base/types/zkc.credential.js";
+import { IssuerTypes, IZkcIssuer, ZkcChallenge, ZkcChallengeReq } from "../../../base/types/zkc.issuer.js";
+import { Proved, ZkcId, ZkCred, ZkcSchemaNums } from "../../../base/types/zkc.credential.js";
 import { IOAuthCallback } from "../../../base/types/issuer.js";
 import { OAuthState } from "../../../base/types/oauth.js";
 import { Disposable, tokens } from "typed-inject";
@@ -18,7 +11,7 @@ import { GitHubService } from "../../../base/service/external/github.service.js"
 import { ClientError } from "../../../backbone/errors.js";
 import { IZkcSignerManager } from "../../../base/service/signers/zkc.signer-manager.js";
 import { IVerifierManager } from "../../../base/service/verifiers/verifier.manager.js";
-import { Zkc } from "../../../util/zk-credentials/index.js";
+import { ZKC } from "../../../util/zk-credentials/index.js";
 
 
 export interface GitChallengeReq extends ZkcChallengeReq {
@@ -29,6 +22,8 @@ export interface GitChallenge extends ZkcChallenge {
   readonly authUrl: string;
 }
 
+export type ZkGithubCred = ZkCred<{ git: { id: number } }>
+
 interface GitSession {
   redirectURL?: URL;
   message: string;
@@ -37,11 +32,14 @@ interface GitSession {
   opt?: Record<string, any>;
 }
 
+interface Ts extends IssuerTypes {
+  ChallengeReq: GitChallengeReq;
+  Challenge: GitChallenge;
+  Cred: Proved<ZkCred<{ git: { id: number } }>>;
+}
+
 export class ZkcGitHubAccountIssuer
-  implements IZkcIssuer<
-    GitChallengeReq,
-    GitChallenge
-  >,
+  implements IZkcIssuer<Ts>,
     IOAuthCallback,
     Disposable {
 
@@ -58,12 +56,15 @@ export class ZkcGitHubAccountIssuer
     private readonly githubService = new GitHubService(config)
   ) {}
 
+  get providedSchema(): ZkcSchemaNums { return 1;};
+
   async getChallenge({
-    subjectId,
-    redirectUrl,
-    expirationDate,
-    options
-  }: GitChallengeReq): Promise<GitChallenge> {
+      subjectId,
+      redirectUrl,
+      expirationDate,
+      options
+    }: Ts["ChallengeReq"]
+  ): Promise<Ts["Challenge"]> {
     const sessionId = absoluteId();
     const redirectURL = redirectUrl
       ? new URL(redirectUrl)
@@ -104,15 +105,16 @@ export class ZkcGitHubAccountIssuer
     return session.redirectURL;
   }
 
-  async canIssue({ sessionId }: ZkcCanIssueReq): Promise<ZkcCanIssueResp> {
+  async canIssue({ sessionId }: Ts["CanIssueReq"]): Promise<Ts["CanIssueResp"]> {
     const session = this.sessionCache.get(sessionId);
     return { canIssue: Boolean(session?.code) };
   }
 
   async issue({
-    sessionId,
-    signature
-  }: ZkcIssueReq): Promise<ZkCredProved> {
+      sessionId,
+      signature
+    }: Ts["IssueReq"]
+  ): Promise<Proved<ZkGithubCred>> {
     const { message, code, subjectId, opt } = this.sessionCache.get(sessionId);
     if (!code) {
       throw new ClientError("GitHub processing your authorization. Wait!");
@@ -129,23 +131,21 @@ export class ZkcGitHubAccountIssuer
     }
     const token = await this.githubService.getAccessToken(code);
     const { id: githubId } = await this.githubService.getUser(token);
-    const transSchema = Zkc.transSchemas[subjectId.t][this.providedSchema];
+    const transSchema = ZKC.transSchemas[subjectId.t][this.providedSchema];
     if (!transSchema) {
       throw new ClientError(`Subject ZKC id with type ${subjectId.t} is not supported`);
     }
-    return this.signerManager.signZkCred(subjectId.t, {
+    return this.signerManager.signZkCred<ZkGithubCred>(subjectId.t, {
         sch: this.providedSchema,
         isd: new Date().getTime(),
         exd: expirationDate ? expirationDate.getTime() : 0,
         sbj: {
           id: subjectId,
-          git: { id: githubId }
+          git: { id: githubId },
         }
       }, transSchema
     );
   }
-
-  get providedSchema(): ZkcSchemaNums { return 1;};
 
   async dispose() {
     this.sessionCache.dispose();

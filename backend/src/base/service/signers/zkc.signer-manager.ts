@@ -1,20 +1,22 @@
 import { IZkcSigner } from "../../types/zkc.signer.js";
-import { ZkCredential, ZkCredProved } from "../../types/zkc.credential.js";
+import { Proved, ZkCred } from "../../types/zkc.credential.js";
 import { TransCredSchema } from "@sybil-center/zkc-preparator";
 import { Config } from "../../../backbone/config.js";
 import { tokens } from "typed-inject";
 import { ZkcIdTypeAlias } from "../../types/zkc.issuer.js";
 import { MinaSigner } from "./mina-signer.service.js";
 import { ClientError } from "../../../backbone/errors.js";
-import { Zkc } from "../../../util/zk-credentials/index.js";
+import { ZKC } from "../../../util/zk-credentials/index.js";
 
 export interface IZkcSignerManager {
   signer(alias: string): IZkcSigner;
-  signZkCred(
+  signZkCred<
+    TCred extends ZkCred = ZkCred
+  >(
     alias: string | number,
-    props: Omit<ZkCredential, "isr">,
+    props: Omit<TCred, "isr">,
     transSchema: TransCredSchema
-  ): Promise<ZkCredProved>;
+  ): Promise<Proved<TCred>>;
 }
 
 export class ZkcSignerManager implements IZkcSignerManager {
@@ -33,16 +35,18 @@ export class ZkcSignerManager implements IZkcSignerManager {
   }
 
   signer(alias: string): IZkcSigner {
-    const isAlias = Zkc.idType.isAlias(alias);
+    const isAlias = ZKC.idType.isAlias(alias);
     if (!isAlias) throw new ClientError(`Chain namespace ${alias} is not supported`);
     return this.signers[alias];
   }
 
-  signZkCred(
+  signZkCred<
+    TCred extends ZkCred = ZkCred
+  >(
     alias: string,
-    props: Omit<ZkCredential, "isr">,
+    props: Omit<TCred, "isr">,
     transSchema: TransCredSchema
-  ): Promise<ZkCredProved> {
+  ): Promise<Proved<TCred>> {
     const signer = this.signer(alias);
     return signer.signZkCred(props, transSchema);
   }

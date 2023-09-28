@@ -12,8 +12,8 @@ import { minaSupport } from "../../../support/chain/mina.js";
 import { oauthCallbackEP } from "../../../../src/util/route.util.js";
 import { Raw, ZkcCanIssueResp, ZkcIssueReq } from "../../../../src/base/types/zkc.issuer.js";
 import Client from "mina-signer";
-import { ZkCredProved } from "../../../../src/base/types/zkc.credential.js";
-import { Zkc } from "../../../../src/util/zk-credentials/index.js";
+import { Proved, ZkCred } from "../../../../src/base/types/zkc.credential.js";
+import { ZKC } from "../../../../src/util/zk-credentials/index.js";
 
 const test = suite("INTEGRATION API: issue Github Account ZKC test");
 
@@ -64,13 +64,13 @@ async function preIssue({ network }: PreIssueArgs): Promise<{
     },
     redirectUrl: redirectURL,
     options: {
-      network: network
+      mina: { network: network }
     }
   };
 
   const challengeResp = await fastify.inject({
     method: "POST",
-    url: Zkc.EPs.v1("GitHubAccount").challenge,
+    url: ZKC.EPs.v1("GitHubAccount").challenge,
     payload: challengeReq
   });
   a.is(challengeResp.statusCode, 200, `Challenge response status code is not 200`);
@@ -86,7 +86,7 @@ async function preIssue({ network }: PreIssueArgs): Promise<{
 
   const canIssueBefore = await fastify.inject({
     method: "GET",
-    url: Zkc.EPs.v1("GitHubAccount").canIssue,
+    url: ZKC.EPs.v1("GitHubAccount").canIssue,
     query: {
       sessionId: challenge.sessionId
     }
@@ -121,7 +121,7 @@ async function preIssue({ network }: PreIssueArgs): Promise<{
 
   const canIssueResp = await fastify.inject({
     method: "GET",
-    url: Zkc.EPs.v1("GitHubAccount").canIssue,
+    url: ZKC.EPs.v1("GitHubAccount").canIssue,
     query: { sessionId: challenge.sessionId }
   });
   a.is(
@@ -157,20 +157,20 @@ test(`Issue Github account zkc & verify for Mina (Main net)`, async () => {
 
   const issueResp = await fastify.inject({
     method: "POST",
-    url: Zkc.EPs.v1("GitHubAccount").issue,
+    url: ZKC.EPs.v1("GitHubAccount").issue,
     payload: issueReq
   });
   a.is(
     issueResp.statusCode, 200,
     `issue response status code is not 200. error: ${issueResp.body}`
   );
-  const credProofed = JSON.parse(issueResp.body) as ZkCredProved;
+  const credProofed = JSON.parse(issueResp.body) as Proved<ZkCred>;
   a.is(credProofed.isr.id.t, 0, "Issuer Mina id type is not matched");
   const proof = credProofed.proof[0]!;
 
   //@ts-ignore
   credProofed.proof = undefined;
-  const prepared = Zkc.preparator.prepare<Field[]>(credProofed, proof.transformSchema);
+  const prepared = ZKC.preparator.prepare<Field[]>(credProofed, proof.transformSchema);
   const msg = Poseidon.hash(prepared);
   const sign = Signature.fromBase58(proof.sign);
   const verified = sign.verify(PublicKey.fromBase58(proof.key), [msg]);
@@ -185,19 +185,19 @@ test(`Issue Github account zkc & verify for Mina (Test net)`, async () => {
   };
   const issueResp = await fastify.inject({
     method: "POST",
-    url: Zkc.EPs.v1("GitHubAccount").issue,
+    url: ZKC.EPs.v1("GitHubAccount").issue,
     payload: issueReq
   });
   a.is(
     issueResp.statusCode, 200,
-    "Issue resp status code is not 200"
+    `Issue resp status code is not 200. error: ${issueResp.body}`
   );
-  const credProved: ZkCredProved = JSON.parse(issueResp.body);
+  const credProved: Proved<ZkCred> = JSON.parse(issueResp.body);
   const proof = credProved.proof[0]!;
   a.ok(proof, "Proof in Zk credential is undefined");
   // @ts-ignore
   credProved.proof = undefined;
-  const prepared = Zkc.preparator.prepare<Field[]>(credProved, proof.transformSchema);
+  const prepared = ZKC.preparator.prepare<Field[]>(credProved, proof.transformSchema);
   const msg = Poseidon.hash(prepared);
   const sign = Signature.fromBase58(proof.sign);
   const verified = sign.verify(PublicKey.fromBase58(proof.key), [msg]);

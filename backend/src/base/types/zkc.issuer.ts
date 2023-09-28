@@ -1,4 +1,4 @@
-import { ZkcId, ZkCredProved, ZkcSchemaNums } from "./zkc.credential.js";
+import { Proved, ZkcId, ZkCred, ZkcSchemaNums } from "./zkc.credential.js";
 
 export const ZKC_ID_TYPE_ALIASES = ["mina", 0] as const;
 
@@ -7,13 +7,15 @@ export type ZkcIdTypeAlias = typeof ZKC_ID_TYPE_ALIASES[number]
 export type ZkcChallengeReq = {
   expirationDate?: number;
   subjectId: ZkcId;
-  options?: Record<string, any>
+  options?: {
+    mina?: { network?: "mainnet" | "testnet" }
+  }
 }
 
 export type Raw<
   T extends ZkcChallengeReq
 > = Omit<T, "subjectId"> & {
-  subjectId: Omit<ZkcId, "t"> & { t: ZkcIdTypeAlias}
+  subjectId: Omit<ZkcId, "t"> & { t: ZkcIdTypeAlias }
 }
 
 export type ZkcChallenge = {
@@ -34,15 +36,21 @@ export type ZkcIssueReq = {
   signature: string;
 }
 
-export interface IZkcIssuer<
-  TChallengeReq extends ZkcChallengeReq = ZkcChallengeReq,
-  TChallenge extends ZkcChallenge = ZkcChallenge,
-  TZkcIssueReq extends ZkcIssueReq = ZkcIssueReq,
-  TCanReq extends ZkcCanIssueReq = ZkcCanIssueReq,
-  TCanResp extends ZkcCanIssueResp = ZkcCanIssueResp
-> {
-  getChallenge(challengeReq: TChallengeReq): Promise<TChallenge>;
-  canIssue(entry: TCanReq): Promise<TCanResp>;
-  issue(issueReq: TZkcIssueReq): Promise<ZkCredProved>;
+export interface IssuerTypes {
+  ChallengeReq: ZkcChallengeReq;
+  Challenge: ZkcChallenge;
+  IssueReq: ZkcIssueReq;
+  Cred: Proved<ZkCred>;
+  CanIssueReq: ZkcCanIssueReq;
+  CanIssueResp: ZkcCanIssueResp;
+}
+
+export interface IZkcIssuer<T extends IssuerTypes = IssuerTypes> {
+  getChallenge(challengeReq: T["ChallengeReq"]): Promise<T["Challenge"]>;
+  canIssue(entry: T["CanIssueReq"]): Promise<T["CanIssueResp"]>;
+  issue(issueReq: T["IssueReq"]): Promise<T["Cred"]>;
   providedSchema: ZkcSchemaNums;
 }
+
+// export interface IZkcIssuer2<{
+// }>
