@@ -1,9 +1,9 @@
 import { Config } from "../../../backbone/config.js";
-import { ZkCredential, ZkCredProved } from "../../types/zkc.credential.js";
+import { Proved, ZkcIdType, ZkCred } from "../../types/zkc.credential.js";
 import { TransCredSchema } from "@sybil-center/zkc-preparator";
-import { zkc } from "../../../util/zk-credentials.util.js";
 import { Field, Poseidon, PrivateKey, PublicKey, Signature } from "snarkyjs";
 import { IZkcSigner } from "../../types/zkc.signer.js";
+import { ZKC } from "../../../util/zk-credentials/index.js";
 
 
 export class MinaSigner implements IZkcSigner {
@@ -14,26 +14,25 @@ export class MinaSigner implements IZkcSigner {
     private readonly publicKey: PublicKey = privateKey.toPublicKey()
   ) {}
 
-  get identifier(): { t: number, k: string } {
+  get identifier(): { t: ZkcIdType, k: string } {
     return {
       t: 0,
       k: this.publicKey.toBase58()
     };
   }
-
-  async signZkCred(
-    props: Omit<ZkCredential, "isr">,
+  async signZkCred<TCred extends ZkCred = ZkCred>(
+    props: Omit<TCred, "isr">,
     transSchema: TransCredSchema
-  ): Promise<ZkCredProved> {
-    const zkCred: ZkCredential = {
+  ): Promise<Proved<TCred>> {
+    //
+    const zkCred: ZkCred = {
       isr: { id: this.identifier },
       ...props
     };
-    let values = zkc.preparator.prepare<Field[]>(zkCred, transSchema);
+    let values = ZKC.preparator.prepare<Field[]>(zkCred, transSchema);
     const hash = Poseidon.hash(values);
     const signature = Signature.create(this.privateKey, [hash]);
     return {
-      ...zkc.sort(zkCred),
       proof: [
         {
           target: "mina",
@@ -42,7 +41,8 @@ export class MinaSigner implements IZkcSigner {
           transformSchema: transSchema,
           sign: signature.toBase58()
         }
-      ]
+      ],
+      ...ZKC.sortCred<TCred>(zkCred as TCred),
     };
   }
 }

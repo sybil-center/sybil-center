@@ -1,9 +1,14 @@
+export const ZKC_ID_TYPES = [0] as const;
+export type ZkcIdType = typeof ZKC_ID_TYPES[number]
+
 export type ZkcId = {
-  t: number,
+  t: ZkcIdType,
   k: string
 }
 
-export type ZkCredential = {
+export type ZkCred<
+  TSbj = Record<string, any | undefined>
+> = {
   isr: {
     id: ZkcId;
   }
@@ -12,8 +17,12 @@ export type ZkCredential = {
   exd: number; // 0 if expiration date is undefined
   sbj: {
     id: ZkcId;
-  } & Record<string, any>
+  } & TSbj
 }
+
+export type Proved<
+  TCred extends ZkCred
+> = TCred & { proof: ZkcProof[] }
 
 type TransCredSchema = {
   isr: {
@@ -41,15 +50,11 @@ export type ZkcProof = {
   sign: string;
 }
 
-export interface ZkCredProved extends ZkCredential {
-  proof: ZkcProof[];
-}
-
 /* Schemas */
 
-export const schemaNames = ["GitHubAccount", "Passport"] as const;
-export type ZkcSchemaNames = typeof schemaNames[number];
+export const ZKC_SCHEMA_NAMES = ["GitHubAccount", "Passport"] as const;
+export type ZkcSchemaNames = typeof ZKC_SCHEMA_NAMES[number];
 
-export const schemaNums = [0, 1] as const;
-export type ZkcSchemaNums = typeof schemaNums[number];
+export const ZKC_SCHEMA_NUMS = [0, 1] as const;
+export type ZkcSchemaNums = typeof ZKC_SCHEMA_NUMS[number];
 

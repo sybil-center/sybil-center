@@ -1,25 +1,27 @@
 import { IZkcSigner } from "../../types/zkc.signer.js";
-import { ZkCredential, ZkCredProved } from "../../types/zkc.credential.js";
+import { Proved, ZkCred } from "../../types/zkc.credential.js";
 import { TransCredSchema } from "@sybil-center/zkc-preparator";
 import { Config } from "../../../backbone/config.js";
 import { tokens } from "typed-inject";
-import { ZkcIdAlias } from "../../types/zkc.issuer.js";
+import { ZkcIdTypeAlias } from "../../types/zkc.issuer.js";
 import { MinaSigner } from "./mina-signer.service.js";
-import { zkc } from "../../../util/zk-credentials.util.js";
 import { ClientError } from "../../../backbone/errors.js";
+import { ZKC } from "../../../util/zk-credentials/index.js";
 
 export interface IZkcSignerManager {
   signer(alias: string): IZkcSigner;
-  signZkCred(
+  signZkCred<
+    TCred extends ZkCred = ZkCred
+  >(
     alias: string | number,
-    props: Omit<ZkCredential, "isr">,
+    props: Omit<TCred, "isr">,
     transSchema: TransCredSchema
-  ): Promise<ZkCredProved>;
+  ): Promise<Proved<TCred>>;
 }
 
 export class ZkcSignerManager implements IZkcSignerManager {
 
-  private readonly signers: Record<ZkcIdAlias, IZkcSigner>;
+  private readonly signers: Record<ZkcIdTypeAlias, IZkcSigner>;
 
   static inject = tokens("config");
   constructor(
@@ -33,17 +35,19 @@ export class ZkcSignerManager implements IZkcSignerManager {
   }
 
   signer(alias: string): IZkcSigner {
-    const isAlias = zkc.isIdAlias(alias);
+    const isAlias = ZKC.idType.isAlias(alias);
     if (!isAlias) throw new ClientError(`Chain namespace ${alias} is not supported`);
     return this.signers[alias];
   }
 
-  signZkCred(
+  signZkCred<
+    TCred extends ZkCred = ZkCred
+  >(
     alias: string,
-    props: Omit<ZkCredential, "isr">,
+    props: Omit<TCred, "isr">,
     transSchema: TransCredSchema
-  ): Promise<ZkCredProved> {
+  ): Promise<Proved<TCred>> {
     const signer = this.signer(alias);
-    return signer.signZkCred(props, transSchema)
+    return signer.signZkCred(props, transSchema);
   }
 }

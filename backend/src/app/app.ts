@@ -110,7 +110,7 @@ export class App {
     apiKeyController(app.context);
     configController(app.context);
     zkCredentialController(app.context);
-    personaKYCController(app.context)
+    personaKYCController(app.context);
 
     const didService = app.context.resolve("didService");
     await didService.init();
