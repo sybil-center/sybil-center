@@ -46,9 +46,9 @@ type TransCredSchema = {
 };
 
 export type ZkcProof = {
+  id?: string;
   key: string;
   type: string;
-  target: string;
   transformSchema: TransCredSchema;
   sign: string;
 }

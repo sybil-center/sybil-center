@@ -39,13 +39,13 @@ type TransCredSchema = {
       t: string[];
       k: string[];
     };
-  } & Record<string, any>;
+  } & Record<string, any | undefined>;
 };
 
 export type ZkcProof = {
+  id?: string;
   key: string;
   type: string;
-  target: string;
   transformSchema: TransCredSchema;
   sign: string;
 }
