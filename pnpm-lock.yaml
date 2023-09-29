@@ -56,7 +56,6 @@ importers:
       '@solana/web3.js': 1.74.0
       '@stablelib/sha256': 1.0.1
       '@sybil-center/sdk': link:../sybil
-      '@sybil-center/zkc-issuer': link:../zkc-issuer
       '@sybil-center/zkc-preparator': 0.0.4
       bitcoinjs-message: 2.2.0
       bs58: 5.0.0
