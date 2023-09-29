@@ -182,12 +182,36 @@ importers:
       typescript: 4.9.5
       uvu: 0.5.6
 
-  zkc-issuer:
+  zkc-core:
     specifiers:
+      ieee754: ^1.2.1
+      prettier: ^2.8.4
+      sort-keys: ^5.0.0
+      tsm: ^2.3.0
+      typescript: ^4.9.5
+      uint8arrays: ^4.0.6
+      uvu: ^0.5.6
+    dependencies:
+      ieee754: 1.2.1
+      sort-keys: 5.0.0
+      uint8arrays: 4.0.6
+    devDependencies:
+      prettier: 2.8.7
+      tsm: 2.3.0
+      typescript: 4.9.5
+      uvu: 0.5.6
+
+  zkc-o1js:
+    specifiers:
+      '@sybil-center/zkc-core': workspace:*
+      o1js: ^0.13.0
       prettier: ^2.8.4
       tsm: ^2.3.0
       typescript: ^4.9.5
       uvu: ^0.5.6
+    dependencies:
+      '@sybil-center/zkc-core': link:../zkc-core
+      o1js: 0.13.0
     devDependencies:
       prettier: 2.8.7
       tsm: 2.3.0
@@ -10345,6 +10369,21 @@ packages:
 
   /nwsapi/2.2.2:
     resolution: {integrity: sha512-90yv+6538zuvUMnN+zCr8LuV6bPFdq50304114vJYJ8RDyK8D5O9Phpbd6SZWgI7PwzmmfN1upeOJlvybDSgCw==}
+    dev: false
+
+  /o1js/0.13.0:
+    resolution: {integrity: sha512-JwhdgEiGz+ucpvvddykW1pnX25tyPGUEUyurskb9T/k8U5ATPdHrvdV9WWsSGq3fXL4NT40UCY5Y9qQ6IegV8w==}
+    engines: {node: '>=16.4.0'}
+    hasBin: true
+    dependencies:
+      blakejs: 1.2.1
+      detect-gpu: 5.0.37
+      isomorphic-fetch: 3.0.0
+      js-sha256: 0.9.0
+      reflect-metadata: 0.1.13
+      tslib: 2.4.0
+    transitivePeerDependencies:
+      - encoding
     dev: false
 
   /object-assign/4.1.1:

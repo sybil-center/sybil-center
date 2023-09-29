@@ -2,4 +2,5 @@ packages:
   - backend
   - frontend
   - sybil
-  - zkc-issuer
+  - zkc-core
+  - zkc-o1js

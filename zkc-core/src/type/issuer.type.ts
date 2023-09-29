@@ -1,5 +1,5 @@
 import { Proved, ZkcId, ZkcIdTypeAlias, ZkCred, ZkcSchemaNums } from "./credential.type.js";
-import { WalletProof } from "./wallet-proof.type.js";
+import { WalletProof } from "./wallet-provider.type.js";
 
 export type ZkcChallengeReq = {
   expirationDate?: number;

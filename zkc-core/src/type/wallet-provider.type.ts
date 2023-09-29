@@ -7,3 +7,16 @@ export type WalletProof = {
   subjectId: Omit<ZkcId, "t"> & { t: ZkcIdTypeAlias }
   signFn: SignFn
 }
+
+export interface WalletProvider {
+
+  getProof(): Promise<WalletProof>;
+
+  getSubjectId(): Promise<ZkcId>;
+
+  getAddress(): Promise<string>;
+
+  sign: SignFn;
+}
+
+
