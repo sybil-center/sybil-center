@@ -1,6 +1,9 @@
 export const ZKC_ID_TYPES = [0] as const;
 export type ZkcIdType = typeof ZKC_ID_TYPES[number]
 
+export const ZKC_ID_TYPE_ALIASES = ["mina", 0] as const;
+export type ZkcIdTypeAlias = typeof ZKC_ID_TYPE_ALIASES[number]
+
 export type ZkcId = {
   t: ZkcIdType,
   k: string

@@ -35,9 +35,8 @@ export class MinaSigner implements IZkcSigner {
     return {
       proof: [
         {
-          target: "mina",
           key: this.publicKey.toBase58(),
-          type: "mina:Poseidon-BabyJubJub",
+          type: "Mina:PoseidonBaby2Jub",
           transformSchema: transSchema,
           sign: signature.toBase58()
         }
