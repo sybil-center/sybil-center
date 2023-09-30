@@ -31,9 +31,10 @@ test("invalid signature behavior", () => {
   const client = new Client({ network: "mainnet" });
   const privatekey = PrivateKey.random();
   const sign = client.signMessage("not_hello", privatekey.toBase58());
-  sign.data = "hello"
+  sign.data = "hello";
   const notVerified = client.verifyMessage(sign);
   a.is(notVerified, false, `Invalid sign MUST NOT be verified`);
 });
 
 test.run();
+

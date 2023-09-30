@@ -27,7 +27,7 @@ export type Proved<
   TCred extends ZkCred
 > = TCred & { proof: ZkcProof[] }
 
-type TransCredSchema = {
+export type TransCredSchema = {
   isr: {
     id: {
       t: string[];
