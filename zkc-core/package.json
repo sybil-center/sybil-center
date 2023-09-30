@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sybil-center/zkc-issuer"
+    "url": "git+https://github.com/sybil-center/zkc-core"
   },
   "type": "module",
   "files": [

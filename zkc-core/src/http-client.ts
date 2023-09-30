@@ -7,7 +7,7 @@ import {
   ZkcIssueReq
 } from "./type/index.js";
 import { Proved, ZkCred, ZkcSchemaNames, ZkcSchemaNums } from "./type/index.js";
-import { ZkcUtil } from "./util/index.js";
+import { zkcUtil } from "./util/index.js";
 
 const DEFAULT_DOMAIN = new URL("https://api.sybil.center");
 
@@ -23,9 +23,9 @@ export class HttpClient {
     params: TParams
   ): Promise<TResp> {
     const schemaName = typeof schema === "number"
-      ? ZkcUtil.schema.toName(schema)
+      ? zkcUtil.schema.toName(schema)
       : schema;
-    const endpoint = new URL(ZkcUtil.EPs.v1(schemaName).challenge, this.issuerDomain);
+    const endpoint = new URL(zkcUtil.EPs.v1(schemaName).challenge, this.issuerDomain);
     const resp = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -46,9 +46,9 @@ export class HttpClient {
     params: TReq
   ): Promise<TResp> {
     const schemaName = typeof schema === "number"
-      ? ZkcUtil.schema.toName(schema)
+      ? zkcUtil.schema.toName(schema)
       : schema;
-    const endpoint = new URL(ZkcUtil.EPs.v1(schemaName).canIssue, this.issuerDomain);
+    const endpoint = new URL(zkcUtil.EPs.v1(schemaName).canIssue, this.issuerDomain);
     endpoint.searchParams.set("sessionId", params.sessionId);
     const resp = await fetch(endpoint, { method: "GET", });
     const body = await resp.json();
@@ -64,9 +64,9 @@ export class HttpClient {
     params: TReq
   ): Promise<Proved<TCred>> {
     const schemaName = typeof schema === "number"
-      ? ZkcUtil.schema.toName(schema)
+      ? zkcUtil.schema.toName(schema)
       : schema;
-    const endpoint = new URL(ZkcUtil.EPs.v1(schemaName).issue, this.issuerDomain);
+    const endpoint = new URL(zkcUtil.EPs.v1(schemaName).issue, this.issuerDomain);
     const resp = await fetch(endpoint, {
       method: "POST",
       headers: {

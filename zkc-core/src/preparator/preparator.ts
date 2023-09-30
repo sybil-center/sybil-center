@@ -5,7 +5,10 @@ import { Proved, TransCredSchema, ZkCred } from "../type/index.js";
 export class Preparator {
 
   private readonly graph = new TransformationGraph();
+
   extendGraph = this.graph.extend.bind(this.graph);
+  transform = this.graph.transform.bind(this.graph);
+  sort = sort;
 
   prepare<
     TOut extends any[] = any [],
@@ -24,7 +27,6 @@ export class Preparator {
       return result;
     }, ([] as any[]) as TOut);
   }
-
 }
 
 type PathValue = {

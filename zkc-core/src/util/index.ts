@@ -4,7 +4,7 @@ import { Proved, ZkCred } from "../type/index.js";
 import { CredExtractor } from "./extractor.util.js";
 
 
-const ZkcUtil = {
+const zkcUtil = {
   EPs: EPs,
   schema: Schema,
   idType: IdType,
@@ -13,4 +13,4 @@ const ZkcUtil = {
   }
 };
 
-export { ZkcUtil };
+export { zkcUtil };
