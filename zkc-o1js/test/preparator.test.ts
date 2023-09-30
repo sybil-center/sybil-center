@@ -1,5 +1,5 @@
 import { suite } from "uvu";
-import { PassportCred, Proved, ZkcUtil } from "@sybil-center/zkc-core";
+import { PassportCred, Proved, zkcUtil } from "@sybil-center/zkc-core";
 import { o1jsPreparator, zkcMina } from "../src/index.js";
 import { Field, PublicKey } from "o1js";
 import * as a from "uvu/assert";
@@ -54,7 +54,7 @@ test("test preparator", () => {
   };
   zkCred.proof[0]?.transformSchema.isr.id.k.pop();
   zkCred.proof[0]?.transformSchema.sbj.id.k.pop();
-  const transSchema = ZkcUtil.from(zkCred).proof().transformSchema;
+  const transSchema = zkcUtil.from(zkCred).proof().transformSchema;
   const [
     isr_id_t,
     isr_id_k,
