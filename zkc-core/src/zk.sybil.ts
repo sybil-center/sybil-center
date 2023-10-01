@@ -6,7 +6,7 @@ type ZkCredKinds = {
   passport: {
     Kind: PassportIT["Cred"],
     Issuer: PassportIssuer,
-    Options: PassportIT["Options"]
+    Options: PassportIT["Options"] | undefined
   }
 }
 

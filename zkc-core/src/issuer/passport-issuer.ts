@@ -33,7 +33,7 @@ export interface PassportChallenge extends ZkcChallenge {
 }
 
 export interface PassportOptions extends Option<PassportChallengeReq> {
-  windowFeature: string;
+  windowFeature?: string;
 }
 
 export interface PassportIT extends IssuerTypes {
