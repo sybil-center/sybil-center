@@ -36,6 +36,7 @@ export type ZkPassportCred = ZkCred<{
 type PassportSession = {
   message: string;
   subjectId: ZkcId;
+  verifyURL: string;
   challengeReq: ZkcChallengeReq;
   webhookResult?: Inquiry["Hook"]["Return"]
 }
@@ -70,9 +71,18 @@ export class ZkcPassportIssuer
   async getChallenge(challengeReq: IT["ChallengeReq"]): Promise<IT["Challenge"]> {
     const sbjId = challengeReq.subjectId;
     const refId = this.personaKYC.refId(sbjId);
+    const found = this.sessionCache.find(refId);
+    if (found) {
+      return {
+        sessionId: refId,
+        verifyURL: found.verifyURL,
+        message: found.message,
+      };
+    }
     const { verifyURL } = await this.personaKYC.createInquiry({ referenceId: refId });
     const message = getMessage(challengeReq);
     this.sessionCache.set(refId, {
+      verifyURL: verifyURL,
       message: message,
       subjectId: sbjId,
       challengeReq: challengeReq,
