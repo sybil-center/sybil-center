@@ -2,7 +2,7 @@ import { suite } from "uvu";
 import * as a from "uvu/assert";
 import * as u8a from "uint8arrays";
 import { SupportedEncodings } from "uint8arrays";
-import { TransformationGraph } from "../src/preparator/index.js";
+import { TransformationGraph } from "../src/index.js";
 
 const test = suite("Transformation Graph Tests");
 
@@ -325,6 +325,65 @@ test("extending existing graph or node rise error", () => {
       transform: (_: any) => "test"
     }]);
   }, `extending existing link MUST rise error`);
+});
+
+const uintMap: Record<string, { max: bigint | null, numBytes: number | null, value: bigint }> = {
+  uint: { max: null, numBytes: null, value: 12222282823423423438283n },
+  uint16: { max: 2n ** 16n - 1n, numBytes: 2, value: 1n },
+  uint32: { max: 2n ** 32n - 1n, numBytes: 4, value: 2n ** 32n - 1n - 5000n },
+  uint64: { max: 2n ** 64n - 1n, numBytes: 8, value: 2n ** 64n - 1n - 10000n },
+  uint128: { max: 2n ** 128n - 1n, numBytes: 16, value: 2n ** 128n - 1n - 200000n },
+  uint256: { max: 2n ** 128n - 1n, numBytes: 32, value: 2n ** 256n - 1n - 2000000n }
+};
+
+test("Test uint to bytes as BE", () => {
+  const graph = new TransformationGraph();
+  for (const uintName in uintMap) {
+    const transformed = graph.transform<Uint8Array>(259, [`${uintName}-bytes`]);
+    const lastElement = transformed.length - 1;
+    a.is(transformed[lastElement], 3, `${uintName}-bytes graph link result is not BE bytes`);
+    a.is(transformed[lastElement - 1], 1, `${uintName}-bytes graph link result is not BE bytes`);
+  }
+});
+
+test("Test uint to bytes length", () => {
+  const graph = new TransformationGraph();
+
+  for (const uintName in uintMap) {
+    const uint = uintMap[uintName]!;
+    const transformed = graph.transform(1, [`${uintName}-bytes`]);
+    if (uint.numBytes) {
+      a.is(
+        transformed.length === uint.numBytes, true,
+        `${uintName}-bytes graph link returns bytes length not equals to ${uint.numBytes}`
+      );
+    } else { // special for "uint" node
+      a.is(transformed.length === 1, true,
+        `${uintName}-bytes graph link must has only one element in bytes array as output`
+      );
+    }
+  }
+});
+
+test("Uint to bytes and bytes to uint", () => {
+  const graph = new TransformationGraph();
+  for (const uintName in uintMap) {
+    const uint = uintMap[uintName]!;
+    const transformed = graph.transform(uint.value, [`${uintName}-bytes`, `bytes-${uintName}`]);
+    a.is(transformed, uint.value, `uint-bytes & bytes-uint is not correct result`);
+  }
+});
+
+test("Bytes from hex to number", () => {
+  const graph = new TransformationGraph();
+  const bytes = graph.transform<Uint8Array>("FF01", ["base16-bytes"]);
+  a.equal(
+    bytes,
+    new Uint8Array([255, 1]),
+    `Incorrect transformation base-bytes link result`
+  );
+  const number = graph.transform<bigint>(bytes, ["bytes-uint64"]);
+  a.is(number, 65281n, "bytes-uint64 incorrect result");
 });
 
 test.run();

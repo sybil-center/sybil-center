@@ -132,6 +132,7 @@ const BASE_NODES: Record<string, GraphNode> = {
   },
   bytes: {
     name: "bytes",
+    spread: true,
     isType: (value: any) => value instanceof Uint8Array
   },
   uint: {
@@ -169,8 +170,9 @@ function defaultLinks(): Record<string, GraphLink> {
 }
 
 function toBigInt(bytes: Uint8Array): bigint {
+  const reversedBytes = bytes.reverse();
   let result = BigInt(0);
-  for (let i = bytes.length - 1; i >= 0; i--) {
+  for (let i = reversedBytes.length - 1; i >= 0; i--) {
     result = result * BigInt(256) + BigInt(bytes[i]!);
   }
   return result;
@@ -185,7 +187,40 @@ function numToBytes(num: number | bigint): Uint8Array {
     count++;
     target = target / 256n;
   }
-  return new Uint8Array(bytes);
+  return new Uint8Array(bytes.reverse());
+}
+
+const uintMap: Record<string, { max: bigint | null, numBytes: number | null }> = {
+  uint: { max: null, numBytes: null },
+  uint16: { max: 2n ** 16n - 1n, numBytes: 2 },
+  uint32: { max: 2n ** 32n - 1n, numBytes: 4 },
+  uint64: { max: 2n ** 64n - 1n, numBytes: 8 },
+  uint128: { max: 2n ** 128n - 1n, numBytes: 16 },
+  uint256: { max: 2n ** 128n - 1n, numBytes: 32 }
+};
+
+// @ts-ignore
+function uintToBytes(): Record<string, GraphLink> {
+  const result: Record<string, GraphLink> = {};
+  for (const uintName in uintMap) {
+    const uint = uintMap[uintName]!;
+    result[`${uintName}-bytes`] = {
+      name: `${uintName}-bytes`,
+      inputType: uintName,
+      outputType: "bytes",
+      transform: (value: number | bigint): Uint8Array => {
+        const bytes = numToBytes(value);
+        if (uint.numBytes && uint.numBytes > bytes.length) {
+          const zeroes = new Array<number>(uint.numBytes - bytes.length).fill(0);
+          return new Uint8Array([...zeroes, ...bytes]);
+        } else if (uint.numBytes && uint.numBytes < bytes.length) {
+          throw new Error(`Transformation Graph: link ${uintName}-bytes, throw error because bytes length more than max bytes length ${uint.numBytes}`);
+        }
+        return bytes;
+      }
+    };
+  }
+  return result;
 }
 
 const uints = [
@@ -209,17 +244,17 @@ function bytesToUint(): Record<string, GraphLink> {
   }, {} as Record<string, GraphLink>);
 }
 
-function uintsToBytes(): Record<string, GraphLink> {
-  return uints.reduce((prev, name) => {
-    prev[`${name}-bytes`] = {
-      inputType: name,
-      outputType: "bytes",
-      name: `${name}-bytes`,
-      transform: numToBytes
-    };
-    return prev;
-  }, {} as Record<string, GraphLink>);
-}
+// function uintsToBytes(): Record<string, GraphLink> {
+//   return uints.reduce((prev, name) => {
+//     prev[`${name}-bytes`] = {
+//       inputType: name,
+//       outputType: "bytes",
+//       name: `${name}-bytes`,
+//       transform: numToBytes
+//     };
+//     return prev;
+//   }, {} as Record<string, GraphLink>);
+// }
 
 const intsMap: Record<string, { num: number, bnum: bigint }> = {
   int16: { num: 16, bnum: 16n },
@@ -436,7 +471,7 @@ function floatToStrings(): Record<string, GraphLink> {
 const BASE_LINKS: Record<string, GraphLink> = {
   ...defaultLinks(),
   ...bytesToUint(),
-  ...uintsToBytes(),
+  ...uintToBytes(),
   ...bytesToInt(),
   ...intsToBytes(),
   ...bytesToString(),

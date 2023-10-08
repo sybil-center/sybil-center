@@ -1,7 +1,6 @@
 import { suite } from "uvu";
 import * as a from "uvu/assert";
-import { TransCredSchema, ZkCred } from "../src/index.js";
-import { Preparator } from "../src/preparator/index.js";
+import { Preparator, TransCredSchema, ZkCred } from "../src/index.js";
 
 const test = suite("Preparator tests");
 
@@ -27,7 +26,7 @@ test("prepare zk-credential", () => {
     isr: {
       id: {
         t: ["uint32-bytes", "bytes-uint32", "uint32-boolean"],
-        k: ["utf8-bytes"]
+        k: ["utf8-bytes", "bytes-uint128"]
       },
     },
     sch: ["uint32-bytes", "bytes-base16"],
@@ -35,7 +34,7 @@ test("prepare zk-credential", () => {
     exd: ["uint64-bytes", "bytes-utf8"],
     sbj: {
       id: {
-        t: ["uint32-bytes"],
+        t: ["uint32-bytes", "bytes-uint32"],
         k: ["utf8-bytes", "bytes-base16"]
       },
       alias: ["ascii-bytes", "bytes-uint128"],
@@ -58,9 +57,8 @@ test("prepare zk-credential", () => {
     isr_id_t, true,
     `Incorrect preparation of ZKCredential.isr.id.t`
   );
-  a.instance(
-    isr_id_k, Uint8Array,
-    `Incorrect preparation of ZKCredential.isr.id.k`
+  a.is(
+    isr_id_k, 54091677185334n, `Incorrect preparation of ZKCredential.isr.id.k`
   );
   a.type(
     sch, "string",
@@ -74,10 +72,7 @@ test("prepare zk-credential", () => {
     exd, "string",
     `Incorrect preparation of ZKCredential.exd`
   );
-  a.instance(
-    sbj_id_t, Uint8Array,
-    `Incorrect preparation of ZKCredential.sbj.id.t`
-  );
+  a.is(sbj_id_t, 2n, `Incorrect preparation of ZKCredential.sbj.id.t`);
   a.type(
     sbj_id_k, "string",
     `Incorrect preparation of ZKCredential.sbj.id.k`
@@ -105,7 +100,7 @@ test("extend transformation graph", () => {
     isr: {
       id: {
         t: ["uint32-bytes", "bytes-uint32", "uint32-boolean"],
-        k: ["utf8-bytes", "bytes.reverse"]
+        k: ["utf8-bytes", "bytes.reverse", "bytes-uint"]
       },
     },
     sch: ["uint32-bytes", "bytes-base16"],
@@ -113,7 +108,7 @@ test("extend transformation graph", () => {
     exd: ["uint64-bytes", "bytes-utf8"],
     sbj: {
       id: {
-        t: ["uint32-bytes"],
+        t: ["uint32-bytes", "bytes-uint64"],
         k: ["utf8-bytes", "bytes-base16"]
       },
       alias: ["ascii-bytes", "bytes-uint128"],
@@ -135,10 +130,7 @@ test("extend transformation graph", () => {
     isr_id_t, true,
     `Incorrect preparation of ZKCredential.isr.id.t`
   );
-  a.instance(
-    isr_id_k, Uint8Array,
-    `Incorrect preparation of ZKCredential.isr.id.k`
-  );
+  a.is(isr_id_k, 59602136937009n, `Incorrect preparation of ZKCredential.isr.id.k`);
   a.type(
     sch, "string",
     `Incorrect preparation of ZKCredential.sch`
@@ -151,10 +143,7 @@ test("extend transformation graph", () => {
     exd, "string",
     `Incorrect preparation of ZKCredential.exd`
   );
-  a.instance(
-    sbj_id_t, Uint8Array,
-    `Incorrect preparation of ZKCredential.sbj.id.t`
-  );
+  a.is(sbj_id_t, 2n, `Incorrect preparation of ZKCredential.sbj.id.t`);
   a.type(
     sbj_id_k, "string",
     `Incorrect preparation of ZKCredential.sbj.id.k`
@@ -237,7 +226,79 @@ test("spread some properties", () => {
   a.is(sbj_id_t, 1n, `Incorrect preparation of ZKCredential.sbj.id.t`);
   a.is(sbj_id_k, "123456", `Incorrect preparation of ZKCredential.sbj.id.k`);
   a.is(text_hello, "hello", `Incorrect preparation of ZKCredential.sbj.text[0]`);
-  a.is(text_world, "world", `Incorrect preparation of ZKCredential.sbj.text[1]`)
+  a.is(text_world, "world", `Incorrect preparation of ZKCredential.sbj.text[1]`);
+});
+
+test("all to bytes", () => {
+  const cred: ZkCred = {
+    isr: { id: { t: 0, k: "FFFF" } },
+    sch: 2,
+    isd: 1696781360,
+    exd: 0,
+    sbj: {
+      id: {
+        // @ts-ignore
+        t: 1,
+        k: "FF"
+      }
+    }
+  };
+  const transSchema: TransCredSchema = {
+    isr: {
+      id: {
+        t: ["uint32-bytes"],
+        k: ["base16-bytes", "bytes-uint128", "uint128-bytes"],
+      }
+    },
+    sch: ["uint16-bytes"],
+    isd: ["uint64-bytes"],
+    exd: ["uint64-bytes"],
+    sbj: {
+      id: {
+        t: ["uint32-bytes"],
+        k: ["base16-bytes", "bytes-uint128", "uint128-bytes"]
+      },
+    }
+  };
+  const preparator = new Preparator();
+  const prepared = preparator.prepare<number[]>(cred, transSchema);
+  a.is(prepared.length, 58, `Prepared bytes length is not correct`);
+  const isr_id_t = prepared.slice(0, 4);
+  const isr_id_k = prepared.slice(4, 4 + 16);
+  const sch = prepared.slice(20, 20 + 2);
+  const isd = prepared.slice(22, 22 + 8);
+  const exd = prepared.slice(30, 30 + 8);
+  const sbj_id_t = prepared.slice(38, 38 + 4);
+  const sbj_id_k = prepared.slice(42, 58);
+  a.equal(isr_id_t, [0, 0, 0, 0], `Issuer id type is not matched`);
+  a.equal(isr_id_k,
+    [
+      0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0,
+      0, 0, 255, 255
+    ], "Issuer id key is not matched"
+  );
+  a.equal(sch, [0, 2], "Issuer schema not matched");
+  a.equal(
+    isd,
+    [
+      0, 0, 0, 0,
+      101, 34, 212, 48
+    ], "Issuance date is not matched");
+  a.equal(
+    exd, new Array(8).fill(0),
+    "Expiration date is not matched"
+  );
+  a.equal(sbj_id_t, [0, 0, 0, 1], "Subject id type is not matched");
+  a.equal(
+    sbj_id_k,
+    [
+      0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0,
+      0, 0, 0, 255
+    ],
+    "Subject id key is not matched"
+  );
 });
 
 test.run();
