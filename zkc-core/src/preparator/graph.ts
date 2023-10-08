@@ -69,6 +69,10 @@ const BASE_NODES: Record<string, GraphNode> = {
     name: "base16",
     isType: isStr("base16upper")
   },
+  hex: {
+    name: "hex",
+    isType: isStr("hex")
+  },
   base64url: {
     name: "base64url",
     isType: isStr("base64url")
@@ -244,18 +248,6 @@ function bytesToUint(): Record<string, GraphLink> {
   }, {} as Record<string, GraphLink>);
 }
 
-// function uintsToBytes(): Record<string, GraphLink> {
-//   return uints.reduce((prev, name) => {
-//     prev[`${name}-bytes`] = {
-//       inputType: name,
-//       outputType: "bytes",
-//       name: `${name}-bytes`,
-//       transform: numToBytes
-//     };
-//     return prev;
-//   }, {} as Record<string, GraphLink>);
-// }
-
 const intsMap: Record<string, { num: number, bnum: bigint }> = {
   int16: { num: 16, bnum: 16n },
   int32: { num: 32, bnum: 32n },
@@ -311,7 +303,8 @@ const encAliases: Record<string, u8a.SupportedEncodings> = {
   "base32": "base32upper",
   "base16": "base16upper",
   "base58": "base58btc",
-  "ascii": "ascii"
+  "ascii": "ascii",
+  "hex": "hex"
 };
 
 function bytesToString(): Record<string, GraphLink> {

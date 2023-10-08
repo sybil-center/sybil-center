@@ -42,6 +42,11 @@ const encodings: {
     chars: "0123456789ABCDEF"
   },
   {
+    name: "hex",
+    alias: "hex",
+    chars: "0123456789ABCDEF".toLowerCase(),
+  },
+  {
     name: "base58",
     alias: "base58btc",
     chars: "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -384,6 +389,13 @@ test("Bytes from hex to number", () => {
   );
   const number = graph.transform<bigint>(bytes, ["bytes-uint64"]);
   a.is(number, 65281n, "bytes-uint64 incorrect result");
+});
+
+test("compare bytes from uint and from hex", () => {
+  const graph = new TransformationGraph();
+  const fromHex = graph.transform("0100", ["hex-bytes"]);
+  const fromUint = graph.transform(256, ["uint16-bytes"]);
+  a.equal(fromHex, fromUint, "from hex and from uint bytes is not matched");
 });
 
 test.run();
