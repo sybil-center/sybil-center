@@ -398,4 +398,16 @@ test("compare bytes from uint and from hex", () => {
   a.equal(fromHex, fromUint, "from hex and from uint bytes is not matched");
 });
 
+test("uints modular division", () => {
+  const bigNumber = 2n ** 512n + 1n;
+  const graph = new TransformationGraph();
+  for (const uint of Object.keys(uintMap)) {
+    if (uint === "uint") continue;
+    const fromBigNum = graph.transform(bigNumber, [`mod.${uint}`]);
+    a.is(fromBigNum, 1n, `mod.${uint} graph link invalid work with ${bigNumber}`);
+    const fromLittleNum = graph.transform(10, [`mod.${uint}`]);
+    a.is(fromLittleNum, 10n, `mod.${uint} graph link invalid work with ${10}`);
+  }
+});
+
 test.run();

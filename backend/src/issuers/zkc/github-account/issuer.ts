@@ -131,6 +131,7 @@ export class ZkcGitHubAccountIssuer
     }
     const token = await this.githubService.getAccessToken(code);
     const { id: githubId } = await this.githubService.getUser(token);
+    // @ts-ignore
     const transSchema = ZKC.transSchemas[subjectId.t][this.providedSchema];
     if (!transSchema) {
       throw new ClientError(`Subject ZKC id with type ${subjectId.t} is not supported`);

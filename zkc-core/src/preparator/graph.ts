@@ -355,6 +355,32 @@ function stringsToBoolean(): Record<string, GraphLink> {
   }, {} as Record<string, GraphLink>);
 }
 
+function uintsMod(): Record<string, GraphLink> {
+  const uintsMods: Record<typeof uints[number], bigint | null> = {
+    uint: null,
+    uint16: 2n ** 16n,
+    uint32: 2n ** 32n,
+    uint64: 2n ** 64n,
+    uint128: 2n ** 128n,
+    uint256: 2n ** 256n
+  };
+  const result: Record<string, GraphLink> = {};
+  for (const name in uintsMods) {
+    const divisor = (uintsMods as any)[name];
+    if (!divisor) continue;
+    result[`mod.${name}`] = {
+      inputType: "uint",
+      outputType: name,
+      name: `mod.${name}`,
+      transform: (value: number | bigint): bigint => {
+        const target = typeof value === "number" ? BigInt(value) : value;
+        return target % divisor;
+      }
+    };
+  }
+  return result;
+}
+
 function booleanToStrings(): Record<string, GraphLink> {
   return [
     "utf8",
@@ -477,6 +503,7 @@ const BASE_LINKS: Record<string, GraphLink> = {
   ...numbersToStrings(),
   ...stringsToFloat(),
   ...floatToStrings(),
+  ...uintsMod(),
   "bytes-float32": {
     inputType: "bytes",
     outputType: "float32",

@@ -68,6 +68,9 @@ export class Config {
   /** KYC session ttl in MS */
   readonly kycSessionTtl: number;
 
+  /** secp256k1 private key as hex string */
+  readonly secp256k1PrivateKey: string;
+
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -113,6 +116,7 @@ export class Config {
     this.personaHookSecret = getStrOrThrow("PERSONA_HOOK_SECRET");
 
     this.kycSessionTtl = getNumOrThrow("KYC_SESSION_TTL");
+    this.secp256k1PrivateKey = getStrOrThrow("SECP256K1_PRIVATE_KEY");
   }
 }
 

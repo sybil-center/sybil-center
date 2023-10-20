@@ -3,6 +3,7 @@ import { MinaVerifier } from "./mina-verifier.service.js";
 import { ClientError } from "../../../backbone/errors.js";
 import { ZkcChallengeReq, ZkcIdTypeAlias } from "../../types/zkc.issuer.js";
 import { ZKC } from "../../../util/zk-credentials/index.js";
+import { EthVerifier } from "./eth-verifier.service.js";
 
 /** Manage Signature Verifiers */
 export interface IVerifierManager {
@@ -30,9 +31,12 @@ export class VerifierManager implements IVerifierManager {
 
   constructor() {
     const minaVerifier = new MinaVerifier();
+    const ethVerifier = new EthVerifier();
     this.verifiers = {
       "mina": minaVerifier,
-      0: minaVerifier
+      0: minaVerifier,
+      "eth": ethVerifier,
+      1: ethVerifier
     };
   }
 
