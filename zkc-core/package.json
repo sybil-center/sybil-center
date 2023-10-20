@@ -1,6 +1,6 @@
 {
   "name": "@sybil-center/zkc-core",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Cover raw HTTP requests to issue Zero-Knowledge Credentials & ZKC preparation implementation",
   "license": "Apache-2.0",
   "repository": {
