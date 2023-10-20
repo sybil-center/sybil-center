@@ -139,7 +139,7 @@ export class ZkcPassportIssuer
         }
       });
     }
-    const zkCred = this.signerManager.signZkCred<ZkPassportCred>(subjectId.t, {
+    const zkCred = await this.signerManager.signZkCred<ZkPassportCred>(subjectId.t, {
       sch: this.providedSchema,
       isd: new Date().getTime(),
       exd: expirationDate ? expirationDate : 0,

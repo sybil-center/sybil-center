@@ -85,7 +85,6 @@ test("Correct sign zk credential", async () => {
     },
     ...zkCredProps
   }, transSchema);
-  console.log(zkCredProved);
   const hash = sha256(new Uint8Array(prepared));
   const sign = (await secp256k1.sign(hash, issuerPrivateKey)).toCompactRawBytes();
   const signHex = u8a.toString(sign, "hex");

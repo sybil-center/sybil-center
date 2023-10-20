@@ -32,8 +32,8 @@ export class NoirECDSA implements IZkcSigner {
     const sbjId: ZkcId = {
       t: props.sbj.id.t,
       k: props.sbj.id.k.startsWith("0x")
-        ? props.sbj.id.k.replace("0x", "")
-        : props.sbj.id.k
+        ? props.sbj.id.k.replace("0x", "").toLowerCase()
+        : props.sbj.id.k.toLowerCase()
     };
     const zkCred: ZkCred = {
       isr: { id: this.identifier },
