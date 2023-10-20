@@ -92,6 +92,72 @@ class MinaSchemas implements Record<ZkcSchemaNames & ZkcSchemaNums, TransCredSch
   };
 }
 
+class Secp256k1Schemas implements Record<ZkcSchemaNames & ZkcSchemaNums, TransCredSchema> {
+  get GitHubAccount() {
+    return {
+      isr: {
+        id: {
+          t: ["uint16-bytes"],
+          k: ["hex-bytes",]
+        }
+      },
+      sch: ["uint16-bytes"],
+      isd: ["uint64-bytes"],
+      exd: ["uint64-bytes"],
+      sbj: {
+        id: {
+          t: ["uint16-bytes"],
+          k: ["hex-bytes"]
+        },
+        git: { id: ["uint256-bytes"] }
+      }
+    };
+  }
+  get Passport() {
+    return {
+      isr: {
+        id: {
+          t: ["uint16-bytes"],
+          k: ["hex-bytes"], // secp256k1 public key length is 64 bytes
+        }
+      },
+      sch: ["uint16-bytes"],
+      isd: ["uint64-bytes"],
+      exd: ["uint64-bytes"],
+      sbj: {
+        id: {
+          t: ["uint16-bytes"],
+          k: ["hex-bytes"] // ethereum address length is 20 bytes
+        },
+        bd: ["uint64-bytes"],
+        cc: ["uint16-bytes"],
+        fn: [
+          "utf8-bytes",
+          "bytes-uint",
+          "mod.uint128",
+          "uint128-bytes"
+        ],
+        ln: [
+          "utf8-bytes",
+          "bytes-uint",
+          "mod.uint128",
+          "uint128-bytes"
+        ],
+        doc: {
+          t: ["uint16-bytes"],
+          id: ["utf8-bytes", "bytes-uint", "mod.uint256", "uint256-bytes"]
+        }
+      }
+    };
+  };
+  get 0() {
+    return this[(Schema.toName(0))];
+  }
+  get 1() {
+    return this[(Schema.toName(1))];
+  };
+}
+
 
 class TransSchemas
   implements Record<
@@ -99,8 +165,11 @@ class TransSchemas
     Record<ZkcSchemaNames & ZkcSchemaNums, TransCredSchema>
   > {
   readonly #MinaSchemas = new MinaSchemas();
+  readonly #Secp256k1Schemas = new Secp256k1Schemas()
   get mina() { return this.#MinaSchemas; }
   get 0() { return this.#MinaSchemas; }
+  get 1() { return this.#Secp256k1Schemas}
+  get eth() { return this.#Secp256k1Schemas}
 }
 
 const transSchemas = new TransSchemas();

@@ -6,7 +6,7 @@ import {
   ZkcSchemaNames,
   ZkcSchemaNums
 } from "../../base/types/zkc.credential.js";
-import { ZkcIdTypeAlias, ZKC_ID_TYPE_ALIASES } from "../../base/types/zkc.issuer.js";
+import { ZKC_ID_TYPE_ALIASES, ZkcIdTypeAlias } from "../../base/types/zkc.issuer.js";
 
 const SCHEMA_STR_TO_NUM: Record<ZkcSchemaNames, ZkcSchemaNums> = {
   GitHubAccount: 1,
@@ -50,13 +50,15 @@ const Schema = {
 const IDALIAS_TO_IDTYPE: Record<ZkcIdTypeAlias, ZkcId["t"]> = {
   0: 0,
   "mina": 0,
+  1: 1,
+  "eth": 1
 };
 
 const IdType = {
   isAlias: (aliasType: number | string): aliasType is ZkcIdTypeAlias => {
     return ZKC_ID_TYPE_ALIASES
       // @ts-ignore
-      .includes(aliasType)
+      .includes(aliasType);
   },
   fromAlias: (aliasType: number | string): ZkcIdType => {
     const isAliasType = IdType.isAlias(aliasType);

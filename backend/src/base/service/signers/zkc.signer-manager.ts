@@ -7,6 +7,7 @@ import { ZkcIdTypeAlias } from "../../types/zkc.issuer.js";
 import { MinaSigner } from "./mina-signer.service.js";
 import { ClientError } from "../../../backbone/errors.js";
 import { ZKC } from "../../../util/zk-credentials/index.js";
+import { NoirECDSA } from "./noir-ecdsa.js";
 
 export interface IZkcSignerManager {
   signer(alias: string): IZkcSigner;
@@ -28,9 +29,12 @@ export class ZkcSignerManager implements IZkcSignerManager {
     config: Config
   ) {
     const minaSigner = new MinaSigner(config);
+    const noirSigner = new NoirECDSA(config)
     this.signers = {
       "mina": minaSigner,
-      "0": minaSigner
+      "0": minaSigner,
+      "1": noirSigner,
+      "eth": noirSigner
     };
   }
 

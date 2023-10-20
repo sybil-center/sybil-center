@@ -125,6 +125,7 @@ export class ZkcPassportIssuer
     }, options);
     if (!verified) throw new ClientError("Signature is not verified");
     const { user } = webhookResult;
+    // @ts-ignore
     const transSchema = ZKC.transSchemas[subjectId.t][this.providedSchema];
     if (!transSchema) {
       throw new ClientError(`Subject ZKC id with type ${subjectId.t} is not supported`);

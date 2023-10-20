@@ -1,4 +1,4 @@
-export const ZKC_ID_TYPES = [0] as const;
+export const ZKC_ID_TYPES = [0, 1, 2] as const;
 export type ZkcIdType = typeof ZKC_ID_TYPES[number]
 
 export type ZkcId = {

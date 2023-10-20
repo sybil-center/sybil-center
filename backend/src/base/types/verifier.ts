@@ -8,5 +8,5 @@ export interface IVerifier<
   TOpt extends {} = {}
 > {
   /** Verify signature */
-  verify(signEntry: SignEntry, opt?:TOpt): Promise<boolean>;
+  verify(signEntry: SignEntry, options?:TOpt): Promise<boolean>;
 }
