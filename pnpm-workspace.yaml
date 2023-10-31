@@ -3,4 +3,5 @@ packages:
   - frontend
   - sybil
   - zkc-core
+  - sybil.zkc-core
   - zkc-o1js

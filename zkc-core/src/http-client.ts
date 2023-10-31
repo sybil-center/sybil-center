@@ -1,81 +1,74 @@
-import {
-  Raw,
-  ZkcCanIssueReq,
-  ZkcCanIssueResp,
-  ZkcChallenge,
-  ZkcChallengeReq,
-  ZkcIssueReq
-} from "./type/index.js";
-import { Proved, ZkCred, ZkcSchemaNames, ZkcSchemaNums } from "./type/index.js";
-import { zkcUtil } from "./util/index.js";
-
-const DEFAULT_DOMAIN = new URL("https://api.sybil.center");
+import { CanIssueReq, CanIssueResp, Challenge, ChallengeReq, IssueReq, ZkCred } from "./types/index.js";
 
 export class HttpClient {
 
-  constructor(readonly issuerDomain = DEFAULT_DOMAIN) {}
+  constructor(private readonly issuerDomain: URL) {}
 
-  async challenge<
-    TResp extends ZkcChallenge = ZkcChallenge,
-    TParams extends Raw<ZkcChallengeReq> = Raw<ZkcChallengeReq>
-  >(
-    schema: ZkcSchemaNames | ZkcSchemaNums,
-    params: TParams
-  ): Promise<TResp> {
-    const schemaName = typeof schema === "number"
-      ? zkcUtil.schema.toName(schema)
-      : schema;
-    const endpoint = new URL(zkcUtil.EPs.v1(schemaName).challenge, this.issuerDomain);
+  async getChallenge<
+    TOut = Challenge,
+    TIn extends ChallengeReq = ChallengeReq
+  >(args: {
+    path: string;
+    challengeReq: TIn;
+    headers?: Record<string, any>;
+    method?: string
+  }): Promise<TOut> {
+    const endpoint = new URL(args.path, this.issuerDomain);
     const resp = await fetch(endpoint, {
-      method: "POST",
+      method: args.method ? args.method : "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        ...args.headers
       },
-      body: JSON.stringify(params)
+      body: JSON.stringify(args.challengeReq)
     });
     const body = await resp.json();
     if (resp.ok) return body;
-    throw new Error(body.message);
+    throw new Error(body);
   }
 
   async canIssue<
-    TResp extends ZkcCanIssueResp,
-    TReq extends ZkcCanIssueReq,
-  >(
-    schema: ZkcSchemaNames | ZkcSchemaNums,
-    params: TReq
-  ): Promise<TResp> {
-    const schemaName = typeof schema === "number"
-      ? zkcUtil.schema.toName(schema)
-      : schema;
-    const endpoint = new URL(zkcUtil.EPs.v1(schemaName).canIssue, this.issuerDomain);
-    endpoint.searchParams.set("sessionId", params.sessionId);
-    const resp = await fetch(endpoint, { method: "GET", });
-    const body = await resp.json();
-    if (resp.ok) return body;
-    throw new Error(body.message);
-  }
-
-  async issue<
-    TCred extends ZkCred = ZkCred,
-    TReq extends ZkcIssueReq = ZkcIssueReq
-  >(
-    schema: ZkcSchemaNames | ZkcSchemaNums,
-    params: TReq
-  ): Promise<Proved<TCred>> {
-    const schemaName = typeof schema === "number"
-      ? zkcUtil.schema.toName(schema)
-      : schema;
-    const endpoint = new URL(zkcUtil.EPs.v1(schemaName).issue, this.issuerDomain);
+    TOut = CanIssueResp,
+    TIn extends CanIssueReq = CanIssueReq
+  >(args: {
+    path: string;
+    canIssueReq: TIn;
+    headers?: Record<string, any>;
+    method?: string;
+  }): Promise<TOut> {
+    const endpoint = new URL(args.path, this.issuerDomain);
+    endpoint.searchParams.set("sessionId", args.canIssueReq.sessionId);
     const resp = await fetch(endpoint, {
-      method: "POST",
+      method: args.method ? args.method : "GET",
       headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(params)
+        ...args.headers
+      }
     });
     const body = await resp.json();
     if (resp.ok) return body;
-    throw new Error(body.message);
+    throw new Error(body);
+  }
+
+  async issue<
+    TOut = ZkCred,
+    TIn extends IssueReq = IssueReq
+  >(args: {
+    path: string;
+    issueReq: TIn;
+    headers?: Record<string, any>;
+    method?: string;
+  }): Promise<TOut> {
+    const endpoint = new URL(args.path, this.issuerDomain);
+    const resp = await fetch(endpoint, {
+      method: args.method ? args.method : "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...args.headers
+      },
+      body: JSON.stringify(args.issueReq)
+    });
+    const body = await resp.json();
+    if (resp.ok) return body;
+    throw new Error(body);
   }
 }
