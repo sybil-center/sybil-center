@@ -36,10 +36,10 @@ export interface IssuerTypes {
   Options: ChallengeReq["options"];
 }
 
-export interface Issuer<T extends IssuerTypes = IssuerTypes> {
+export interface IZkcIssuer<T extends IssuerTypes = IssuerTypes> {
   issueCred(args: {
     proof: WalletProof;
-    options: T["Options"];
+    options?: T["Options"];
   }): Promise<T["Cred"]>;
   getChallenge(challengeReq: T["ChallengeReq"]): Promise<T["Challenge"]>;
   canIssue(entry: T["CanIssueReq"]): Promise<T["CanIssueResp"]>;

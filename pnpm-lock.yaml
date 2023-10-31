@@ -270,15 +270,9 @@ importers:
 
   sybil.zkc-core:
     dependencies:
-      ieee754:
-        specifier: ^1.2.1
-        version: 1.2.1
-      sort-keys:
-        specifier: ^5.0.0
-        version: 5.0.0
-      uint8arrays:
-        specifier: ^4.0.6
-        version: 4.0.6
+      zkc-core:
+        specifier: workspace:*
+        version: link:../zkc-core
     devDependencies:
       prettier:
         specifier: ^2.8.4

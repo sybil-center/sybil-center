@@ -1,9 +1,14 @@
-import { IssuerTypes, IZkcIssuer, Option, ZkcChallenge, ZkcChallengeReq } from "../type/index.js";
-import { Proved, ZkCred, ZkcSchemaNums } from "../type/index.js";
-import { HttpClient } from "../http-client.js";
-import { WalletProof } from "../type/index.js";
-import { popupFeatures } from "../util/view.util.js";
-import { repeatUntil } from "../util/repeat.util.js";
+import {
+  type Challenge,
+  type ChallengeReq,
+  type HttpClient,
+  type IssuerTypes,
+  type IZkcIssuer,
+  type WalletProof,
+  type ZkCred
+} from "zkc-core";
+import util, { popupFeatures } from "../util/index.js";
+import { toSchemaName } from "../schemas.js";
 
 export const DOC_TYPES = [
   1, // Passport
@@ -26,19 +31,23 @@ export type PassportCred = ZkCred<{
   }
 }>
 
-export interface PassportChallengeReq extends ZkcChallengeReq {}
-
-export interface PassportChallenge extends ZkcChallenge {
+export interface PassportChallenge extends Challenge {
   verifyURL: string;
 }
 
-export interface PassportOptions extends Option<PassportChallengeReq> {
-  windowFeature?: string;
+export interface PassportChallengeReq extends ChallengeReq {
+  options: {
+    expirationDate?: number;
+    windowFeature?: string;
+  };
 }
 
+export type PassportOptions = PassportChallengeReq["options"]
+
 export interface PassportIT extends IssuerTypes {
+  ChallengeReq: PassportChallengeReq;
   Challenge: PassportChallenge;
-  Cred: Proved<PassportCred>;
+  Cred: PassportCred;
   Options: PassportOptions;
 }
 
@@ -48,55 +57,68 @@ export class PassportIssuer implements IZkcIssuer<PassportIT> {
     private readonly client: HttpClient
   ) {}
 
-  get providedSchema(): ZkcSchemaNums { return 0;};
+  get providedSchema() { return 0;};
 
   getChallenge(
     challengeReq: PassportIT["ChallengeReq"]
   ): Promise<PassportIT["Challenge"]> {
-    return this.client.challenge(this.providedSchema, challengeReq);
+    return this.client.getChallenge({
+      path: util.EPs.v1(toSchemaName(this.providedSchema)).challenge,
+      challengeReq,
+    });
   }
 
   canIssue(
     entry: PassportIT["CanIssueReq"]
   ): Promise<PassportIT["CanIssueResp"]> {
-    return this.client.canIssue(this.providedSchema, entry);
+    return this.client.canIssue({
+      path: util.EPs.v1(toSchemaName(this.providedSchema)).canIssue,
+      canIssueReq: entry
+    });
   }
 
   issue(issueReq: PassportIT["IssueReq"]): Promise<PassportIT["Cred"]> {
-    return this.client.issue(this.providedSchema, issueReq);
+    return this.client.issue({
+      path: util.EPs.v1(toSchemaName(this.providedSchema)).issue,
+      issueReq: issueReq
+    });
   }
 
-  async issueCred({
-      subjectId,
-      signFn
-    }: WalletProof,
-    options?: PassportIT["Options"]
-  ): Promise<PassportIT["Cred"]> {
-    const challenge = await this.getChallenge(options
-      ? { ...options, subjectId: subjectId }
-      : { subjectId: subjectId }
-    );
+  async issueCred(args: {
+    proof: WalletProof;
+    options?: PassportIT["Options"];
+  }): Promise<PassportIT["Cred"]> {
+    const {
+      proof: {
+        subjectId,
+        signFn
+      }, options
+    } = args;
+    const challengeReq: PassportIT["ChallengeReq"] = {
+      subjectId: subjectId,
+      options: {
+        expirationDate: options?.expirationDate
+      }
+    };
+    const challenge = await this.getChallenge(challengeReq);
     const popup = window.open(
       challenge.verifyURL,
       "_blank",
-      options ? options.windowFeature : popupFeatures()
+      options?.windowFeature ? options.windowFeature : popupFeatures()
     );
     if (!popup) throw new Error(`Can not open popup window to authenticate in Discord`);
-    const result = await repeatUntil<boolean>(
+    const result = await util.repeat<boolean>(
       (r) => (r instanceof Error) ? true : r,
       1000,
       async () => {
-        return (await this.canIssue({
-          sessionId: challenge.sessionId
-        })).canIssue;
+        return (await this.canIssue({ sessionId: challenge.sessionId })).canIssue;
       }
     );
     if (result instanceof Error) throw result;
     const signature = await signFn({ message: challenge.message });
     return this.issue({
       sessionId: challenge.sessionId,
-      signature: signature,
+      signature: signature
     });
   }
-
 }

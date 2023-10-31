@@ -1,6 +1,7 @@
 import { PassportIssuer, PassportIT } from "./issuer/index.js";
-import { HttpClient } from "./http-client.js";
-import { WalletProof } from "./type/index.js";
+import { HttpClient, WalletProof } from "zkc-core";
+
+export * from "zkc-core";
 
 type ZkCredKinds = {
   passport: {
@@ -14,12 +15,14 @@ type Issuers = {
   [K in keyof ZkCredKinds]: ZkCredKinds[K]["Issuer"]
 }
 
+const DEFAULT_DOMAIN = new URL(`https://api.sybil.center`);
+
 export class ZkSybil {
   readonly issuers: Issuers;
 
   constructor(
     readonly issuerDomain?: URL,
-    httpClient = new HttpClient(issuerDomain)
+    httpClient = new HttpClient(issuerDomain ? issuerDomain : DEFAULT_DOMAIN)
   ) {
     this.issuers = {
       passport: new PassportIssuer(httpClient)
@@ -41,7 +44,7 @@ export class ZkSybil {
     walletProof: WalletProof,
     options: ZkCredKinds[TName]["Options"]
   ): Promise<ZkCredKinds[TName]["Kind"]> {
-    return this.issuer(name).issueCred(walletProof, options);
+    return this.issuer(name).issueCred({ proof: walletProof, options });
   }
 
 }

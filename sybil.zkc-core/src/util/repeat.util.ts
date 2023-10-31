@@ -1,4 +1,4 @@
-export function repeatUntil<T>(
+export function repeatUtil<T>(
   shouldStop: (t: T | Error) => boolean,
   betweenMS: number,
   fn: () => Promise<T>

@@ -31,9 +31,7 @@
     "test": "npx tsm ./node_modules/uvu/bin.js ./test"
   },
   "dependencies": {
-    "ieee754": "^1.2.1",
-    "sort-keys": "^5.0.0",
-    "uint8arrays": "^4.0.6"
+    "zkc-core": "workspace:*"
   },
   "devDependencies": {
     "prettier": "^2.8.4",

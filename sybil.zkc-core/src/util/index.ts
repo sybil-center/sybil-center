@@ -1,16 +1,13 @@
+import { repeatUtil } from "./repeat.util.js";
 import { EPs } from "./endpoints.util.js";
-import { IdType, Schema } from "./type-adapter.util.js";
-import { Proved, ZkCred } from "../type/index.js";
-import { CredExtractor } from "./extractor.util.js";
+import { popupFeatures } from "./view.util.js";
 
+export * from "./view.util.js";
 
-const zkcUtil = {
+const util = {
+  repeat: repeatUtil,
   EPs: EPs,
-  schema: Schema,
-  idType: IdType,
-  from<TCred extends Proved<ZkCred> = Proved<ZkCred>>(cred: TCred) {
-    return new CredExtractor<TCred>(cred);
-  }
+  popupFeatures
 };
 
-export { zkcUtil };
+export default util;

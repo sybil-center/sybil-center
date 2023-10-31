@@ -1,15 +1,8 @@
-import { ZkcSchemaNames } from "../type/index.js";
-
-function schemaToURL(name: ZkcSchemaNames) {
-  return name
-    .toString()
-    .replace(/([a-z0–9])([A-Z])/g, "$1-$2")
-    .toLowerCase();
-}
+import { SchemaName } from "../schemas.js";
 
 const EPs = {
-  v1: (schemaName: ZkcSchemaNames) => {
-    const baseURL = `/api/v1/zkc/${schemaToURL(schemaName)}`;
+  v1: (schemaName: SchemaName) => {
+    const baseURL = `/api/v1/zkc/${schemaName}`;
     return {
       challenge: `${baseURL}/challenge`,
       canIssue: `${baseURL}/can-issue`,
