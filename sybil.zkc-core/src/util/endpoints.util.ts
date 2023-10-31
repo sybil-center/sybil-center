@@ -1,4 +1,4 @@
-import { SchemaName } from "../schemas.js";
+import { SchemaName } from "../type/schemas.js";
 
 const EPs = {
   v1: (schemaName: SchemaName) => {

@@ -5,10 +5,10 @@ import {
   type IssuerTypes,
   type IZkcIssuer,
   type WalletProof,
-  type ZkCred
 } from "zkc-core";
 import util, { popupFeatures } from "../util/index.js";
-import { toSchemaName } from "../schemas.js";
+import { toSchemaName } from "../type/schemas.js";
+import { type SybilCred } from "../type/cred.js";
 
 export const DOC_TYPES = [
   1, // Passport
@@ -20,7 +20,7 @@ export const DOC_TYPES = [
 
 export type DocTypes = typeof DOC_TYPES[number]
 
-export type PassportCred = ZkCred<{
+export type PassportCred = SybilCred<{
   fn: string;
   ln: string;
   bd: number;
