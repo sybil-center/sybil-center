@@ -17,7 +17,7 @@ export type ZkCred<
   }
 }
 
-export type TransSchema = {
+export type SignSchema = {
   sign: string[];
   isr: {
     id: {
@@ -25,6 +25,9 @@ export type TransSchema = {
       k: string[];
     }
   };
+}
+
+export type AttributeSchema = {
   sch: string[];
   isd: string[];
   exd: string[];
@@ -38,12 +41,15 @@ export type TransSchema = {
 
 export type Proof = {
   id?: string;
-  issuer: {
-    id: ZkcID;
-  }
-  signature: string;
   type: string;
-  schemas: {
-    default: TransSchema;
-  } & Record<string, TransSchema | undefined>
+  signature: {
+    isr: { id: ZkcID; };
+    sign: string;
+  }
+  signatureSchemas: {
+    default: SignSchema;
+  } & Record<string, SignSchema | undefined>;
+  attributeSchemas: {
+    default: AttributeSchema;
+  } & Record<string, AttributeSchema | undefined>;
 }

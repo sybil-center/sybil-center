@@ -9,10 +9,24 @@ const zkCred: ZkCred = {
   proofs: [
     {
       id: "id:1",
-      signature: "0",
-      issuer: { id: { t: 1, k: "2" } },
+      signature: {
+        sign: "0",
+        isr: { id: { t: 1, k: "2" } }
+      },
+      signatureSchemas: {
+        default: {
+          isr: {
+            id: { t: ["uint16-bytes"], k: ["utf8-bytes"] }
+          },
+          sign: ["utf8-bytes"],
+        },
+        pre: {
+          isr: { id: { t: ["uint16"], k: ["utf8"] } },
+          sign: ["utf8"]
+        }
+      },
       type: "type:1",
-      schemas: {
+      attributeSchemas: {
         default: {
           sign: ["utf8-bytes"],
           isr: {
@@ -55,10 +69,18 @@ const zkCred: ZkCred = {
     },
     {
       id: "id:2",
-      signature: "1",
-      issuer: { id: { t: 2, k: "3" } },
       type: "type:2",
-      schemas: {
+      signature: {
+        isr: { id: { t: 2, k: "3" } },
+        sign: "1"
+      },
+      signatureSchemas: {
+        default: {
+          isr: { id: { t: ["uint16"], k: ["utf8"] } },
+          sign: ["utf8"],
+        }
+      },
+      attributeSchemas: {
         default: {
           sign: ["utf8-uint"],
           isr: {
@@ -86,139 +108,134 @@ const zkCred: ZkCred = {
     isd: 4,
     exd: 5,
     sbj: {
+      hello: "8",
       id: {
         t: 6,
         k: "7"
       },
-      hello: "8"
     }
   }
 };
 
-test("preparator.prepare", () => {
+test("Preparator.prepareSign by default selector", () => {
   const preparator = new Preparator();
-  const preapared = preparator.prepare<[
-    bigint,
-    string,
-    bigint,
-    bigint,
-    bigint,
-    string,
-    string,
-    bigint
-  ]>({
-    issuer: {
-      id: { t: 1, k: "2" }
-    },
-    signature: "1",
-    attributes: {
-      exd: 5,
-      isd: 4,
-      sch: 3,
-      sbj: {
-        id: { t: 6, k: "7" },
-        doc: "hello"
-      },
-    },
-    transSchema: {
-      sign: ["base58-bytes", "bytes-uint16"],
-      isd: ["uint16-bytes", "bytes-uint128"],
-      exd: ["uint16-bytes", "bytes-hex"],
-      sch: ["uint16-bytes", "bytes-base58", "base58-bytes", "bytes-uint"],
-      sbj: {
-        id: {
-          k: ["utf8-uint16"],
-          t: ["uint16-bytes", "bytes-utf8"],
-        },
-        doc: ["utf8-bytes", "bytes-uint"]
-      },
-      isr: {
-        id: {
-          t: ["uint-bytes", "bytes-uint", "uint-utf8"],
-          k: ["utf8-uint32"]
-        }
-      },
-    }
+  const prepared = preparator.prepareSign(zkCred);
+  prepared.forEach((it) => a.is(typeof it === "number", true));
+});
+
+test("Preparator.prepareSign select by index", () => {
+  const preparator = new Preparator();
+  const prepared = preparator.prepareSign(zkCred, {
+    proof: { index: 1 }
   });
-  a.equal(preapared, [0n, "1", 2n, 3n, 4n, "0005", "\u0000\u0006", 7n, 448378203247n]);
+  a.equal(prepared, ["1", 2n, "3"]);
 });
 
-test("preparator.prepareCred default", () => {
+test("Preparator.prepareSign select by proofType", () => {
   const preparator = new Preparator();
-  const prepared = preparator.prepareCred(zkCred);
-  prepared.forEach((it) => {
-    a.is(typeof it === "number", true);
+  const prepared = preparator.prepareSign(zkCred, {
+    proof: { type: "type:2" }
   });
+  a.equal(prepared, ["1", 2n, "3"]);
 });
 
-test("preparator.prepareCred select by index", () => {
+test("Preparator.prepareSign select by issuer id", () => {
   const preparator = new Preparator();
-  const prepared = preparator.prepareCred<bigint[]>(zkCred, { proof: { index: 1 } });
-  a.equal(prepared, [
-    1n, 2n, 3n, 3n, 4n,
-    5n, 6n, 7n, 8n
-  ]);
+  const prepared = preparator.prepareSign(zkCred, {
+    proof: { issuer: { id: { t: 2, k: "3" } } }
+  });
+  a.equal(prepared, ["1", 2n, "3"]);
 });
 
-test("preparator.prepareCred select by id", () => {
+test("Preparator.prepareSIgn select by type & issuer", () => {
   const preparator = new Preparator();
-  const preparedFirst = preparator.prepareCred(zkCred, { proof: { id: "id:1" } });
-  preparedFirst.forEach((it) => a.is(typeof it === "number", true));
-  const preparedSecond = preparator.prepareCred(zkCred, { proof: { id: "id:2" } });
-  a.equal(preparedSecond, [
-    1n, 2n, 3n, 3n, 4n,
-    5n, 6n, 7n, 8n
-  ]);
-});
-
-test("preparator.prepareCred select by type", () => {
-  const preparator = new Preparator();
-  const prepared = preparator.prepareCred(zkCred, { proof: { type: "type:2" } });
-  a.equal(prepared, [
-    1n, 2n, 3n, 3n, 4n,
-    5n, 6n, 7n, 8n
-  ]);
-});
-
-test("preparator.prepareCred select by issuer", () => {
-  const preparator = new Preparator();
-  const prepared = preparator.prepareCred(zkCred, {
+  const prepared = preparator.prepareSign(zkCred, {
     proof: {
-      issuer: {
-        id: { t: 2, k: "3" }
-      }
+      issuer: { id: { t: 2, k: "3" } },
+      type: "type:2"
     }
   });
-  a.equal(prepared, [
-    1n, 2n, 3n, 3n, 4n,
-    5n, 6n, 7n, 8n
-  ]);
+  a.equal(prepared, ["1", 2n, "3"]);
+  a.throws(() => {
+    preparator.prepareSign(zkCred, {
+      proof: {
+        issuer: { id: { t: 2, k: "invalid" } },
+        type: "type:2"
+      }
+    });
+  });
 });
 
-test("preparator.prepareCred select type & schema", () => {
+test("Preparator.prepareSing select by schema name", () => {
   const preparator = new Preparator();
-  const prepared = preparator.prepareCred(zkCred, {
-    proof: { type: "type:1" },
+  const prepared = preparator.prepareSign(zkCred, {
+    proof: { index: 0 },
     schema: "pre"
   });
-  a.equal(prepared, [
-    "0", 1n, "2", 3n,
-    4n, 5n, 6n, "7",
-    "8"
-  ]);
+  a.equal(prepared, ["0", 1n, "2"]);
+  a.throws(() => {
+    preparator.prepareSign(zkCred, {
+      proof: { index: 0 },
+      schema: "invalid"
+    });
+  });
 });
 
-test("preparator.prepareCred select by schema & index", () => {
+test("Preparator.prepareAttributes select by default", () => {
   const preparator = new Preparator();
-  const prepared = preparator.prepareCred(zkCred, {
-    schema: "pre",
-    proof: { index: 0 }
+  const prepared = preparator.prepareAttributes(zkCred);
+  prepared.forEach((it) => a.is(typeof it === "number", true));
+});
+
+test("Preparator.prepareAttributes select by issuer", () => {
+  const preparator = new Preparator();
+  const prepared = preparator.prepareAttributes(zkCred, {
+    proof: {
+      issuer: { id: { t: 2, k: "3" } },
+    }
   });
-  a.equal(prepared, [
-    "0", 1n, "2", 3n,
-    4n, 5n, 6n, "7",
-    "8"
-  ]);
+  a.equal(prepared, [3n, 4n, 5n, 6n, 7n, 8n]);
+  a.throws(() => {
+    preparator.prepareAttributes(zkCred, {
+      proof: {
+        issuer: { id: { t: 2, k: "invalid" } }
+      }
+    });
+  });
+});
+
+test("Preparator.prepareAttributes select by issuer & type", () => {
+  const preparator = new Preparator();
+  const prepared = preparator.prepareAttributes(zkCred, {
+    proof: {
+      issuer: { id: { t: 2, k: "3" } },
+      type: "type:2"
+    }
+  });
+  a.equal(prepared, [3n, 4n, 5n, 6n, 7n, 8n]);
+  a.throws(() => {
+    preparator.prepareAttributes(zkCred, {
+      proof: {
+        issuer: { id: { t: 5, k: "invalid" } },
+        type: "type:2"
+      }
+    });
+  });
+});
+
+test("Preparator.prepareAttributes select by schema name", () => {
+  const preparator = new Preparator();
+  const prepared = preparator.prepareAttributes(zkCred, {
+    proof: { index: 0 },
+    schema: "pre"
+  });
+  a.equal(prepared, [3n, 4n, 5n, 6n, "7", "8"]);
+  a.throws(() => {
+    preparator.prepareAttributes(zkCred, {
+      proof: { index: 0 },
+      schema: "invalid"
+    });
+  });
 });
 
 test.run();

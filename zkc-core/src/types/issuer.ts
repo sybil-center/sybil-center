@@ -37,7 +37,7 @@ export interface IssuerTypes {
 }
 
 export interface IZkcIssuer<T extends IssuerTypes = IssuerTypes> {
-  issueCred(args: {
+  issueCred?(args: {
     proof: WalletProof;
     options?: T["Options"];
   }): Promise<T["Cred"]>;

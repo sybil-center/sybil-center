@@ -1,14 +1,7 @@
-import {
-  type Challenge,
-  type ChallengeReq,
-  type HttpClient,
-  type IssuerTypes,
-  type IZkcIssuer,
-  type WalletProof,
-} from "zkc-core";
+import { type Challenge, type ChallengeReq, type HttpClient, type IssuerTypes, type WalletProof, } from "zkc-core";
 import util, { popupFeatures } from "../util/index.js";
-import { toSchemaName } from "../type/schemas.js";
-import { type SybilCred } from "../type/cred.js";
+import { Schema, toSchemaName } from "../type/schemas.js";
+import { ISybilIssuer, type SybilCred } from "../type/cred.js";
 
 export const DOC_TYPES = [
   1, // Passport
@@ -39,6 +32,7 @@ export interface PassportChallengeReq extends ChallengeReq {
   options: {
     expirationDate?: number;
     windowFeature?: string;
+    proofTypes?: string[];
   };
 }
 
@@ -51,13 +45,13 @@ export interface PassportIT extends IssuerTypes {
   Options: PassportOptions;
 }
 
-export class PassportIssuer implements IZkcIssuer<PassportIT> {
+export class PassportIssuer implements ISybilIssuer<PassportIT> {
 
   constructor(
     private readonly client: HttpClient
   ) {}
 
-  get providedSchema() { return 0;};
+  get providedSchema(): Schema { return 0;};
 
   getChallenge(
     challengeReq: PassportIT["ChallengeReq"]
@@ -97,7 +91,8 @@ export class PassportIssuer implements IZkcIssuer<PassportIT> {
     const challengeReq: PassportIT["ChallengeReq"] = {
       subjectId: subjectId,
       options: {
-        expirationDate: options?.expirationDate
+        expirationDate: options?.expirationDate,
+        proofTypes: options?.proofTypes
       }
     };
     const challenge = await this.getChallenge(challengeReq);

@@ -1,4 +1,4 @@
-import { Field, Poseidon, PublicKey } from "o1js";
+import { Field, Poseidon, PublicKey, Signature } from "o1js";
 import { type GraphLink, type GraphNode, Preparator } from "@sybil-center/zkc-core";
 
 const numTypes = [
@@ -26,6 +26,10 @@ const extendNodes: GraphNode[] = [
     name: "mina:publickey",
     isType: (value: any) => value instanceof PublicKey
   },
+  {
+    name: "mina:signature",
+    isType: (value: any) => value instanceof Signature
+  }
 ];
 
 function numsToField(): GraphLink[] {
@@ -67,6 +71,18 @@ const extendLinks: GraphLink[] = [
     inputType: "mina:publickey",
     outputType: "mina:fields",
     transform: (pk: PublicKey) => pk.toFields()
+  },
+  {
+    name: "mina:base58-signature",
+    inputType: "base58",
+    outputType: "mina:signature",
+    transform: (value: string) => Signature.fromBase58(value)
+  },
+  {
+    name: "mina:signature-fields",
+    inputType: "mina:signature",
+    outputType: "mina:fields",
+    transform: (value: Signature) => value.toFields()
   },
   {
     name: "mina:hash-poseidon",

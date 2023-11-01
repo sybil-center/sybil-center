@@ -1,4 +1,4 @@
-import { WalletProof, WalletProvider, ZkcId } from "@sybil-center/zkc-core";
+import { SybilID, WalletProof, WalletProvider } from "@sybil-center/zkc-core";
 import { Field, Scalar, Signature } from "o1js";
 
 interface SignMessageArgs {
@@ -54,7 +54,7 @@ export class MinaProvider implements WalletProvider {
     throw new Error(`Enable Mina wallet`);
   }
 
-  async getSubjectId(): Promise<ZkcId> {
+  async getSubjectId(): Promise<SybilID> {
     return {
       t: 0,
       k: await this.getAddress()

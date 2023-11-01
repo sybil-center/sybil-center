@@ -1,7 +1,6 @@
 import { PassportIssuer, PassportIT } from "./issuer/index.js";
 import { HttpClient, WalletProof } from "zkc-core";
 
-export * from "zkc-core";
 
 type ZkCredKinds = {
   passport: {

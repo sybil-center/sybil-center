@@ -1,15 +1,11 @@
 import { TransformationGraph } from "./graph.js";
 import sortKeys from "sort-keys";
-import { Proof, TransSchema, ZkcID, ZkCred } from "../types/index.js";
+import { AttributeSchema, Proof, SignSchema, ZkcID, ZkCred } from "../types/index.js";
 
-type ZkcAttributes = ZkCred["attributes"] & {
-  sign: string;
-  isr: {
-    id: ZkcID;
-  }
-}
+type ZkcAttributes = ZkCred["attributes"];
+type ZkcSignAttributes = ZkCred["proofs"][number]["signature"];
 
-type Selector = {
+export type Selector = {
   proof: {
     id?: string;
     type?: string;
@@ -25,24 +21,32 @@ export class Preparator {
 
   extendGraph = this.graph.extend.bind(this.graph);
   transform = this.graph.transform.bind(this.graph);
-  sort = sort;
+  sort = sortAttributes;
 
-  prepare<
+  prepareAttributes<
+    TOut extends any[] = any[],
+    TCred extends ZkCred = ZkCred
+  >(cred: TCred, selector?: Selector): TOut {
+    const _selector: Selector = selector ? selector : { proof: { index: 0 }, schema: "default" };
+    const { attributeSchema } = this.selectProof(cred, _selector);
+    return this._prepareAttributes<TOut>({
+      attributes: cred.attributes,
+      attributesSchema: attributeSchema
+    });
+  }
+
+  private _prepareAttributes<
     TOut extends any[] = any[],
     TAtr extends ZkCred["attributes"] = ZkCred["attributes"]
   >(args: {
     attributes: TAtr;
-    signature: string;
-    issuer: { id: ZkcID };
-    transSchema: TransSchema;
+    attributesSchema: AttributeSchema;
   }): TOut {
     const targetAttr: ZkcAttributes = {
-      sign: args.signature,
-      isr: args.issuer,
       ...args.attributes
     };
-    const sortedAttr = sort(targetAttr);
-    const sortedSchema = sort(args.transSchema);
+    const sortedAttr = sortAttributes(targetAttr);
+    const sortedSchema = sortAttributes(args.attributesSchema);
     const pathValueList = toPathValueList(sortedAttr);
     return pathValueList.reduce((result, { value, path }) => {
       const links = getByPath(sortedSchema, path) as string[];
@@ -54,58 +58,90 @@ export class Preparator {
     }, ([] as any[]) as TOut);
   }
 
-  prepareCred<
+  prepareSign<
     TOut extends any[] = any[],
     TCred extends ZkCred = ZkCred
   >(cred: TCred, selector?: Selector): TOut {
     const _selector: Selector = selector ? selector : { proof: { index: 0 }, schema: "default" };
-    const { proof, schema } = selectProof(cred, _selector);
-    return this.prepare<TOut>({
-      ...proof,
-      attributes: cred.attributes,
-      transSchema: schema
+    const { proof: { signature }, signSchema } = this.selectProof(cred, _selector);
+    return this._prepareSign<TOut>({
+      signSchema: signSchema,
+      signAttributes: signature
     });
   }
-}
 
-function selectProof(
-  cred: ZkCred,
-  selector: Selector
-): { proof: Proof, schema: TransSchema } {
-  const {
-    proof: {
-      index,
-      id,
-      issuer,
-      type
-    },
-    schema: schemaName
-  } = selector;
-  let proof: Proof | undefined = undefined;
-  if (index === 0 || index) {
-    proof = cred.proofs[index];
-  } else if (id) {
-    proof = cred.proofs.find((it) => it.id === id);
-  } else if (issuer && type) {
-    proof = cred.proofs.find((it) =>
-      it.issuer.id.t === issuer.id.t &&
-      it.issuer.id.k === issuer.id.k &&
-      it.type === type
+  private _prepareSign<
+    TOut extends any[] = any[],
+    TSign extends ZkcSignAttributes = ZkcSignAttributes
+  >(
+    args: {
+      signAttributes: TSign,
+      signSchema: SignSchema
+    }
+  ): TOut {
+    const sortedSignature = sortSignature(args.signAttributes);
+    const sortedSchema = sortSignature(args.signSchema);
+    const pathValueList = toPathValueList(sortedSignature);
+    return pathValueList.reduce((result, { value, path }) => {
+      const links = getByPath(sortedSchema, path) as string[];
+      const transformed = this.graph.transform(value, links);
+      const lastNode = this.graph.toLastNode(links);
+      if (lastNode?.spread) transformed.forEach((it: any) => result.push(it));
+      else result.push(transformed);
+      return result;
+    }, ([] as any[]) as TOut);
+  }
+
+  selectProof(
+    cred: ZkCred,
+    selector?: Selector
+  ): {
+    proof: Proof;
+    attributeSchema: AttributeSchema;
+    signSchema: SignSchema
+  } {
+    const _selector = selector ? selector : { proof: { index: 0 }, schema: "default" };
+    const {
+      proof: {
+        index,
+        id,
+        issuer,
+        type
+      },
+      schema: schemaName
+    } = _selector;
+    let proof: Proof | undefined = undefined;
+    if (index === 0 || index) {
+      proof = cred.proofs[index];
+    } else if (id) {
+      proof = cred.proofs.find((it) => it.id === id);
+    } else if (issuer && type) {
+      proof = cred.proofs.find((it) =>
+        it.signature.isr.id.t === issuer.id.t &&
+        it.signature.isr.id.k === issuer.id.k &&
+        it.type === type
+      );
+    } else if (issuer) proof = cred.proofs.find((it) =>
+      it.signature.isr.id.t === issuer.id.t &&
+      it.signature.isr.id.k === issuer.id.k
     );
-  } else if (issuer) proof = cred.proofs.find((it) =>
-    it.issuer.id.t === issuer.id.t &&
-    it.issuer.id.k === issuer.id.k
-  );
-  else if (type) proof = cred.proofs.find((it) => it.type === type);
-  if (!proof) {
-    throw new Error(`Can not find proof by selector = ${JSON.stringify(selector)}`);
+    else if (type) proof = cred.proofs.find((it) => it.type === type);
+    if (!proof) {
+      throw new Error(`Can not find proof by selector = ${JSON.stringify(selector)}`);
+    }
+    const _schemaName = schemaName ? schemaName : "default";
+    const attributeSchema = proof.attributeSchemas[_schemaName];
+    if (!attributeSchema) {
+      throw new Error(`Can not find transformation schema by selector = ${JSON.stringify(selector)}`);
+    }
+    const signSchema = proof.signatureSchemas[_schemaName]
+      ? proof.signatureSchemas[_schemaName]
+      : proof.signatureSchemas["default"];
+    if (!signSchema) {
+      throw new Error(`Can not find sign schema by selector = ${JSON.stringify(selector)}`);
+    }
+    return { proof, attributeSchema: attributeSchema, signSchema: signSchema };
   }
-  const _schemaName = schemaName ? schemaName : "default";
-  const schema = proof.schemas[_schemaName];
-  if (!schema) {
-    throw new Error(`Can not find transformation schema by selector = ${JSON.stringify(selector)}`);
-  }
-  return { proof, schema };
 }
 
 
@@ -161,18 +197,10 @@ function getByPath(obj: any, path: string[]): any {
 }
 
 
-function sort<
-  T extends (ZkcAttributes | TransSchema) = ZkcAttributes
+function sortAttributes<
+  T extends (ZkcAttributes | AttributeSchema) = ZkcAttributes
 >(credential: T): T {
   const target: Record<string, any> = {};
-  target["sign"] = credential.sign;
-  target["isr"] = {
-    id: {
-      t: credential.isr.id.t,
-      k: credential.isr.id.k
-    }
-  };
-
   target["sch"] = credential.sch;
   target["isd"] = credential.isd;
   target["exd"] = credential.exd;
@@ -205,4 +233,18 @@ function sort<
     ...target,
     ...sortKeys(otherAttributes, { deep: true })
   } as T;
+}
+
+function sortSignature<
+  T extends (ZkcSignAttributes | SignSchema) = ZkcSignAttributes
+>(attributes: T): T {
+  const target: Record<string, any> = {};
+  target["sign"] = attributes.sign;
+  target["isr"] = {
+    id: {
+      t: attributes.isr.id.t,
+      k: attributes.isr.id.k
+    }
+  };
+  return target as T;
 }
