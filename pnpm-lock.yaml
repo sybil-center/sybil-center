@@ -39,6 +39,9 @@ importers:
       '@sybil-center/zkc-core':
         specifier: workspace:*
         version: link:../sybil.zkc-core
+      '@sybil-center/zkc-o1js':
+        specifier: workspace:*
+        version: link:../sybil.zkc-o1js
       '@sybil-center/zkc-preparator':
         specifier: ^0.0.4
         version: 0.0.4

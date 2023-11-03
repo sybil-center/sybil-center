@@ -1,82 +1,64 @@
-import { IssuerTypes, IZkcIssuer, ZkcChallenge, ZkcChallengeReq } from "../../../base/types/zkc.issuer.js";
-import { IWebhookHandler } from "../../../base/types/webhook-handler.js";
-import { Proved, ZkcId, ZkCred, ZkcSchemaNums } from "../../../base/types/zkc.credential.js";
+import { ChallengeReq, GovernmentIdType, ISybilIssuer, PassportCred, PassportIT, Schema } from "@sybil-center/zkc-core";
+import { Config } from "../../../backbone/config.js";
+import { Disposable, tokens } from "typed-inject";
+import { VerifierManager } from "../../../base/service/verifiers/verifier.js";
+import { ZKCSignerManager } from "../../../base/service/signers/signer-manager.js";
 import {
   Inquiry,
   PERSONA_GOV_ID_TYPES,
-  PersonaGovIdTypes,
+  type PersonaGovIdType,
   PersonaKYC
 } from "../../../base/service/external/persona-kyc.service.js";
-import { Disposable, tokens } from "typed-inject";
 import { TimedCache } from "../../../base/service/timed-cache.js";
-import { Config } from "../../../backbone/config.js";
-import { IZkcSignerManager } from "../../../base/service/signers/zkc.signer-manager.js";
-import { IVerifierManager } from "../../../base/service/verifiers/verifier.manager.js";
 import { randomUUID } from "node:crypto";
-import { FastifyRequest } from "fastify";
+import { type IWebhookHandler } from "../../../base/types/webhook-handler.js";
 import { ClientError, ServerError } from "../../../backbone/errors.js";
+import { FastifyRequest } from "fastify";
 import { ISO3166 } from "../../../util/iso-3166.js";
-import { ZKC } from "../../../util/zk-credentials/index.js";
+import sortKeys from "sort-keys";
 
-export interface PassportChallenge extends ZkcChallenge {
-  verifyURL: string;
-}
-
-export type ZkPassportCred = ZkCred<{
-  fn: string;
-  ln: string;
-  bd: number;
-  cc: number;
-  doc: {
-    t: DocTypes;
-    id: string;
-  }
-}>
-
-type PassportSession = {
-  message: string;
-  subjectId: ZkcId;
-  verifyURL: string;
-  challengeReq: ZkcChallengeReq;
-  webhookResult?: Inquiry["Hook"]["Return"]
-}
 
 const MS_FROM_1900_TO_1970 = -(new Date("1900-01-01T00:00:00.000Z").getTime());
 
-interface IT extends IssuerTypes {
-  Cred: Proved<ZkPassportCred>;
-  Challenge: PassportChallenge;
+type PassportSession = {
+  challengeReq: PassportIT["ChallengeReq"];
+  message: string;
+  verifyURL: string;
+  webhookResult?: Inquiry["Hook"]["Return"];
 }
 
-export class ZkcPassportIssuer
-  implements IZkcIssuer<IT>,
-    IWebhookHandler,
-    Disposable {
+export class PassportIssuer
+  implements ISybilIssuer<PassportIT>, IWebhookHandler, Disposable {
 
+  private readonly personaKYC: PersonaKYC;
+  private readonly sessionCache: TimedCache<string, PassportSession>;
   static inject = tokens(
     "config",
-    "zkcSignerManager",
-    "verifierManager"
+    "verifierManager",
+    "zkcSignerManager"
   );
   constructor(
     config: Config,
-    private readonly signerManager: IZkcSignerManager,
-    private readonly verifierManager: IVerifierManager,
-    private readonly personaKYC = new PersonaKYC(config),
-    private readonly sessionCache = new TimedCache<string, PassportSession>(config.kycSessionTtl),
-  ) {}
+    private readonly verifierManager: VerifierManager,
+    private readonly zkcSignerManager: ZKCSignerManager
+  ) {
+    this.personaKYC = new PersonaKYC(config);
+    this.sessionCache = new TimedCache<string, PassportSession>(config.kycSessionTtl);
+  }
 
-  get providedSchema(): ZkcSchemaNums { return 0;};
+  get providedSchema(): Schema { return 0;};
 
-  async getChallenge(challengeReq: IT["ChallengeReq"]): Promise<IT["Challenge"]> {
-    const sbjId = challengeReq.subjectId;
-    const refId = this.personaKYC.refId(sbjId);
+  async getChallenge(
+    challengeReq: PassportIT["ChallengeReq"]
+  ): Promise<PassportIT["Challenge"]> {
+    const subjectId = challengeReq.subjectId;
+    const refId = this.personaKYC.refId(subjectId);
     const found = this.sessionCache.find(refId);
     if (found) {
       return {
         sessionId: refId,
         verifyURL: found.verifyURL,
-        message: found.message,
+        message: found.message
       };
     }
     const { verifyURL } = await this.personaKYC.createInquiry({ referenceId: refId });
@@ -84,8 +66,7 @@ export class ZkcPassportIssuer
     this.sessionCache.set(refId, {
       verifyURL: verifyURL,
       message: message,
-      subjectId: sbjId,
-      challengeReq: challengeReq,
+      challengeReq: challengeReq
     });
     return {
       verifyURL: verifyURL,
@@ -94,10 +75,12 @@ export class ZkcPassportIssuer
     };
   }
 
-  async canIssue({ sessionId: refId }: IT["CanIssueReq"]): Promise<IT["CanIssueResp"]> {
-    const { webhookResult } = this.sessionCache.get(refId);
-    if (!webhookResult) return { canIssue: false };
-    if (!webhookResult.completed) throw new ClientError(webhookResult.reason!);
+  async canIssue(
+    { sessionId: refId }: PassportIT["CanIssueReq"]
+  ): Promise<PassportIT["CanIssueResp"]> {
+    const session = this.sessionCache.get(refId);
+    if (!session.webhookResult) return { canIssue: false };
+    if (!session.webhookResult.completed) throw new ClientError(session.webhookResult.reason!);
     return { canIssue: true };
   }
 
@@ -108,41 +91,34 @@ export class ZkcPassportIssuer
     session.webhookResult = hookResult;
   }
 
-  async issue({ sessionId: refId, signature }: IT["IssueReq"]): Promise<IT["Cred"]> {
+  async issue({
+      sessionId: refId,
+      signature
+    }: PassportIT["IssueReq"]
+  ): Promise<PassportIT["Cred"]> {
+    const session = this.sessionCache.get(refId);
+    if (!session) throw new ClientError(`Session ${refId} has been expired`);
     const {
-      message,
       webhookResult,
-      subjectId,
-      challengeReq: { expirationDate, options }
-    } = this.sessionCache.get(refId);
-    if (!webhookResult || !webhookResult.completed) {
-      throw new ClientError("Your Government ID is not verified");
-    }
-    const verified = await this.verifierManager.verify(subjectId.t, {
-      sign: signature,
-      msg: message,
-      publickey: subjectId.k
-    }, options);
-    if (!verified) throw new ClientError("Signature is not verified");
+      message,
+      challengeReq: {
+        subjectId,
+        options
+      }
+    } = session;
+    if (!this.checkWebhook(webhookResult)) throw new Error();
+    const verified = await this.verifierManager.verify({
+      subjectId: subjectId,
+      signEntry: { msg: message, sign: signature },
+      options: options
+    });
+    if (!verified) throw new ClientError(`Signature is not verified`);
     const { user } = webhookResult;
-    // @ts-ignore
-    const transSchema = ZKC.transSchemas[subjectId.t][this.providedSchema];
-    if (!transSchema) {
-      throw new ClientError(`Subject ZKC id with type ${subjectId.t} is not supported`);
-    }
-    const countryCode = ISO3166.numeric(user.countryCode);
-    if (!countryCode) {
-      throw new ServerError("Internal server error", {
-        props: {
-          _place: this.constructor.name,
-          _log: `Received alphabet ${user.countryCode} country code has not numeric representation`
-        }
-      });
-    }
-    const zkCred = await this.signerManager.signZkCred<ZkPassportCred>(subjectId.t, {
+    const countryCode = this.toNumCountryCode(user.countryCode);
+    const attributes: PassportCred["attributes"] = {
       sch: this.providedSchema,
       isd: new Date().getTime(),
-      exd: expirationDate ? expirationDate : 0,
+      exd: options?.expirationDate ? options.expirationDate : 0,
       sbj: {
         id: subjectId,
         fn: user.firstName,
@@ -150,29 +126,68 @@ export class ZkcPassportIssuer
         bd: (user.birthdate.getTime() + MS_FROM_1900_TO_1970),
         cc: countryCode,
         doc: {
-          t: toCredDocType(user.document.type),
+          t: this.toGovernmentIdType(user.document.type),
           id: user.document.id
         }
       }
-    }, transSchema);
+    };
+    const cred = await this.zkcSignerManager.proveZkCred<PassportCred>({
+      attributes: attributes,
+      proofTypes: options?.proofTypes
+    });
     this.sessionCache.delete(refId);
-    return zkCred;
+    return sortKeys(cred, { deep: true });
   }
 
-  async dispose() {
+  private checkWebhook(
+    webhookResult?: Inquiry["Hook"]["Return"]
+  ): webhookResult is Inquiry["Hook"]["Return"] {
+    if (!webhookResult) throw new ClientError(`Your Government ID verification in process. Wait`);
+    if (!webhookResult.completed) throw new ClientError(`Your Government ID is not verified`);
+    return true;
+  }
+
+  private toNumCountryCode(countryCode: string): number {
+    const numCC = ISO3166.numeric(countryCode);
+    if (numCC) return numCC;
+    throw new ServerError("Internal server error", {
+      props: {
+        _place: this.constructor.name,
+        _log: `Received alphabet ${countryCode} country code has not numeric representation`
+      }
+    });
+  }
+
+  private toGovernmentIdType(type: string) {
+    const isPersonaIdType = function (_type: string): _type is PersonaGovIdType {
+      return PERSONA_GOV_ID_TYPES
+        // @ts-ignore
+        .includes(_type);
+    }(type);
+    if (isPersonaIdType) return GOVERNMENT_ID_ADAPTER[type];
+    throw new ServerError(`Unsupported government id type`, {
+      props: {
+        _place: this.constructor.name,
+        _log: `Unsupported Persona government id type ${type}`
+      }
+    });
+  }
+
+  async dispose(): Promise<void> {
     this.sessionCache.dispose();
   }
 }
 
-function getMessage({
+
+function getMessage<TReq extends ChallengeReq = ChallengeReq>({
   subjectId,
-  expirationDate,
-}: ZkcChallengeReq): string {
+  options
+}: TReq): string {
   const nonce = randomUUID();
   const description = `Sign the message to prove your Government ID and get Passport Zero-Knowledge Credential`;
   const address = subjectId.k;
-  const targetExDate = expirationDate
-    ? new Date(expirationDate).toISOString()
+  const targetExDate = options?.expirationDate
+    ? new Date(options.expirationDate).toISOString()
     : "Without an expiration date";
   return [
     "Description:" + "\n" + description,
@@ -183,19 +198,8 @@ function getMessage({
   ].join("\n\n");
 }
 
-const DOC_TYPES = [
-  1, // Passport
-  2, // Driver license
-  3, // Identification card
-  4, // Passport card
-  0, // OTHER - something that we do not support now
-] as const;
-
-export type DocTypes = typeof DOC_TYPES[number]
-
-
 /** Adapt Persona Government ID type to Passport Credential document type*/
-const DOC_TYPE_ADAPTOR: Record<PersonaGovIdTypes, DocTypes> = {
+const GOVERNMENT_ID_ADAPTER: Record<PersonaGovIdType, GovernmentIdType> = {
   pp: 1,
   ipp: 1,
   dl: 2,
@@ -224,15 +228,4 @@ const DOC_TYPE_ADAPTOR: Record<PersonaGovIdTypes, DocTypes> = {
   wp: 0
 };
 
-function toCredDocType(docType: string): DocTypes {
-  function isPersonaDocType(pDocType: string): pDocType is PersonaGovIdTypes {
-    return PERSONA_GOV_ID_TYPES
-      // @ts-ignore
-      .includes(pDocType);
-  }
-  const typeOfPersona = isPersonaDocType(docType);
-  if (typeOfPersona) {
-    return DOC_TYPE_ADAPTOR[docType];
-  }
-  throw new ClientError("Invalid persona Government ID document type");
-}
+

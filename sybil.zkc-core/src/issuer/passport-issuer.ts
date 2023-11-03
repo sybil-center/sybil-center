@@ -1,9 +1,10 @@
-import { type Challenge, type ChallengeReq, type HttpClient, type IssuerTypes, type WalletProof, } from "zkc-core";
-import util, { popupFeatures } from "../util/index.js";
+import { type Challenge, type HttpClient, type IssuerTypes, } from "zkc-core";
+import { popupFeatures, util } from "../util/index.js";
 import { Schema, toSchemaName } from "../type/schemas.js";
-import { ISybilIssuer, type SybilCred } from "../type/cred.js";
+import { ISybilIssuer, SybilChallengeReq, type SybilCred } from "../type/cred.js";
+import { SybilWalletProof } from "../type/wallet-provider.js";
 
-export const DOC_TYPES = [
+export const GOVERNMENT_ID_TYPES = [
   1, // Passport
   2, // Driver license
   3, // Identification card
@@ -11,7 +12,7 @@ export const DOC_TYPES = [
   0, // OTHER - something that we do not support now
 ] as const;
 
-export type DocTypes = typeof DOC_TYPES[number]
+export type GovernmentIdType = typeof GOVERNMENT_ID_TYPES[number]
 
 export type PassportCred = SybilCred<{
   fn: string;
@@ -19,7 +20,7 @@ export type PassportCred = SybilCred<{
   bd: number;
   cc: number;
   doc: {
-    t: DocTypes;
+    t: GovernmentIdType;
     id: string;
   }
 }>
@@ -28,13 +29,7 @@ export interface PassportChallenge extends Challenge {
   verifyURL: string;
 }
 
-export interface PassportChallengeReq extends ChallengeReq {
-  options: {
-    expirationDate?: number;
-    windowFeature?: string;
-    proofTypes?: string[];
-  };
-}
+export interface PassportChallengeReq extends SybilChallengeReq {}
 
 export type PassportOptions = PassportChallengeReq["options"]
 
@@ -42,7 +37,7 @@ export interface PassportIT extends IssuerTypes {
   ChallengeReq: PassportChallengeReq;
   Challenge: PassportChallenge;
   Cred: PassportCred;
-  Options: PassportOptions;
+  Options: PassportOptions & { windowFeature?: string; };
 }
 
 export class PassportIssuer implements ISybilIssuer<PassportIT> {
@@ -79,7 +74,7 @@ export class PassportIssuer implements ISybilIssuer<PassportIT> {
   }
 
   async issueCred(args: {
-    proof: WalletProof;
+    proof: SybilWalletProof;
     options?: PassportIT["Options"];
   }): Promise<PassportIT["Cred"]> {
     const {
@@ -90,10 +85,7 @@ export class PassportIssuer implements ISybilIssuer<PassportIT> {
     } = args;
     const challengeReq: PassportIT["ChallengeReq"] = {
       subjectId: subjectId,
-      options: {
-        expirationDate: options?.expirationDate,
-        proofTypes: options?.proofTypes
-      }
+      options: options
     };
     const challenge = await this.getChallenge(challengeReq);
     const popup = window.open(

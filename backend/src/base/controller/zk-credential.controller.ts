@@ -1,26 +1,25 @@
 import { Injector } from "typed-inject";
-import { ZkcIssuerManager } from "../../issuers/zkc/zkc.issuer-manager.js";
 import { contextUtil } from "../../util/context.util.js";
 import { ZkcRoutes } from "./routes/zkc.routes.js";
 import { HttpServer } from "../../backbone/http-server.js";
-import { Raw, ZkcCanIssueReq, ZkcChallengeReq, ZkcIssueReq } from "../types/zkc.issuer.js";
-import { ZKC } from "../../util/zk-credentials/index.js";
+import { CanIssueReq, IssueReq, SybilChallengeReq } from "@sybil-center/zkc-core";
+import { IssuerManager } from "../../issuers/zkc/issuer.manager.js";
 
 type Dependencies = {
   httpServer: HttpServer
-  zkcIssuerManager: ZkcIssuerManager
+  issuerManager: IssuerManager
 }
 
 const tokens: (keyof Dependencies)[] = [
-  "zkcIssuerManager",
+  "issuerManager",
   "httpServer"
 ];
 
-export function zkCredentialController(injector: Injector<Dependencies>) {
+export function zkCredController(injector: Injector<Dependencies>) {
 
   const {
     httpServer: { fastify },
-    zkcIssuerManager: issuerManager,
+    issuerManager: issuerManager,
   } = contextUtil.from(tokens, injector);
 
   ZkcRoutes.forEach(({
@@ -30,32 +29,22 @@ export function zkCredentialController(injector: Injector<Dependencies>) {
     schemaName
   }) => {
     if (challengeRoute) {
-      fastify.route<{ Body: Raw<ZkcChallengeReq> }>({
+      fastify.route<{ Body: SybilChallengeReq }>({
         ...challengeRoute,
-        handler: async ({ body }) => {
-          const subjectId = {
-            k: body.subjectId.k,
-            t: ZKC.idType.fromAlias(body.subjectId.t)
-          };
-          const challengeReq: ZkcChallengeReq = {
-            ...body,
-            subjectId: subjectId
-          };
-          return await issuerManager.getChallenge(schemaName, challengeReq);
-        }
+        handler: async ({ body }) => issuerManager.getChallenge(schemaName, body)
       });
     }
 
     if (canIssueRoute) {
-      fastify.route<{ Querystring: ZkcCanIssueReq }>({
+      fastify.route<{ Querystring: CanIssueReq }>({
         ...canIssueRoute,
         handler: async ({ query }) => issuerManager.canIssue(schemaName, query)
       });
     }
 
-    fastify.route<{ Body: ZkcIssueReq }>({
+    fastify.route<{ Body: IssueReq }>({
       ...issueRoute,
-      handler: async ({ body }) => issuerManager.issue(schemaName, body)
+      handler: async ({ body }) => issuerManager.issueCred(schemaName, body)
     });
   });
 }

@@ -19,12 +19,12 @@ export async function verify<
     signSelector
   } = args;
   try {
-    const preparedAttr = o1jsPreparator.prepareAttributes<Field[]>(cred, attributeSelector);
+    const preparedAttr = o1jsPreparator.getPreparedAttributes<Field[]>(cred, attributeSelector);
     const [
       sign,
       _,
       isr_id_k
-    ] = o1jsPreparator.prepareSign<PreparedSign>(
+    ] = o1jsPreparator.getPreparedSign<PreparedSign>(
       cred,
       signSelector ? signSelector : attributeSelector
     );

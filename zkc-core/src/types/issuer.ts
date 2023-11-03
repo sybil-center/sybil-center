@@ -3,7 +3,7 @@ import { WalletProof } from "./wallet-provider.js";
 
 export type ChallengeReq = {
   subjectId: ZkcID;
-  options: {
+  options?: {
     expirationDate?: number;
   }
 }

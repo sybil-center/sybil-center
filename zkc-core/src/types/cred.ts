@@ -37,7 +37,7 @@ export type AttributeSchema = {
       k: string[];
     }
   } & Record<string, unknown>;
-} & Record<string, unknown>
+};
 
 export type Proof = {
   id?: string;

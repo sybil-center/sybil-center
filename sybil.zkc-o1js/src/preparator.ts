@@ -1,5 +1,7 @@
 import { Field, Poseidon, PublicKey, Signature } from "o1js";
-import { type GraphLink, type GraphNode, Preparator } from "@sybil-center/zkc-core";
+import { type GraphLink, type GraphNode, Preparator, TransformationGraph } from "@sybil-center/zkc-core";
+
+const graph = new TransformationGraph();
 
 const numTypes = [
   "uint16",
@@ -89,6 +91,15 @@ const extendLinks: GraphLink[] = [
     inputType: "mina:field",
     outputType: "mina:field",
     transform: (value: Field) => Poseidon.hash([value])
+  },
+  {
+    name: "mina:hex-field",
+    inputType: "hex",
+    outputType: "field",
+    transform: (value: string) => {
+      const num = graph.transform<bigint>(value, ["hex-bytes", "bytes-uint"]);
+      return Field(num);
+    }
   },
   ...numsToField(),
   ...numsModMinaOrder(),

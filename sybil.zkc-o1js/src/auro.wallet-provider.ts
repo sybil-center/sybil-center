@@ -1,4 +1,4 @@
-import { SybilID, WalletProof, WalletProvider } from "@sybil-center/zkc-core";
+import { SybilID, SybilWalletProof, WalletProvider } from "@sybil-center/zkc-core";
 import { Field, Scalar, Signature } from "o1js";
 
 interface SignMessageArgs {
@@ -40,7 +40,7 @@ export interface IAuroWallet {
   sendTransaction(args: SendTransactionArgs): Promise<{ hash: string }>;
 }
 
-export class MinaProvider implements WalletProvider {
+export class AuroProvider implements WalletProvider {
   constructor(private readonly provider: IAuroWallet) {
     this.sign = this.sign.bind(this);
     this.getAddress = this.getAddress.bind(this);
@@ -72,7 +72,7 @@ export class MinaProvider implements WalletProvider {
     return sign.toBase58();
   };
 
-  async getProof(): Promise<WalletProof> {
+  async getProof(): Promise<SybilWalletProof> {
     return {
       subjectId: await this.getSubjectId(),
       signFn: this.sign

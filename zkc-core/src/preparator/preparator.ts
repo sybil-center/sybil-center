@@ -23,19 +23,19 @@ export class Preparator {
   transform = this.graph.transform.bind(this.graph);
   sort = sortAttributes;
 
-  prepareAttributes<
+  getPreparedAttributes<
     TOut extends any[] = any[],
     TCred extends ZkCred = ZkCred
   >(cred: TCred, selector?: Selector): TOut {
     const _selector: Selector = selector ? selector : { proof: { index: 0 }, schema: "default" };
     const { attributeSchema } = this.selectProof(cred, _selector);
-    return this._prepareAttributes<TOut>({
+    return this.prepareAttributes<TOut>({
       attributes: cred.attributes,
       attributesSchema: attributeSchema
     });
   }
 
-  private _prepareAttributes<
+  prepareAttributes<
     TOut extends any[] = any[],
     TAtr extends ZkCred["attributes"] = ZkCred["attributes"]
   >(args: {
@@ -58,19 +58,19 @@ export class Preparator {
     }, ([] as any[]) as TOut);
   }
 
-  prepareSign<
+  getPreparedSign<
     TOut extends any[] = any[],
     TCred extends ZkCred = ZkCred
   >(cred: TCred, selector?: Selector): TOut {
     const _selector: Selector = selector ? selector : { proof: { index: 0 }, schema: "default" };
     const { proof: { signature }, signSchema } = this.selectProof(cred, _selector);
-    return this._prepareSign<TOut>({
+    return this.prepareSign<TOut>({
       signSchema: signSchema,
       signAttributes: signature
     });
   }
 
-  private _prepareSign<
+  prepareSign<
     TOut extends any[] = any[],
     TSign extends ZkcSignAttributes = ZkcSignAttributes
   >(

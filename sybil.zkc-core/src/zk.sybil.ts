@@ -1,5 +1,6 @@
 import { PassportIssuer, PassportIT } from "./issuer/index.js";
-import { HttpClient, WalletProof } from "zkc-core";
+import { HttpClient } from "zkc-core";
+import { SybilWalletProof } from "./type/wallet-provider.js";
 
 
 type ZkCredKinds = {
@@ -40,7 +41,7 @@ export class ZkSybil {
     TName extends keyof ZkCredKinds
   >(
     name: TName,
-    walletProof: WalletProof,
+    walletProof: SybilWalletProof,
     options: ZkCredKinds[TName]["Options"]
   ): Promise<ZkCredKinds[TName]["Kind"]> {
     return this.issuer(name).issueCred({ proof: walletProof, options });

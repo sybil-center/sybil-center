@@ -1,6 +1,6 @@
 import { Config } from "../../../backbone/config.js";
 import { tokens } from "typed-inject";
-import { ZkcId } from "../../types/zkc.credential.js";
+import {ZkcID} from "@sybil-center/zkc-core"
 import { hash as sha256 } from "@stablelib/sha256";
 import * as u8a from "uint8arrays";
 import * as t from "io-ts";
@@ -211,7 +211,7 @@ export class PersonaKYC {
   }
 
   /** Transform Zkc Identifier to Persona reference-id */
-  refId(zkcId: ZkcId): string {
+  refId(zkcId: ZkcID): string {
     const strId = `${String(zkcId.t)}:${zkcId.k}`;
     const refId = crypto.createHmac("sha256", this.secret);
     refId.update(strId);
@@ -441,4 +441,6 @@ export const PERSONA_GOV_ID_TYPES = [
   "wp"
 ] as const;
 
-export type PersonaGovIdTypes = typeof PERSONA_GOV_ID_TYPES[number];
+export type PersonaGovIdType = typeof PERSONA_GOV_ID_TYPES[number];
+
+
