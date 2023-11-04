@@ -3,29 +3,29 @@ import { Injector } from "typed-inject";
 import { contextUtil } from "../../util/context.util.js";
 import { personaWebhookRoute } from "./routes/persona-kyc.route.js";
 import { FastifyRequest } from "fastify";
-import { IssuerManager } from "../../issuers/zkc/issuer.manager.js";
+import { ZKCIssuerManager } from "../../issuers/zkc/zkc-issuer.manager.js";
 
 type Dependencies = {
   httpServer: HttpServer;
-  issuerManager: IssuerManager
+  zkcIssuerManager: ZKCIssuerManager
 }
 
 const tokens: (keyof Dependencies)[] = [
   "httpServer",
-  "issuerManager"
+  "zkcIssuerManager"
 ];
 
 export function personaKYCController(injector: Injector<Dependencies>) {
   const {
     httpServer: { fastify },
-    issuerManager
+    zkcIssuerManager
   } = contextUtil.from(tokens, injector);
 
   fastify.route({
     ...personaWebhookRoute,
     config: { rawBody: true },
     handler: async (req: FastifyRequest, resp) => {
-      await issuerManager.handleWebhook("passport", req);
+      await zkcIssuerManager.handleWebhook("passport", req);
       resp.statusCode = 200;
       resp.send({ message: "ok" });
     }

@@ -9,19 +9,19 @@ import {
 } from "@sybil-center/zkc-core";
 import { IWebhookHandler } from "../../base/types/webhook-handler.js";
 import { Disposable, tokens } from "typed-inject";
-import { type PassportIssuer } from "./passport/issuer.js";
+import { type ZKCPassportIssuer } from "./passport/issuer.js";
 import { ClientError } from "../../backbone/errors.js";
 import { FastifyRequest } from "fastify";
 
 type Issuer = ISybilIssuer & Partial<IWebhookHandler>
 
-export class IssuerManager implements Disposable {
+export class ZKCIssuerManager implements Disposable {
   private readonly issuers: Record<SchemaName, Issuer>;
 
   static inject = tokens(
-    "passportIssuer"
+    "zkcPassportIssuer"
   );
-  constructor(passportIssuer: PassportIssuer) {
+  constructor(passportIssuer: ZKCPassportIssuer) {
     this.issuers = {
       "passport": passportIssuer
     };

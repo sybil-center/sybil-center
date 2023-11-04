@@ -95,7 +95,7 @@ const extendLinks: GraphLink[] = [
   {
     name: "mina:hex-field",
     inputType: "hex",
-    outputType: "field",
+    outputType: "mina:field",
     transform: (value: string) => {
       const num = graph.transform<bigint>(value, ["hex-bytes", "bytes-uint"]);
       return Field(num);

@@ -1,8 +1,8 @@
 import { ChallengeReq, GovernmentIdType, ISybilIssuer, PassportCred, PassportIT, Schema } from "@sybil-center/zkc-core";
 import { Config } from "../../../backbone/config.js";
 import { Disposable, tokens } from "typed-inject";
-import { VerifierManager } from "../../../base/service/verifiers/verifier.js";
-import { ZKCSignerManager } from "../../../base/service/signers/signer-manager.js";
+import { SignVerifierManager } from "../../../base/service/verifiers/sign-verifier.manager.js";
+import { ZKCSignerManager } from "../../../base/service/signers/zkc.signer-manager.js";
 import {
   Inquiry,
   PERSONA_GOV_ID_TYPES,
@@ -27,19 +27,19 @@ type PassportSession = {
   webhookResult?: Inquiry["Hook"]["Return"];
 }
 
-export class PassportIssuer
+export class ZKCPassportIssuer
   implements ISybilIssuer<PassportIT>, IWebhookHandler, Disposable {
 
   private readonly personaKYC: PersonaKYC;
   private readonly sessionCache: TimedCache<string, PassportSession>;
   static inject = tokens(
     "config",
-    "verifierManager",
+    "signVerifierManager",
     "zkcSignerManager"
   );
   constructor(
     config: Config,
-    private readonly verifierManager: VerifierManager,
+    private readonly verifierManager: SignVerifierManager,
     private readonly zkcSignerManager: ZKCSignerManager
   ) {
     this.personaKYC = new PersonaKYC(config);

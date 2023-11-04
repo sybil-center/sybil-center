@@ -18,12 +18,12 @@ import { apiKeyController } from "../base/controller/api-key.controller.js";
 import { CaptchaService, ICaptchaService } from "../base/service/captcha.service.js";
 import { configController } from "../base/controller/config.controller.js";
 import { GateService, type IGateService } from "../base/service/gate.service.js";
-import { zkCredController } from "../base/controller/zk-credential.controller.js";
+import { zkCredController } from "../base/controller/zk-cred.controller.js";
 import { personaKYCController } from "../base/controller/persona-kyc.controller.js";
-import { PassportIssuer } from "../issuers/zkc/passport/issuer.js";
-import { ZKCSignerManager } from "../base/service/signers/signer-manager.js";
-import { VerifierManager } from "../base/service/verifiers/verifier.js";
-import { IssuerManager } from "../issuers/zkc/issuer.manager.js";
+import { ZKCPassportIssuer } from "../issuers/zkc/passport/issuer.js";
+import { ZKCSignerManager } from "../base/service/signers/zkc.signer-manager.js";
+import { SignVerifierManager } from "../base/service/verifiers/sign-verifier.manager.js";
+import { ZKCIssuerManager } from "../issuers/zkc/zkc-issuer.manager.js";
 
 type DI = {
   logger: ILogger;
@@ -40,10 +40,10 @@ type DI = {
   apiKeyService: ApiKeyService;
   captchaService: ICaptchaService;
   gateService: IGateService;
-  passportIssuer: PassportIssuer;
-  issuerManager: IssuerManager;
+  zkcPassportIssuer: ZKCPassportIssuer;
+  zkcIssuerManager: ZKCIssuerManager;
   zkcSignerManager: ZKCSignerManager;
-  verifierManager: VerifierManager;
+  signVerifierManager: SignVerifierManager;
 };
 
 export class App {
@@ -84,7 +84,7 @@ export class App {
       .provideClass("apiKeyService", ApiKeyService)
       .provideClass("gateService", GateService)
       .provideClass("zkcSignerManager", ZKCSignerManager)
-      .provideClass("verifierManager", VerifierManager)
+      .provideClass("signVerifierManager", SignVerifierManager)
 
       // Issuers
       .provideClass("ethereumAccountIssuer", EthereumAccountIssuer)
@@ -95,9 +95,9 @@ export class App {
       .provideClass("issuerContainer", IssuerContainer)
 
       // Zkc Issuers
-      .provideClass("passportIssuer", PassportIssuer)
+      .provideClass("zkcPassportIssuer", ZKCPassportIssuer)
       // Zkc Issuer Manager
-      .provideClass("issuerManager", IssuerManager);
+      .provideClass("zkcIssuerManager", ZKCIssuerManager);
 
 
     const httpServer = app.context.resolve("httpServer");

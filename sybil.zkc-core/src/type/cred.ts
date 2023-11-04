@@ -3,7 +3,7 @@ import { ChallengeReq } from "zkc-core";
 import { type IDType } from "./identifiers.js";
 import { type Schema } from "./schemas.js";
 
-export const PROOF_TYPES = ["Mina:PoseidonPasta"] as const;
+export const PROOF_TYPES = ["Mina:PoseidonPasta", "Sha256Secp256k1"] as const;
 export type ProofType = typeof PROOF_TYPES[number];
 
 export function isProofType(type: string) {

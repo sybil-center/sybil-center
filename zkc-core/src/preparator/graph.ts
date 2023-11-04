@@ -555,7 +555,7 @@ export class TransformationGraph {
       const input = this.nodes[inputType];
       if (!input) throw new Error(`Node with name ${inputType} not supported`);
       const output = this.nodes[outputType];
-      if (!output) throw new Error(`Node with mat ${outputType} not supported`);
+      if (!output) throw new Error(`Node with name ${outputType} not supported`);
 
       if (!input.isType(result)) {
         throw new Error(`Invalid transformation, input type ${input.name} is not matched to value`);

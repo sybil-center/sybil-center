@@ -4,7 +4,7 @@ import { MinaVerifier } from "./mina-verifier.service.js";
 import { EthVerifier } from "./eth-verifier.service.js";
 import { ClientError } from "../../../backbone/errors.js";
 
-export class VerifierManager {
+export class SignVerifierManager {
   private readonly verifierMap: Map<IDName, IVerifier>;
 
   constructor() {

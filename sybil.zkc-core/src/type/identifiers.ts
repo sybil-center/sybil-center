@@ -1,3 +1,5 @@
+import { SybilID } from "./cred.js";
+
 export const ID_TYPES = [0, 1, 2] as const;
 export type IDType = typeof ID_TYPES[number];
 
@@ -52,3 +54,17 @@ export function toIdName(type: string | number): IDName {
   }
 }
 
+export function normalizeID(subjectID: SybilID): SybilID {
+  const idName = toIdName(subjectID.t);
+  return {
+    t: subjectID.t,
+    k: NORMALIZE_ID_MAP[idName](subjectID.k)
+  };
+}
+
+
+const NORMALIZE_ID_MAP: Record<IDName, (key: string) => string> = {
+  "MinaPublicKey": (key) => key,
+  "EthereumAddress": (key) => key.replace("0x", "").toLowerCase(),
+  "Secp256k1PublicKey": (key) => key.replace("0x", "").toLowerCase()
+};

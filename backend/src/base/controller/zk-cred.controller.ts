@@ -2,16 +2,16 @@ import { Injector } from "typed-inject";
 import { contextUtil } from "../../util/context.util.js";
 import { ZkcRoutes } from "./routes/zkc.routes.js";
 import { HttpServer } from "../../backbone/http-server.js";
-import { CanIssueReq, IssueReq, SybilChallengeReq } from "@sybil-center/zkc-core";
-import { IssuerManager } from "../../issuers/zkc/issuer.manager.js";
+import { CanIssueReq, IssueReq, normalizeID, SybilChallengeReq } from "@sybil-center/zkc-core";
+import { ZKCIssuerManager } from "../../issuers/zkc/zkc-issuer.manager.js";
 
 type Dependencies = {
   httpServer: HttpServer
-  issuerManager: IssuerManager
+  zkcIssuerManager: ZKCIssuerManager
 }
 
 const tokens: (keyof Dependencies)[] = [
-  "issuerManager",
+  "zkcIssuerManager",
   "httpServer"
 ];
 
@@ -19,7 +19,7 @@ export function zkCredController(injector: Injector<Dependencies>) {
 
   const {
     httpServer: { fastify },
-    issuerManager: issuerManager,
+    zkcIssuerManager,
   } = contextUtil.from(tokens, injector);
 
   ZkcRoutes.forEach(({
@@ -31,20 +31,26 @@ export function zkCredController(injector: Injector<Dependencies>) {
     if (challengeRoute) {
       fastify.route<{ Body: SybilChallengeReq }>({
         ...challengeRoute,
-        handler: async ({ body }) => issuerManager.getChallenge(schemaName, body)
+        handler: async ({ body }) => {
+          const challengeReq: SybilChallengeReq = {
+            ...body,
+            subjectId: normalizeID(body.subjectId)
+          };
+          return zkcIssuerManager.getChallenge(schemaName, challengeReq);
+        }
       });
     }
 
     if (canIssueRoute) {
       fastify.route<{ Querystring: CanIssueReq }>({
         ...canIssueRoute,
-        handler: async ({ query }) => issuerManager.canIssue(schemaName, query)
+        handler: async ({ query }) => zkcIssuerManager.canIssue(schemaName, query)
       });
     }
 
     fastify.route<{ Body: IssueReq }>({
       ...issueRoute,
-      handler: async ({ body }) => issuerManager.issueCred(schemaName, body)
+      handler: async ({ body }) => zkcIssuerManager.issueCred(schemaName, body)
     });
   });
 }

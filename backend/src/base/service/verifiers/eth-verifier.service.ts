@@ -16,7 +16,10 @@ export class EthVerifier implements IVerifier {
   }: SignEntry): Promise<boolean> {
     try {
       const actualAddress = utils.verifyMessage(msg, sign);
-      return actualAddress.toLowerCase() === publickey.toLowerCase();
+      return actualAddress.toLowerCase() === (publickey.startsWith("0x")
+          ? publickey.toLowerCase()
+          : `0x${publickey.toLowerCase()}`
+      );
     } catch (e) {
       return false;
     }

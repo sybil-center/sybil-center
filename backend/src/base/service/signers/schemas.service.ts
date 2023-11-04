@@ -145,6 +145,65 @@ export const SCHEMAS_MAP: Record<
           sign: ["mina:base58-signature"]
         }
       }
+    },
+
+
+    "Sha256Secp256k1": {
+      default: {
+        id: {
+          MinaPublicKey: {
+            t: ["uint16-bytes"],
+            k: ["base58-bytes"],
+          },
+          EthereumAddress: {
+            t: ["uint16-bytes"],
+            k: ["hex-bytes"]
+          },
+          Secp256k1PublicKey: { // TODO
+            t: [],
+            k: []
+          }
+        },
+        signature: {
+          isr: {
+            id: {
+              t: ["uint16-bytes"],
+              k: ["hex-bytes"], // 64 bytes secp256k1 public key
+            }
+          },
+          sign: ["hex-bytes"], // secp256k1 signature
+        },
+        attributes: {
+          sch: ["uint64-bytes"],
+          isd: ["uint64-bytes"],
+          exd: ["uint64-bytes"],
+          sbj: {
+            bd: ["uint64-bytes"],
+            cc: ["uint16-bytes"],
+            fn: [
+              "utf8-bytes",
+              "bytes-uint",
+              "mod.uint128",
+              "uint128-bytes"
+            ],
+            ln: [
+              "utf8-bytes",
+              "bytes-uint",
+              "mod.uint128",
+              "uint128-bytes"
+            ],
+            doc: {
+              t: ["uint16-bytes"],
+              id: [
+                "utf8-bytes",
+                "bytes-uint",
+                "mod.uint256",
+                "uint256-bytes"
+              ]
+            }
+          }
+        }
+      }
     }
   }
 };
