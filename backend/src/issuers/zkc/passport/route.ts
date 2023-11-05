@@ -59,11 +59,11 @@ export const ZkcPassportRoutes: ZkCredRoutes = {
   },
 
   canIssue: {
-    method: ["GET"],
+    method: ["POST"],
     url: sybil.EPs.v1("passport").canIssue,
     schema: {
       tags: tags,
-      querystring: {
+      body: {
         type: "object",
         required: ["sessionId"],
         properties: {

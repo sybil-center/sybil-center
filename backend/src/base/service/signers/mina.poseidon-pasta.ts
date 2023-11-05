@@ -3,7 +3,7 @@ import { IDType, ProofType, SybilCred, SybilProof } from "@sybil-center/zkc-core
 import { Field, Poseidon, PrivateKey, PublicKey, Signature } from "snarkyjs";
 import { ServerError } from "../../../backbone/errors.js";
 import { o1jsSybil } from "@sybil-center/zkc-o1js";
-import { getTransformSchemas } from "./schemas.service.js";
+import { getTransformSchemas } from "../schemas.service.js";
 import { IZKCSigner } from "../../types/zkc.signer.js";
 
 export class MinaPoseidonPasta implements IZKCSigner {

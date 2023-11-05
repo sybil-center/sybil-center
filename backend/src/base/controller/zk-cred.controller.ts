@@ -42,9 +42,9 @@ export function zkCredController(injector: Injector<Dependencies>) {
     }
 
     if (canIssueRoute) {
-      fastify.route<{ Querystring: CanIssueReq }>({
+      fastify.route<{ Body: CanIssueReq }>({
         ...canIssueRoute,
-        handler: async ({ query }) => zkcIssuerManager.canIssue(schemaName, query)
+        handler: async ({ body }) => zkcIssuerManager.canIssue(schemaName, body)
       });
     }
 

@@ -2,7 +2,7 @@ import { type Challenge, type HttpClient, type IssuerTypes, } from "zkc-core";
 import { popupFeatures, util } from "../util/index.js";
 import { Schema, toSchemaName } from "../type/schemas.js";
 import { ISybilIssuer, SybilChallengeReq, type SybilCred } from "../type/cred.js";
-import { SybilWalletProof } from "../type/wallet-provider.js";
+import { SybilWalletProof } from "../type/index.js";
 
 export const GOVERNMENT_ID_TYPES = [
   1, // Passport

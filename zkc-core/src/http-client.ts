@@ -37,12 +37,12 @@ export class HttpClient {
     method?: string;
   }): Promise<TOut> {
     const endpoint = new URL(args.path, this.issuerDomain);
-    endpoint.searchParams.set("sessionId", args.canIssueReq.sessionId);
     const resp = await fetch(endpoint, {
-      method: args.method ? args.method : "GET",
+      method: args.method ? args.method : "POST",
       headers: {
         ...args.headers
-      }
+      },
+      body: JSON.stringify(args.canIssueReq)
     });
     const body = await resp.json();
     if (resp.ok) return body;

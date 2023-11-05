@@ -87,7 +87,7 @@ test("o1jsPreparator.prepareAttributes", () => {
     exd,
     isr_id_t,
     isr_id_k
-  ] = o1jsSybil.preparator.getPreparedAttributes<PreparedAttr>(cred, {
+  ] = o1jsSybil.getPreparator().getPreparedAttributes<PreparedAttr>(cred, {
     proof: { index: 0 },
     schema: "pre"
   });
@@ -103,7 +103,7 @@ test("o1jsPreparator.prepareSign", () => {
     sign,
     isr_id_t,
     isr_id_k
-  ] = o1jsSybil.preparator.getPreparedSign<PreparedSign>(cred, {
+  ] = o1jsSybil.getPreparator().getPreparedSign<PreparedSign>(cred, {
     proof: { index: 0 },
     schema: "pre"
   });
@@ -117,13 +117,13 @@ test("verify attributes & signature", () => {
     sign,
     isr_id_t,
     isr_id_k
-  ] = o1jsSybil.preparator.getPreparedSign<PreparedSign>(cred, {
+  ] = o1jsSybil.getPreparator().getPreparedSign<PreparedSign>(cred, {
     proof: { index: 0 },
     schema: "pre"
   });
   a.is(isr_id_t.toBigInt(), 0n, `isr id type is not correct`);
   a.is(isr_id_k.toBase58(), isrPublicKey.toBase58(), `isr id key is not correct`);
-  const preparedAttr = o1jsSybil.preparator.getPreparedAttributes<Field[]>(cred);
+  const preparedAttr = o1jsSybil.getPreparator().getPreparedAttributes<Field[]>(cred);
   const hash = Poseidon.hash(preparedAttr);
   a.is(hash.toBigInt(), poseidonHash.toBigInt(), `hash is not correct`);
   const verified = sign.verify(isr_id_k, [hash]).toBoolean();
@@ -135,7 +135,7 @@ test("o1jsZKC.verify", async () => {
     cred,
     signSelector: { proof: { index: 0 }, schema: "pre" }
   });
-  a.is(verified, true, `signature is not verified`)
+  a.is(verified, true, `signature is not verified`);
 });
 
 test.run();

@@ -313,9 +313,9 @@ async function preIssue(args: {
 
   // Check can issue result before webhook
   const canIssueBeforeResp = await fastify.inject({
-    method: "GET",
+    method: "POST",
     url: sybil.EPs.v1("passport").canIssue,
-    query: { sessionId: refId }
+    payload: { sessionId: refId }
   });
   a.is(
     canIssueBeforeResp.statusCode, 200,
@@ -372,9 +372,9 @@ async function preIssue(args: {
 
   // Assert can issue request after webhook
   const canIssueAfterResp = await fastify.inject({
-    method: "GET",
+    method: "POST",
     url: sybil.EPs.v1("passport").canIssue,
-    query: { sessionId: refId }
+    payload: { sessionId: refId }
   });
   a.is(
     canIssueAfterResp.statusCode, 200,

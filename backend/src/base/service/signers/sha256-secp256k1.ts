@@ -1,7 +1,7 @@
 import { IZKCSigner } from "../../types/zkc.signer.js";
 import * as u8a from "uint8arrays";
 import { ProofType, SybilCred, SybilID, SybilPreparator, SybilProof } from "@sybil-center/zkc-core";
-import { getTransformSchemas } from "./schemas.service.js";
+import { getTransformSchemas } from "../schemas.service.js";
 import { ServerError } from "../../../backbone/errors.js";
 import { sha256 } from "@noble/hashes/sha256";
 import { secp256k1 } from "@noble/curves/secp256k1";

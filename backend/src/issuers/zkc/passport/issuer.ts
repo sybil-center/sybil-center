@@ -1,6 +1,13 @@
-import { ChallengeReq, GovernmentIdType, ISybilIssuer, PassportCred, PassportIT, Schema } from "@sybil-center/zkc-core";
+import {
+  type ChallengeReq,
+  type GovernmentIdType,
+  type ISybilIssuer,
+  type PassportCred,
+  type PassportIT,
+  type Schema
+} from "@sybil-center/zkc-core";
 import { Config } from "../../../backbone/config.js";
-import { Disposable, tokens } from "typed-inject";
+import { type Disposable, tokens } from "typed-inject";
 import { SignVerifierManager } from "../../../base/service/verifiers/sign-verifier.manager.js";
 import { ZKCSignerManager } from "../../../base/service/signers/zkc.signer-manager.js";
 import {
