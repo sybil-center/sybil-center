@@ -1,6 +1,6 @@
 {
   "name": "@sybil-center/zkc-core",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Work with sybil-center ZKC",
   "license": "(Apache-2.0 OR MIT)",
   "keywords": [
