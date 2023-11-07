@@ -1,11 +1,20 @@
 {
   "name": "@sybil-center/zkc-o1js",
-  "version": "0.0.2",
-  "description": "Work with ZKC for Mina protocol",
-  "license": "Apache-2.0",
+  "version": "0.0.3",
+  "description": "Work with sybil-center ZKC & MINA protocol",
+  "license": "(Apache-2.0 OR MIT)",
+  "keywords": [
+    "zkc",
+    "zkc-sybil",
+    "sybil",
+    "sybil-o1js",
+    "zkc-o1js",
+    "zkc-protocol",
+    "zero-knowledge credentials"
+  ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sybil-center/zkc-o1js"
+    "url": "https://github.com/sybil-center/sybil-center"
   },
   "type": "module",
   "files": [

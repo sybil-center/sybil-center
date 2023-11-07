@@ -1,11 +1,18 @@
 {
   "name": "@sybil-center/zkc-core",
-  "version": "0.0.5",
-  "description": "Cover raw HTTP requests to issue Zero-Knowledge Credentials & ZKC preparation implementation",
-  "license": "Apache-2.0",
+  "version": "0.0.6",
+  "description": "Work with sybil-center ZKC",
+  "license": "(Apache-2.0 OR MIT)",
+  "keywords": [
+    "zkc",
+    "zkc-sybil",
+    "sybil",
+    "zero-knowledge credentials",
+    "zkc-protocol"
+  ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sybil-center/zkc-core"
+    "url": "https://github.com/sybil-center/sybil-center"
   },
   "type": "module",
   "files": [
