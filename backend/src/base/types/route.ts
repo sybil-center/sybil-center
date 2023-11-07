@@ -1,6 +1,6 @@
 import { RouteOptions } from "fastify/types/route.js";
 import { CredentialType } from "@sybil-center/sdk/types";
-import { ZkcSchemaNames } from "./zkc.credential.js";
+import { SchemaName } from "@sybil-center/zkc-core";
 
 /** Base route interface each route has to implement it */
 export type Route = Omit<RouteOptions, "handler">
@@ -13,7 +13,7 @@ export type CredentialRoutes = {
 }
 
 export type ZkCredRoutes = {
-  schemaName: ZkcSchemaNames,
+  schemaName: SchemaName,
   issue: Route,
   challenge?: Route,
   canIssue?: Route

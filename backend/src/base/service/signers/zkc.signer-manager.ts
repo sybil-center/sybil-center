@@ -1,57 +1,63 @@
-import { IZkcSigner } from "../../types/zkc.signer.js";
-import { Proved, ZkCred } from "../../types/zkc.credential.js";
-import { TransCredSchema } from "@sybil-center/zkc-preparator";
 import { Config } from "../../../backbone/config.js";
 import { tokens } from "typed-inject";
-import { ZkcIdTypeAlias } from "../../types/zkc.issuer.js";
-import { MinaSigner } from "./mina-signer.service.js";
+import { PROOF_TYPES, ProofType, SybilCred, SybilProof } from "@sybil-center/zkc-core";
+import { IZKCSigner } from "../../types/zkc.signer.js";
+import { MinaPoseidonPasta } from "./mina.poseidon-pasta.js";
 import { ClientError } from "../../../backbone/errors.js";
-import { ZKC } from "../../../util/zk-credentials/index.js";
-import { NoirECDSA } from "./noir-ecdsa.js";
+import { Sha256Secp256k1 } from "./sha256-secp256k1.js";
 
-export interface IZkcSignerManager {
-  signer(alias: string): IZkcSigner;
-  signZkCred<
-    TCred extends ZkCred = ZkCred
-  >(
-    alias: string | number,
-    props: Omit<TCred, "isr">,
-    transSchema: TransCredSchema
-  ): Promise<Proved<TCred>>;
-}
+export class ZKCSignerManager {
 
-export class ZkcSignerManager implements IZkcSignerManager {
+  private readonly signers: Record<ProofType, IZKCSigner>;
 
-  private readonly signers: Record<ZkcIdTypeAlias, IZkcSigner>;
-
-  static inject = tokens("config");
+  static inject = tokens(
+    "config",
+  );
   constructor(
     config: Config
   ) {
-    const minaSigner = new MinaSigner(config);
-    const noirSigner = new NoirECDSA(config)
     this.signers = {
-      "mina": minaSigner,
-      "0": minaSigner,
-      "1": noirSigner,
-      "eth": noirSigner
+      "Mina:PoseidonPasta": new MinaPoseidonPasta(config),
+      "Sha256Secp256k1": new Sha256Secp256k1(config)
     };
   }
 
-  signer(alias: string): IZkcSigner {
-    const isAlias = ZKC.idType.isAlias(alias);
-    if (!isAlias) throw new ClientError(`Chain namespace ${alias} is not supported`);
-    return this.signers[alias];
+  signer(proofType: ProofType): IZKCSigner {
+    const signer = this.signers[proofType];
+    if (signer) return signer;
+    throw new ClientError(`Proof type ${proofType} is not supported`);
   }
 
-  signZkCred<
-    TCred extends ZkCred = ZkCred
-  >(
-    alias: string,
-    props: Omit<TCred, "isr">,
-    transSchema: TransCredSchema
-  ): Promise<Proved<TCred>> {
-    const signer = this.signer(alias);
-    return signer.signZkCred(props, transSchema);
+  signAttributes<
+    TCred extends SybilCred = SybilCred
+  >(args: {
+    attributes: TCred["attributes"];
+    proofType: ProofType;
+  }): Promise<SybilProof> {
+    return this.signer(args.proofType)
+      .signAttributes({ attributes: args.attributes });
+  }
+
+  async proveZkCred<
+    TCred extends SybilCred = SybilCred
+  >(args: {
+    attributes: TCred["attributes"];
+    proofTypes?: ProofType[];
+  }): Promise<Pick<TCred, "attributes" | "proofs">> {
+    const provideTypes = args.proofTypes
+      ? Array.from(new Set(args.proofTypes))
+      : PROOF_TYPES;
+    const proofs: SybilProof[] = [];
+    for (const proofType of provideTypes) {
+      const proof = await this.signAttributes({
+        attributes: args.attributes,
+        proofType: proofType
+      });
+      proofs.push(proof);
+    }
+    return {
+      proofs: proofs,
+      attributes: args.attributes
+    };
   }
 }

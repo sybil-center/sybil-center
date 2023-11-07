@@ -6,27 +6,23 @@ import { OAuthQueryCallBack, OAuthState } from "../types/oauth.js";
 import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 import { Config } from "../../backbone/config.js";
 import { IssuerContainer } from "../service/issuer-container.js";
-import { ZkcIssuerManager } from "../../issuers/zkc/zkc.issuer-manager.js";
 
 type Dependencies = {
   httpServer: HttpServer;
   config: Config;
   issuerContainer: IssuerContainer;
-  zkcIssuerManager: ZkcIssuerManager;
 };
 
 const tokens: (keyof Dependencies)[] = [
   "httpServer",
   "config",
   "issuerContainer",
-  "zkcIssuerManager"
 ];
 export function oauthController(injector: Injector<Dependencies>) {
   const {
     httpServer: { fastify },
     config,
     issuerContainer,
-    zkcIssuerManager
   } = contextUtil.from(tokens, injector);
 
   fastify.route({
@@ -48,9 +44,8 @@ export function oauthController(injector: Injector<Dependencies>) {
       try {
         const state = ThrowDecoder.decode(OAuthState, query.state);
         let redirectUrl: URL | undefined;
-        if (state.isZKC) {
-          redirectUrl = await zkcIssuerManager.callbackOAuth(query.code, state);
-        } else {
+        if (state.isZKC) {}
+        else {
           redirectUrl = await issuerContainer.handleOAuthCallback(
             query.code,
             state

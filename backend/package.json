@@ -40,6 +40,7 @@
     "@sybil-center/sdk": "workspace:*",
     "@sybil-center/zkc-preparator": "^0.0.4",
     "@sybil-center/zkc-core": "workspace:*",
+    "@sybil-center/zkc-o1js": "workspace:*",
     "bitcoinjs-message": "^2.2.0",
     "bs58": "^5.0.0",
     "cache-clock": "^1.5.0",

@@ -1,13 +1,13 @@
 import { HttpServer } from "../../backbone/http-server.js";
-import { ZkcIssuerManager } from "../../issuers/zkc/zkc.issuer-manager.js";
 import { Injector } from "typed-inject";
 import { contextUtil } from "../../util/context.util.js";
 import { personaWebhookRoute } from "./routes/persona-kyc.route.js";
 import { FastifyRequest } from "fastify";
+import { ZKCIssuerManager } from "../../issuers/zkc/zkc-issuer.manager.js";
 
 type Dependencies = {
   httpServer: HttpServer;
-  zkcIssuerManager: ZkcIssuerManager
+  zkcIssuerManager: ZKCIssuerManager
 }
 
 const tokens: (keyof Dependencies)[] = [
@@ -25,7 +25,7 @@ export function personaKYCController(injector: Injector<Dependencies>) {
     ...personaWebhookRoute,
     config: { rawBody: true },
     handler: async (req: FastifyRequest, resp) => {
-      await zkcIssuerManager.handleWebhook("Passport", req);
+      await zkcIssuerManager.handleWebhook("passport", req);
       resp.statusCode = 200;
       resp.send({ message: "ok" });
     }

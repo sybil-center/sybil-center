@@ -23,12 +23,14 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
+    "noPropertyAccessFromIndexSignature": false,
     "allowUnreachableCode": false,
     "skipLibCheck": true,
     "rootDir": "./src/",
     "sourceRoot": "./src/",
     "outDir": "./dist/"
   },
-  "exclude": ["./dist/"]
+  "exclude": [
+    "./dist/",
+  ]
 }
