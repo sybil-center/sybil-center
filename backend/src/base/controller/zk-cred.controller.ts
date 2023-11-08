@@ -12,7 +12,7 @@ type Dependencies = {
 
 const tokens: (keyof Dependencies)[] = [
   "zkcIssuerManager",
-  "httpServer"
+  "httpServer",
 ];
 
 export function zkCredController(injector: Injector<Dependencies>) {
@@ -44,7 +44,9 @@ export function zkCredController(injector: Injector<Dependencies>) {
     if (canIssueRoute) {
       fastify.route<{ Body: CanIssueReq }>({
         ...canIssueRoute,
-        handler: async ({ body }) => zkcIssuerManager.canIssue(schemaName, body)
+        handler: async ({ body }) => {
+          return zkcIssuerManager.canIssue(schemaName, body);
+        }
       });
     }
 

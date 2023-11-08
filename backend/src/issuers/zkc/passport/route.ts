@@ -67,15 +67,7 @@ export const ZkcPassportRoutes: ZkCredRoutes = {
         type: "object",
         required: ["sessionId"],
         properties: {
-          sessionId: { type: "string" }
-        }
-      },
-      response: {
-        200: {
-          type: "object",
-          properties: {
-            canIssue: { type: "boolean" }
-          }
+          sessionId: { type: "string" },
         }
       }
     }
