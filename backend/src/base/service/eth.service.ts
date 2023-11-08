@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { tokens } from "typed-inject";
-import { ClientError } from "../../backbone/errors.js";
+import { ClientErr } from "../../backbone/errors.js";
 
 export interface IEthService {
   /**
@@ -51,7 +51,7 @@ export class EthService implements IEthService {
     try {
       return ethers.utils.verifyMessage(signMessage, signature);
     } catch (err) {
-      throw new ClientError(`Can not verify signature: ${signature}`);
+      throw new ClientErr(`Can not verify signature: ${signature}`);
     }
   }
 
@@ -64,6 +64,6 @@ export class EthService implements IEthService {
     if (ethAddressExists) {
       return ethAddress;
     }
-    throw new ClientError(`Ethereum address - ${ethAddress} not exists`);
+    throw new ClientErr(`Ethereum address - ${ethAddress} not exists`);
   }
 }

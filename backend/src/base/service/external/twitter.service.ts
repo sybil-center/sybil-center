@@ -1,5 +1,5 @@
 import { TwitterApi } from "twitter-api-v2";
-import { ServerError } from "../../../backbone/errors.js";
+import { ServerErr } from "../../../backbone/errors.js";
 import { IOAuthService, OAuthState } from "../../types/oauth.js";
 import { credentialOAuthCallbackURL } from "../../../util/route.util.js";
 import { CredentialType } from "@sybil-center/sdk/types";
@@ -26,13 +26,11 @@ export type TwitterOAuthLinkProps = {
 };
 
 export class TwitterService
-  implements
-    IOAuthService<
-      TwitterOAuthLinkProps,
-      TwitterOAuthLink,
-      TwitterOAuthAccessTokenRequest
-    >
-{
+  implements IOAuthService<
+    TwitterOAuthLinkProps,
+    TwitterOAuthLink,
+    TwitterOAuthAccessTokenRequest
+  > {
   private readonly pathToExposeDomain: URL;
   readonly twitterApi: TwitterApi;
 
@@ -54,12 +52,12 @@ export class TwitterService
     try {
       const { data: user } = await new TwitterApi(accessToken).v2.me();
       return user;
-    } catch (e) {
-      throw new ServerError("Twitter api error", {
-        props: {
-          _log: `Twitter get user info api error. Error: ${e}`,
-          _place: this.constructor.name,
-        },
+    } catch (e: any) {
+      throw new ServerErr({
+        message: "Twitter api error",
+        description: `Twitter get user info api error`,
+        cause: e,
+        place: this.constructor.name
       });
     }
   }
@@ -97,12 +95,12 @@ export class TwitterService
         redirectUri: credentialOAuthCallbackURL(this.pathToExposeDomain).href,
       });
       return accessToken;
-    } catch (e) {
-      throw new ServerError("Twitter api error", {
-        props: {
-          _log: `Twitter get access token api error. Error: ${e}`,
-          _place: this.constructor.name,
-        },
+    } catch (e: any) {
+      throw new ServerErr({
+        message: "Twitter api error",
+        place: this.constructor.name,
+        description: `Twitter get access token api error`,
+        cause: e
       });
     }
   }

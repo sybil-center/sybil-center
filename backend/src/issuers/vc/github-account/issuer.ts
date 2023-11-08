@@ -4,7 +4,7 @@ import { type Disposable, tokens } from "typed-inject";
 import { GitHubService, type GitHubUser } from "../../../base/service/external/github.service.js";
 import { ProofService } from "../../../base/service/proof.service.js";
 import { DIDService } from "../../../base/service/did.service.js";
-import { ClientError } from "../../../backbone/errors.js";
+import { ClientErr } from "../../../backbone/errors.js";
 import type { IMultiSignService } from "../../../base/service/multi-sign.service.js";
 import { fromIssueMessage, toIssueMessage } from "../../../util/message.util.js";
 import { TimedCache } from "../../../base/service/timed-cache.js";
@@ -152,7 +152,7 @@ export class GitHubAccountIssuer
     const session = this.sessionCache.get(sessionId);
     const { issueMessage, code } = session;
     if (!code) {
-      throw new ClientError("GitHub processing your authorization. Wait!");
+      throw new ClientErr("GitHub processing your authorization. Wait!");
     }
     const { custom, expirationDate, subjectId, githubProps } = fromIssueMessage(issueMessage);
     await this.multiSignService.verify({

@@ -2,7 +2,7 @@ import { tokens } from "typed-inject";
 import { hash as sha256 } from "@stablelib/sha256";
 import * as u8a from "uint8arrays";
 import crypto from "node:crypto";
-import { ClientError } from "../../backbone/errors.js";
+import { ClientErr } from "../../backbone/errors.js";
 import { EthAccountVC } from "@sybil-center/sdk";
 import { APIKeys } from "@sybil-center/sdk/types";
 
@@ -80,7 +80,10 @@ export class ApiKeyService {
         isSecret: kind === "secretkey"
       };
     } catch (e) {
-      throw new ClientError("API key or secret key is not valid", 403);
+      throw new ClientErr({
+        message: "API key or secret key is not valid",
+        statusCode: 403
+      });
     }
   }
 

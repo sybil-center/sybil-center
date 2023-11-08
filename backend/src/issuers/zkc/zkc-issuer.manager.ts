@@ -10,8 +10,9 @@ import {
 import { IWebhookHandler } from "../../base/types/webhook-handler.js";
 import { Disposable, tokens } from "typed-inject";
 import { type ZKCPassportIssuer } from "./passport/issuer.js";
-import { ClientError } from "../../backbone/errors.js";
+import { ClientErr } from "../../backbone/errors.js";
 import { FastifyRequest } from "fastify";
+import { ILogger } from "../../backbone/logger.js";
 
 type Issuer = ISybilIssuer & Partial<IWebhookHandler>
 
@@ -19,18 +20,26 @@ export class ZKCIssuerManager implements Disposable {
   private readonly issuers: Record<SchemaName, Issuer>;
 
   static inject = tokens(
-    "zkcPassportIssuer"
+    "logger",
+    "zkcPassportIssuer",
   );
-  constructor(passportIssuer: ZKCPassportIssuer) {
+  constructor(
+    logger: ILogger,
+    passportIssuer: ZKCPassportIssuer
+  ) {
     this.issuers = {
       "passport": passportIssuer
     };
+    for (const issuerName in this.issuers) {
+      logger.info(`Added ${issuerName} zero-knowledge credential issuer`);
+    }
+
   }
 
   issuer(name: SchemaName) {
     const issuer = this.issuers[name];
     if (issuer) return issuer;
-    throw new ClientError(`${name} schema is not supported`);
+    throw new ClientErr(`${name} schema is not supported`);
   }
 
   getChallenge(

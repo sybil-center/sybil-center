@@ -2,7 +2,7 @@ import type { ICredentialIssuer, IOAuthCallback } from "../types/issuer.js";
 import type { ILogger } from "../../backbone/logger.js";
 import type { OAuthState } from "../types/oauth.js";
 import { type Disposable, type Injector, INJECTOR_TOKEN, tokens } from "typed-inject";
-import { ClientError } from "../../backbone/errors.js";
+import { ClientErr } from "../../backbone/errors.js";
 import {
   CanIssueReq,
   CanIssueResp,
@@ -13,7 +13,7 @@ import {
   IssueReq
 } from "@sybil-center/sdk/types";
 
-  type UnknownCredentialIssuer = ICredentialIssuer<
+type UnknownCredentialIssuer = ICredentialIssuer<
   IssueReq,
   Credential,
   ChallengeReq,
@@ -104,7 +104,7 @@ export class IssuerContainer implements Disposable {
     & Partial<IOAuthCallback> {
     const issuer = this.issuers.get(type);
     if (issuer) return issuer;
-    throw new ClientError(`Issuer ${type} not found`);
+    throw new ClientErr(`Issuer ${type} not found`);
   }
 
   async dispose() {

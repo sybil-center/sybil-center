@@ -1,11 +1,11 @@
 import { Config } from "../../../backbone/config.js";
 import { tokens } from "typed-inject";
-import {ZkcID} from "@sybil-center/zkc-core"
+import { ZkcID } from "@sybil-center/zkc-core";
 import { hash as sha256 } from "@stablelib/sha256";
 import * as u8a from "uint8arrays";
 import * as t from "io-ts";
 import crypto from "node:crypto";
-import { ClientError, ServerError } from "../../../backbone/errors.js";
+import { ClientErr, ServerErr } from "../../../backbone/errors.js";
 import { ThrowDecoder } from "../../../util/throw-decoder.util.js";
 import { rest } from "../../../util/fetch.util.js";
 import { FastifyRequest } from "fastify";
@@ -247,12 +247,12 @@ export class PersonaKYC {
         createdAt: new Date(data.attributes["created-at"]),
         updatedAt: new Date(data.attributes["updated-at"])
       };
-    } catch (e) {
-      throw new ServerError("Internal server error", {
-        props: {
-          _place: this.constructor.name,
-          _log: `Fetch Persona create account error. Details: ${String(e)}`
-        }
+    } catch (e: any) {
+      throw new ServerErr({
+        message: "Internal server error",
+        place: this.constructor.name,
+        description: `Fetch Persona create account error`,
+        cause: e
       });
     }
   }
@@ -277,12 +277,12 @@ export class PersonaKYC {
         createdAt: new Date(attributes["created-at"]),
         updatedAt: new Date(attributes["updated-at"])
       } : undefined;
-    } catch (e) {
-      throw new ServerError("Internal server error", {
-        props: {
-          _place: this.constructor.name,
-          _log: `Fetch Persona find account error. Details: ${String(e)}`
-        }
+    } catch (e: any) {
+      throw new ServerErr({
+        message: "Internal server error",
+        place: this.constructor.name,
+        description: `Fetch Persona find account error`,
+        cause: e
       });
     }
   }
@@ -316,12 +316,12 @@ export class PersonaKYC {
         inquiryId: inquiryId,
         verifyURL: `https://withpersona.com/verify?inquiry-id=${inquiryId}`
       };
-    } catch (e) {
-      throw new ServerError("Internal server error", {
-        props: {
-          _place: this.constructor.name,
-          _log: `Fetch Persona create inquiry error. Details: ${String(e)}`
-        }
+    } catch (e: any) {
+      throw new ServerErr({
+        message: "Internal server error",
+        place: this.constructor.name,
+        description: `Fetch Persona create inquiry error`,
+        cause: e
       });
     }
   }
@@ -329,7 +329,7 @@ export class PersonaKYC {
   async handleWebhook(req: FastifyRequest): Promise<Inquiry["Hook"]["Return"]> {
     this.verifyCallback(req);
     const { data } = ThrowDecoder.decode(ToInqEvent, req.body,
-      new ClientError("Invalid type of inquiry webhook")
+      new ClientErr("Invalid type of inquiry webhook")
     );
     this.checkHook({ data });
     if (data.type === "inquiry.failed") return {
@@ -341,7 +341,7 @@ export class PersonaKYC {
     const completedEvent = ThrowDecoder.decode(
       InqCompletedEvent,
       { data },
-      new ClientError("Inquiry completed event haven't required fields")
+      new ClientErr({ message: "Inquiry completed event haven't required fields" })
     );
     const user = completedEvent.data.attributes.payload.data.attributes;
     return {
@@ -368,7 +368,7 @@ export class PersonaKYC {
         ? headers["Persona-Signature"]
         : headers["persona-signature"]
     ) as string;
-    if (!personaSign) throw new ClientError("No webhook signature in header");
+    if (!personaSign) throw new ClientErr("No webhook signature in header");
     const signParams: Record<string, string | undefined> = {};
     personaSign.split(",")
       .forEach(pair => {
@@ -376,27 +376,27 @@ export class PersonaKYC {
         signParams[key!] = value;
       });
     if (!signParams.t || !signParams.v1) {
-      throw new ClientError("Invalid Persona-Signature header");
+      throw new ClientErr("Invalid Persona-Signature header");
     }
     const hmac = crypto.createHmac("sha256", this.config.personaHookSecret)
       .update(`${signParams.t}.${rawBody}`)
       .digest("hex");
     if (!crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(signParams.v1))) {
-      throw new ClientError("Signature is invalid or secret is expired");
+      throw new ClientErr("Signature is invalid or secret is expired");
     }
   };
 
   private checkHook({ data }: InqEvent) {
-    if (data.type !== "event") throw new ClientError("Invalid entity type");
+    if (data.type !== "event") throw new ClientErr("Invalid entity type");
     const attributes = data.attributes;
     if (!(["inquiry.completed", "inquiry.failed"].includes(attributes.name))) {
-      throw new ClientError("Event attributes name must be: inquiry.completed or inquiry.failed");
+      throw new ClientErr("Event attributes name must be: inquiry.completed or inquiry.failed");
     }
     const payload = attributes.payload.data;
-    if (payload.type !== "inquiry") throw new ClientError("Invalid entity type");
+    if (payload.type !== "inquiry") throw new ClientErr("Invalid entity type");
     const payloadStatue = payload.attributes.status;
     if (!(["completed", "failed"].includes(payloadStatue))) {
-      throw new ClientError("Event payload attributes status must be: completed or failed");
+      throw new ClientErr("Event payload attributes status must be: completed or failed");
     }
   }
 }

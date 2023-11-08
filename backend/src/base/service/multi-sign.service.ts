@@ -5,7 +5,7 @@ import { EthereumSignService } from "./sign/ethereum-sign.service.js";
 import { PolygonSignService } from "./sign/polygon-sign.service.js";
 import { SolanaSignService } from "./sign/solana-sign.service.js";
 import { tokens } from "typed-inject";
-import { ClientError } from "../../backbone/errors.js";
+import { ClientErr } from "../../backbone/errors.js";
 import { Prefix } from "@sybil-center/sdk/types";
 
 type MultiVerify = {
@@ -49,7 +49,7 @@ export class MultiSignService implements IMultiSignService {
   async verify({ subjectId, message, signature }: MultiVerify): Promise<string> {
     const idEntry = subjectId.split(":");
     const address = idEntry.pop();
-    if (!address) throw new ClientError("Address is undefined");
+    if (!address) throw new ClientErr("Address is undefined");
     const prefix = idEntry.join(":") as Prefix;
     return await this.signService(prefix).did({ signature, message, address });
   }
@@ -62,6 +62,6 @@ export class MultiSignService implements IMultiSignService {
     if (signService) {
       return signService;
     }
-    throw new ClientError(`${alias} is not supported`);
+    throw new ClientErr(`${alias} is not supported`);
   }
 }

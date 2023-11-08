@@ -3,7 +3,7 @@ import { tokens } from "typed-inject";
 import { PROOF_TYPES, ProofType, SybilCred, SybilProof } from "@sybil-center/zkc-core";
 import { IZKCSigner } from "../../types/zkc.signer.js";
 import { MinaPoseidonPasta } from "./mina.poseidon-pasta.js";
-import { ClientError } from "../../../backbone/errors.js";
+import { ClientErr } from "../../../backbone/errors.js";
 import { Sha256Secp256k1 } from "./sha256-secp256k1.js";
 
 export class ZKCSignerManager {
@@ -25,7 +25,7 @@ export class ZKCSignerManager {
   signer(proofType: ProofType): IZKCSigner {
     const signer = this.signers[proofType];
     if (signer) return signer;
-    throw new ClientError(`Proof type ${proofType} is not supported`);
+    throw new ClientErr(`Proof type ${proofType} is not supported`);
   }
 
   signAttributes<

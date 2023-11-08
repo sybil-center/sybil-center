@@ -2,7 +2,7 @@ import { IDName, IDType, SybilChallengeReq, SybilID, toIdName } from "@sybil-cen
 import { IVerifier, SignEntry } from "../../types/verifier.js";
 import { MinaVerifier } from "./mina-verifier.service.js";
 import { EthVerifier } from "./eth-verifier.service.js";
-import { ClientError } from "../../../backbone/errors.js";
+import { ClientErr } from "../../../backbone/errors.js";
 
 export class SignVerifierManager {
   private readonly verifierMap: Map<IDName, IVerifier>;
@@ -19,7 +19,7 @@ export class SignVerifierManager {
   verifier(type: IDType): IVerifier {
     const verifier = this.verifierMap.get(toIdName(type));
     if (verifier) return verifier;
-    throw new ClientError(`Unsupported signature verifier for id type ${type}`);
+    throw new ClientErr(`Unsupported signature verifier for id type ${type}`);
   }
 
   async verify(args: {

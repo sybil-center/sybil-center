@@ -1,7 +1,7 @@
 import { Config } from "../../../backbone/config.js";
 import { IDType, ProofType, SybilCred, SybilProof } from "@sybil-center/zkc-core";
 import { Field, Poseidon, PrivateKey, PublicKey, Signature } from "snarkyjs";
-import { ServerError } from "../../../backbone/errors.js";
+import { ServerErr } from "../../../backbone/errors.js";
 import { o1jsSybil } from "@sybil-center/zkc-o1js";
 import { getTransformSchemas } from "../schemas.service.js";
 import { IZKCSigner } from "../../types/zkc.signer.js";
@@ -50,11 +50,10 @@ export class MinaPoseidonPasta implements IZKCSigner {
       signatureSchemas
     } = args;
     const attributeSchema = attributeSchemas.default;
-    if (!attributeSchema) throw new ServerError("Internal server error", {
-      props: {
-        _place: this.constructor.name,
-        _log: `Can not find attribute schema mina for attributes=${attributes}`
-      }
+    if (!attributeSchema) throw new ServerErr({
+      message: "Internal server error",
+      place: this.constructor.name,
+      description: `Can not find attribute schema mina for attributes=${attributes}`,
     });
     const prepared = o1jsSybil.getPreparator().prepareAttributes<Field[]>({
       attributes: attributes,

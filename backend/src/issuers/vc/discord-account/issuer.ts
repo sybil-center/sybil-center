@@ -4,7 +4,7 @@ import { Disposable, tokens } from "typed-inject";
 import { DiscordService, type DiscordUser } from "../../../base/service/external/discord.service.js";
 import { ProofService } from "../../../base/service/proof.service.js";
 import { DIDService } from "../../../base/service/did.service.js";
-import { ClientError } from "../../../backbone/errors.js";
+import { ClientErr } from "../../../backbone/errors.js";
 import type { IMultiSignService } from "../../../base/service/multi-sign.service.js";
 import { fromIssueMessage, toIssueMessage } from "../../../util/message.util.js";
 import { TimedCache } from "../../../base/service/timed-cache.js";
@@ -136,7 +136,7 @@ export class DiscordAccountIssuer
   ): Promise<URL | undefined> {
     const sessionId = state.sessionId;
     const session = this.sessionCache.get(sessionId);
-    if (!session) throw new ClientError(`No session with id = ${sessionId}`);
+    if (!session) throw new ClientErr(`No session with id = ${sessionId}`);
     session.code = code;
     this.sessionCache.set(sessionId, session);
     return session.redirectUrl;
@@ -154,7 +154,7 @@ export class DiscordAccountIssuer
     const session = this.sessionCache.get(sessionId);
     const { code, issueMessage } = session;
     if (!code) {
-      throw new ClientError("Discord processing your authorization. Wait!");
+      throw new ClientErr("Discord processing your authorization. Wait!");
     }
     const { custom, expirationDate, subjectId, discordProps } = fromIssueMessage(issueMessage);
     await this.multiSignService.verify({

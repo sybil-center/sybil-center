@@ -5,7 +5,7 @@ import { ProofService } from "../../../base/service/proof.service.js";
 import { TwitterService, type TwitterUser } from "../../../base/service/external/twitter.service.js";
 import { DIDService } from "../../../base/service/did.service.js";
 import { absoluteId } from "../../../util/id.util.js";
-import { ClientError } from "../../../backbone/errors.js";
+import { ClientErr } from "../../../backbone/errors.js";
 import type { IMultiSignService } from "../../../base/service/multi-sign.service.js";
 import { fromIssueMessage, toIssueMessage } from "../../../util/message.util.js";
 import { TimedCache } from "../../../base/service/timed-cache.js";
@@ -151,7 +151,7 @@ export class TwitterAccountIssuer
     const session = this.sessionCache.get(sessionId);
     const { code, codeVerifier, issueMessage } = session;
     if (!code) {
-      throw new ClientError("Twitter processing your authorization. Wait!");
+      throw new ClientErr("Twitter processing your authorization. Wait!");
     }
     const { custom, expirationDate, subjectId, twitterProps } = fromIssueMessage(issueMessage);
     await this.multiSignService.verify({
