@@ -37,7 +37,6 @@ export class HttpClient {
     method?: string;
   }): Promise<TOut> {
     const endpoint = new URL(args.path, this.issuerDomain);
-    console.log(args);
     const resp = await fetch(endpoint, {
       method: args.method ? args.method : "POST",
       headers: {
