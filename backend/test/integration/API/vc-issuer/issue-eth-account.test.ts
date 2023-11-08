@@ -12,21 +12,27 @@ import { appSup } from "../../../support/app/index.js";
 import { delay } from "../../../../src/util/delay.util.js";
 import { support } from "../../../support/index.js";
 
-const test = suite("INTEGRATION API: issue Ethereum account credential test");
+type TestContext = {
+  app: App | undefined;
+  apiKey: string | undefined;
+}
 
-let app: App;
-let apiKey: string;
-
-test.before(async () => {
-  configDotEnv({ path: support.configPath, override: true });
-  app = await App.init();
-  const keys = await appSup.apiKeys(app);
-  apiKey = keys.apiKey;
+const test = suite<TestContext>("INTEGRATION API: issue Ethereum account credential test", {
+  app: undefined,
+  apiKey: undefined
 });
 
-test.after(async () => {
+test.before(async (ctx) => {
+  configDotEnv({ path: support.configPath, override: true });
+  const app = await App.init();
+  const keys = await appSup.apiKeys(app);
+  ctx.apiKey = keys.apiKey;
+  ctx.app = app;
+});
+
+test.after(async (ctx) => {
   sinon.restore();
-  await app.close();
+  await ctx.app?.close();
 });
 
 type PreIssueEntry = {
@@ -34,6 +40,7 @@ type PreIssueEntry = {
   custom?: AnyObj,
   expirationDate?: Date,
   props?: EthAccountProps[],
+  ctx: TestContext;
 }
 const preIssue = async (
   args: PreIssueEntry
@@ -41,7 +48,8 @@ const preIssue = async (
   sessionId: string;
   issueMessage: string;
 }> => {
-  const fastify = app.context.resolve("httpServer").fastify;
+  const { app, apiKey } = args.ctx;
+  const fastify = app!.context.resolve("httpServer").fastify;
   const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("EthereumAccount"),
@@ -69,14 +77,16 @@ type AssertIssueRespArgs = {
   issueResp: LightMyRequestResponse,
   subjectDID: string,
   ethereumAddress: string;
+  ctx: TestContext;
 }
 
 const assertIssueResp = async ({
   issueResp,
   subjectDID,
-  ethereumAddress
+  ethereumAddress,
+  ctx: { app }
 }: AssertIssueRespArgs) => {
-  const issuerDID = app.context.resolve("didService").id;
+  const issuerDID = app!.context.resolve("didService").id;
   a.is(
     issueResp.statusCode, 200,
     `issue resp status code is not 200. error: ${issueResp.body}`);
@@ -107,44 +117,44 @@ const assertIssueResp = async ({
   );
 };
 
-const assertSessionDeleted = (sessionId: string) => {
-  //@ts-ignore
-  let { sessionCache } = app.context.resolve("ethereumAccountIssuer");
+const assertSessionDeleted = (sessionId: string, ctx: TestContext) => {
+  // @ts-expect-error
+  let { sessionCache } = ctx.app!.context.resolve("ethereumAccountIssuer");
   a.throws(() => {
     sessionCache.get(sessionId);
   }, "session is not deleted");
 };
 
-test("should issue ethereum account vc", async () => {
+test("should issue ethereum account vc", async (ctx) => {
   const { didPkh: subjectDID, address } = ethereumSupport.info.ethereum;
-  const fastify = app.context.resolve("httpServer").fastify;
-  const { issueMessage, sessionId } = await preIssue({ subjectId: subjectDID });
+  const fastify = ctx.app!.context.resolve("httpServer").fastify;
+  const { issueMessage, sessionId } = await preIssue({ subjectId: subjectDID, ctx });
   const signature = await ethereumSupport.sign(issueMessage);
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("EthereumAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${ctx.apiKey}`
     },
     payload: {
       sessionId: sessionId,
       signature: signature,
     }
   });
-  await assertIssueResp({ issueResp, subjectDID, ethereumAddress: address });
-  assertSessionDeleted(sessionId);
+  await assertIssueResp({ issueResp, subjectDID, ethereumAddress: address, ctx });
+  assertSessionDeleted(sessionId, ctx);
   const credential = JSON.parse(issueResp.body);
-  await appSup.verifyCredential({ credential: credential, app: app });
+  await appSup.verifyCredential({ credential: credential, app: ctx.app! });
 });
 
-test("should not issue credential because not valid signature", async () => {
+test("should not issue credential because not valid signature", async (ctx) => {
   const { didPkh } = ethereumSupport.info.ethereum;
-  const fastify = app.context.resolve("httpServer").fastify;
+  const fastify = ctx.app!.context.resolve("httpServer").fastify;
   const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("EthereumAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${ctx.apiKey}`
     },
     payload: {
       subjectId: didPkh
@@ -162,7 +172,7 @@ test("should not issue credential because not valid signature", async () => {
     method: "POST",
     url: issueEP("EthereumAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${ctx.apiKey}`
     },
     payload: {
       sessionId: sessionId,
@@ -175,31 +185,32 @@ test("should not issue credential because not valid signature", async () => {
   );
 });
 
-test("should issue ethereum account credential with custom property", async () => {
+test("should issue ethereum account credential with custom property", async (ctx) => {
   const {
     didPkh: subjectDID,
     address: ethAddress,
   } = ethereumSupport.info.ethereum;
   const custom = { test: { hello: "world" } };
-  const { fastify } = app.context.resolve("httpServer");
+  const { fastify } = ctx.app!.context.resolve("httpServer");
 
   const { issueMessage, sessionId } = await preIssue({
     subjectId: subjectDID,
-    custom: custom
+    custom: custom,
+    ctx
   });
   const signature = await ethereumSupport.sign(issueMessage);
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("EthereumAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${ctx.apiKey}`
     },
     payload: {
       signature: signature,
       sessionId: sessionId,
     }
   });
-  await assertIssueResp({ issueResp, subjectDID, ethereumAddress: ethAddress });
+  await assertIssueResp({ issueResp, subjectDID, ethereumAddress: ethAddress, ctx });
   const credential = JSON.parse(issueResp.body) as EthAccountVC;
   const { custom: vcCustom } = credential.credentialSubject;
   a.ok(vcCustom, "custom is not present");
@@ -209,12 +220,12 @@ test("should issue ethereum account credential with custom property", async () =
     vcCustom["test"]?.hello, "world",
     "hello custom property is not matched"
   );
-  assertSessionDeleted(sessionId);
-  await appSup.verifyCredential({ credential: credential, app: app });
+  assertSessionDeleted(sessionId, ctx);
+  await appSup.verifyCredential({ credential: credential, app: ctx.app! });
 });
 
-test("issue eth account credential with expiration date", async () => {
-  const fastify = app.context.resolve("httpServer").fastify;
+test("issue eth account credential with expiration date", async (ctx) => {
+  const fastify = ctx.app!.context.resolve("httpServer").fastify;
   const {
     didPkh: subjectDID,
     address: ethereumAddress,
@@ -222,45 +233,46 @@ test("issue eth account credential with expiration date", async () => {
   const expirationDate = new Date();
   const { sessionId, issueMessage } = await preIssue({
     subjectId: subjectDID,
-    expirationDate: expirationDate
+    expirationDate: expirationDate,
+    ctx
   });
   const signature = await ethereumSupport.sign(issueMessage);
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("EthereumAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${ctx.apiKey}`
     },
     payload: {
       sessionId: sessionId,
       signature: signature
     }
   });
-  await assertIssueResp({ issueResp, ethereumAddress, subjectDID });
+  await assertIssueResp({ issueResp, ethereumAddress, subjectDID, ctx });
   const credential = JSON.parse(issueResp.body) as EthAccountVC;
   a.is(
     credential.expirationDate, expirationDate.toISOString(),
     "credential expiration date is not matched"
   );
-  assertSessionDeleted(sessionId);
+  assertSessionDeleted(sessionId, ctx);
   await delay(20);
   await appSup.verifyCredential({
     credential: credential,
-    app: app,
+    app: ctx.app!,
     shouldVerified: false
   });
 });
 
-test("should issue eth credential without props", async () => {
-  const fastify = app.context.resolve("httpServer").fastify;
+test("should issue eth credential without props", async (ctx) => {
+  const fastify = ctx.app!.context.resolve("httpServer").fastify;
   const { didPkh } = ethereumSupport.info.ethereum;
-  const { issueMessage, sessionId } = await preIssue({ subjectId: didPkh, props: [] });
+  const { issueMessage, sessionId } = await preIssue({ subjectId: didPkh, props: [], ctx });
   const signature = await ethereumSupport.sign(issueMessage);
   const issueResp = await fastify.inject({
     method: "POST",
     path: issueEP("EthereumAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${ctx.apiKey}`
     },
     payload: {
       sessionId: sessionId,
@@ -275,16 +287,16 @@ test("should issue eth credential without props", async () => {
   a.not.ok(ethereum.address, `subject ethereum field has to be empty`);
 });
 
-test("should issue eth account credential with only one prop", async () => {
-  const fastify = app.context.resolve("httpServer").fastify;
+test("should issue eth account credential with only one prop", async (ctx) => {
+  const fastify = ctx.app!.context.resolve("httpServer").fastify;
   const { didPkh, address } = ethereumSupport.info.ethereum;
-  const { sessionId, issueMessage } = await preIssue({ subjectId: didPkh, props: ["address"] });
+  const { sessionId, issueMessage } = await preIssue({ subjectId: didPkh, props: ["address"], ctx });
   const signature = await ethereumSupport.sign(issueMessage);
   const issueResp = await fastify.inject({
     method: "POST",
     path: issueEP("EthereumAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${ctx.apiKey}`
     },
     payload: {
       sessionId: sessionId,

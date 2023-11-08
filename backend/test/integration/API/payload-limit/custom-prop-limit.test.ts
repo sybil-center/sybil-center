@@ -6,28 +6,34 @@ import { challengeEP } from "@sybil-center/sdk/util";
 import { ethereumSupport } from "../../../support/chain/ethereum.js";
 import { appSup } from "../../../support/app/index.js";
 
-const test = suite("INTEGRATION API: Custom property size limit test");
+type TestContext = {
+  app: App | undefined;
+  apiKey: string | undefined;
+}
 
-let app: App;
-let apiKey: string;
+const test = suite<TestContext>("INTEGRATION API: Custom property size limit test", {
+  app: undefined,
+  apiKey: undefined
+});
 
-test.before(async () => {
+test.before(async (testContext) => {
   const globalTestConf = new URL("../../../env-config/test.env", import.meta.url);
   const localTestConf = new URL("./test.env", import.meta.url);
   configDotEnv({ path: globalTestConf, override: true });
   configDotEnv({ path: localTestConf, override: true });
-  app = await App.init();
+  const app = await App.init();
   const keys = await appSup.apiKeys(app);
-  apiKey = keys.apiKey;
+  testContext.app = app;
+  testContext.apiKey = keys.apiKey;
 });
 
-test.after(async () => {
-  await app.close();
+test.after(async ({ app }) => {
+  await app!.close();
 });
 
-test("should throw client error because custom property is too large", async () => {
-  const { fastify } = app.context.resolve("httpServer");
-  const config = app.context.resolve("config");
+test("should throw client error because custom property is too large", async ({ app, apiKey }) => {
+  const { fastify } = app!.context.resolve("httpServer");
+  const config = app!.context.resolve("config");
   const didPkh = ethereumSupport.info.ethereum.didPkh;
   const errResp = await fastify.inject({
     method: "POST",

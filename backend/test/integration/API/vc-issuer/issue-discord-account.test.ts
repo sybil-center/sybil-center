@@ -16,10 +16,15 @@ import { bitcoinSupport } from "../../../support/chain/bitcoin.js";
 import { delay } from "../../../../src/util/delay.util.js";
 import { support } from "../../../support/index.js";
 
-const test = suite("INTEGRATION API: issue Discord account credential test");
+type TestContext = {
+  app: App | undefined;
+  apiKey: string | undefined;
+}
 
-let app: App;
-let apiKey: string;
+const test = suite<TestContext>("INTEGRATION API: issue Discord account credential test", {
+  app: undefined,
+  apiKey: undefined
+});
 
 const redirectUrl = "https://example.com/";
 const code = "code";
@@ -31,12 +36,13 @@ const discordUser = {
   username: "test user name"
 };
 
-test.before(async () => {
+test.before(async (context) => {
   const config = support.configPath;
   configDotEnv({ path: config, override: true });
-  app = await App.init();
+  const app = await App.init();
   const keys = await appSup.apiKeys(app);
-  apiKey = keys.apiKey;
+  context.app = app;
+  context.apiKey = keys.apiKey;
 
   const discordAccountIssuer = app.context.resolve(
     "discordAccountIssuer"
@@ -46,12 +52,13 @@ test.before(async () => {
   stub(discordService, "getUser").resolves(discordUser);
 });
 
-test.after(async () => {
+test.after(async ({ app }) => {
   sinon.restore();
-  await app.close();
+  await app?.close();
 });
 
 type PreIssueEntry = {
+  context: TestContext
   custom?: AnyObj;
   expirationDate?: Date;
   subjectId: string;
@@ -64,7 +71,8 @@ const preIssue = async (
   sessionId: string;
   issueMessage: string
 }> => {
-  const fastify = app.context.resolve("httpServer").fastify;
+  const { context: { app, apiKey } } = args;
+  const fastify = app!.context.resolve("httpServer").fastify;
 
   const challengeResp = await fastify.inject({
     method: "POST",
@@ -149,9 +157,10 @@ const preIssue = async (
 
 const assertIssueResp = async (
   issueResp: LightMyRequestResponse,
-  subjectDID: string
+  subjectDID: string,
+  context: TestContext,
 ) => {
-  const issuerId = app.context.resolve("didService").id;
+  const issuerId = context.app!.context.resolve("didService").id;
   a.is(issueResp.statusCode, 200,
     `issue resp status code is not 200. error: ${issueResp.body}`);
 
@@ -178,97 +187,99 @@ const assertIssueResp = async (
 };
 
 
-const assertSessionDeleted = (sessionId: string) => {
-  //@ts-ignore
-  const { sessionCache } = app.context.resolve("discordAccountIssuer");
+const assertSessionDeleted = (sessionId: string, context: TestContext) => {
+  // @ts-expect-error
+  const { sessionCache } = context.app!.context.resolve("discordAccountIssuer");
   a.throws(() => {
     sessionCache.get(sessionId);
   }, "session is not deleted");
 };
 
-test("should issue discord ownership credential with ethereum did-pkh", async () => {
+test("should issue discord ownership credential with ethereum did-pkh", async (context) => {
   const ethDidPkh = ethereumSupport.info.ethereum.didPkh;
-  const fastify = app.context.resolve("httpServer").fastify;
-
-  const { issueMessage, sessionId } = await preIssue({ subjectId: ethDidPkh });
+  const fastify = context.app!.context.resolve("httpServer").fastify;
+  const { issueMessage, sessionId } = await preIssue({
+    subjectId: ethDidPkh,
+    context: context
+  });
   const signature = await ethereumSupport.sign(issueMessage);
 
   const vcResponse = await fastify.inject({
     method: "POST",
     url: issueEP("DiscordAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${context.apiKey}`
     },
     payload: {
       sessionId: sessionId,
       signature: signature,
     }
   });
-  await assertIssueResp(vcResponse, ethDidPkh);
-  assertSessionDeleted(sessionId);
+  await assertIssueResp(vcResponse, ethDidPkh, context);
+  assertSessionDeleted(sessionId, context);
   const credential = JSON.parse(vcResponse.body);
-  await appSup.verifyCredential({ credential: credential, app: app });
+  await appSup.verifyCredential({ credential: credential, app: context.app! });
 });
 
-test("should issue discord ownership credential with solana did-pkh", async () => {
+test("should issue discord ownership credential with solana did-pkh", async (context) => {
   const {
     didPkh: solanaDidPkh,
   } = solanaSupport.info;
-  const { fastify } = app.context.resolve("httpServer");
+  const { fastify } = context.app!.context.resolve("httpServer");
 
-  const { sessionId, issueMessage } = await preIssue({ subjectId: solanaDidPkh });
+  const { sessionId, issueMessage } = await preIssue({ subjectId: solanaDidPkh, context });
   const signature = await solanaSupport.sign(issueMessage);
 
   const vcResponse = await fastify.inject({
     method: "POST",
     url: issueEP("DiscordAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${context.apiKey}`
     },
     payload: {
       sessionId: sessionId,
       signature: signature,
     }
   });
-  await assertIssueResp(vcResponse, solanaDidPkh);
-  assertSessionDeleted(sessionId);
+  await assertIssueResp(vcResponse, solanaDidPkh, context);
+  assertSessionDeleted(sessionId, context);
   const credential = JSON.parse(vcResponse.body);
-  await appSup.verifyCredential({ credential: credential, app: app });
+  await appSup.verifyCredential({ credential: credential, app: context.app! });
 });
 
-test("should issue discord ownership credential with bitcoin did-pkh", async () => {
+test("should issue discord ownership credential with bitcoin did-pkh", async (context) => {
   const { didPkh: bitcoinDidPkh, } = bitcoinSupport.info;
-  const { fastify } = app.context.resolve("httpServer");
+  const { fastify } = context.app!.context.resolve("httpServer");
 
-  const { sessionId, issueMessage } = await preIssue({ subjectId: bitcoinDidPkh });
+  const { sessionId, issueMessage } = await preIssue({ subjectId: bitcoinDidPkh, context });
   const signature = await bitcoinSupport.sing(issueMessage);
 
   const vcResponse = await fastify.inject({
     method: "POST",
     url: issueEP("DiscordAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${context.apiKey}`
     },
     payload: {
       sessionId: sessionId,
       signature: signature
     }
   });
-  await assertIssueResp(vcResponse, bitcoinDidPkh);
-  assertSessionDeleted(sessionId);
+  await assertIssueResp(vcResponse, bitcoinDidPkh, context);
+  assertSessionDeleted(sessionId, context);
   const credential = JSON.parse(vcResponse.body);
-  await appSup.verifyCredential({ credential: credential, app: app });
+  await appSup.verifyCredential({ credential: credential, app: context.app! });
 });
 
-test("should redirect to default page after authorization", async () => {
+test("should redirect to default page after authorization", async (context) => {
   const { didPkh } = ethereumSupport.info.ethereum;
-  const { fastify } = app.context.resolve("httpServer");
-  const config = app.context.resolve("config");
+  const { fastify } = context.app!.context.resolve("httpServer");
+  const config = context.app!.context.resolve("config");
   const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("DiscordAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${context.apiKey}`
     },
     payload: {
       subjectId: didPkh
@@ -306,20 +317,21 @@ test("should redirect to default page after authorization", async () => {
   );
 });
 
-test("should issue vc with custom properties", async () => {
+test("should issue vc with custom properties", async (context) => {
   const custom = { hello: { test: "test", world: "world" } };
   const { didPkh } = ethereumSupport.info.ethereum;
-  const { fastify } = app.context.resolve("httpServer");
+  const { fastify } = context.app!.context.resolve("httpServer");
   const { sessionId, issueMessage } = await preIssue({
     subjectId: didPkh,
-    custom: custom
+    custom: custom,
+    context
   });
   const signature = await ethereumSupport.sign(issueMessage);
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("DiscordAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${context.apiKey}`
     },
     payload: {
       sessionId: sessionId,
@@ -327,26 +339,26 @@ test("should issue vc with custom properties", async () => {
     }
   });
   a.is(issueResp.statusCode, 200, `issue resp status code is not 200. error: ${issueResp.body}`);
-  await assertIssueResp(issueResp, didPkh);
+  await assertIssueResp(issueResp, didPkh, context);
   const vc = JSON.parse(issueResp.body) as DiscordAccountVC;
   const vcCustom = vc.credentialSubject.custom;
   a.ok(vcCustom, "custom property is not present");
   a.ok(vcCustom.hello, "custom hello is not present");
   a.is(vcCustom.hello.test, "test", "custom property is not matched");
   a.is(vcCustom.hello.world, "world", "custom property is not matched");
-  assertSessionDeleted(sessionId);
-  await appSup.verifyCredential({ credential: vc, app: app });
+  assertSessionDeleted(sessionId, context);
+  await appSup.verifyCredential({ credential: vc, app: context.app! });
 });
 
-test("should not find Discord code", async () => {
+test("should not find Discord code", async (context) => {
   const { didPkh } = ethereumSupport.info.ethereum;
-  const fastify = app.context.resolve("httpServer").fastify;
+  const fastify = context.app!.context.resolve("httpServer").fastify;
   await fastify.ready();
   const challengeResp = await fastify.inject({
     method: "POST",
     url: challengeEP("DiscordAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${context.apiKey}`
     },
     payload: {
       redirectUrl: redirectUrl,
@@ -367,7 +379,7 @@ test("should not find Discord code", async () => {
     method: "POST",
     url: issueEP("DiscordAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${context.apiKey}`
     },
     payload: {
       sessionId: sessionId,
@@ -381,13 +393,14 @@ test("should not find Discord code", async () => {
   await fastify.ready();
 });
 
-test("issue discord account credential with expiration date", async () => {
+test("issue discord account credential with expiration date", async (context) => {
   const { didPkh: subjectDID } = ethereumSupport.info.ethereum;
-  const { fastify } = app.context.resolve("httpServer");
+  const { fastify } = context.app!.context.resolve("httpServer");
   const expirationDate = new Date();
   const { sessionId, issueMessage } = await preIssue({
     subjectId: subjectDID,
-    expirationDate: expirationDate
+    expirationDate: expirationDate,
+    context
   });
   const signature = await ethereumSupport.sign(issueMessage);
 
@@ -395,15 +408,15 @@ test("issue discord account credential with expiration date", async () => {
     method: "POST",
     url: issueEP("DiscordAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${context.apiKey}`
     },
     payload: {
       sessionId: sessionId,
       signature: signature,
     }
   });
-  await assertIssueResp(issueResp, subjectDID);
-  assertSessionDeleted(sessionId);
+  await assertIssueResp(issueResp, subjectDID, context);
+  assertSessionDeleted(sessionId, context);
   const credential = JSON.parse(issueResp.body);
   a.ok(credential.expirationDate, "credential expiration date is not present");
   a.is(
@@ -414,19 +427,19 @@ test("issue discord account credential with expiration date", async () => {
   await delay(20);
   await appSup.verifyCredential({
     credential: credential,
-    app: app,
+    app: context.app!,
     shouldVerified: false
   });
 });
 
-test("not valid date-time format for expiration date", async () => {
-  const { fastify } = app.context.resolve("httpServer");
+test("not valid date-time format for expiration date", async (context) => {
+  const { fastify } = context.app!.context.resolve("httpServer");
   const ethDidPkh = ethereumSupport.info.ethereum.didPkh;
   const errResp = await fastify.inject({
     method: "POST",
     url: challengeEP("DiscordAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${context.apiKey}`
     },
     payload: {
       redirectUrl: redirectUrl,
@@ -438,19 +451,19 @@ test("not valid date-time format for expiration date", async () => {
     `invalid expiration date is ok. error: ${errResp.body}`);
 });
 
-test("should issue eth account credential without props", async () => {
-  const fastify = app.context.resolve("httpServer").fastify;
+test("should issue eth account credential without props", async (context) => {
+  const fastify = context.app!.context.resolve("httpServer").fastify;
   const { didPkh } = ethereumSupport.info.ethereum;
   const {
     sessionId,
     issueMessage
-  } = await preIssue({ subjectId: didPkh, props: [] });
+  } = await preIssue({ subjectId: didPkh, props: [], context });
   const signature = await ethereumSupport.sign(issueMessage);
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("DiscordAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${context.apiKey}`
     },
     payload: {
       sessionId: sessionId,
@@ -465,19 +478,19 @@ test("should issue eth account credential without props", async () => {
   a.not.ok(credential.credentialSubject.discord.discriminator);
 });
 
-test("should issue eth account credential with only one prop", async () => {
-  const fastify = app.context.resolve("httpServer").fastify;
+test("should issue eth account credential with only one prop", async (ctx) => {
+  const fastify = ctx.app!.context.resolve("httpServer").fastify;
   const { didPkh } = ethereumSupport.info.ethereum;
   const {
     sessionId,
     issueMessage
-  } = await preIssue({ subjectId: didPkh, props: ["username"] });
+  } = await preIssue({ subjectId: didPkh, props: ["username"], context: ctx });
   const signature = await ethereumSupport.sign(issueMessage);
   const issueResp = await fastify.inject({
     method: "POST",
     url: issueEP("DiscordAccount"),
     headers: {
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${ctx.apiKey}`
     },
     payload: {
       sessionId: sessionId,
