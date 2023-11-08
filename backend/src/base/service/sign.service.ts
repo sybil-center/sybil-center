@@ -1,4 +1,4 @@
-import { ClientError } from "../../backbone/errors.js";
+import { ClientErr } from "../../backbone/errors.js";
 import { ethers } from "ethers";
 
 export type VerifySignFun = (
@@ -23,28 +23,28 @@ export abstract class SignService {
   /**
    * Verify signature. If signature verified return
    * address as string according sign documentation,
-   * else throw {@link ClientError}
+   * else throw {@link ClientErr}
    * @param signature base64 string
    * @param message
    * @param publicId - has to be blockchain address or public key as base64
    * @return address if signature verified
-   * @throws ClientError if signature is not verified
+   * @throws ClientErr if signature is not verified
    */
   async verify({
     address,
     signature,
     message,
-    }: VerifyArgs): Promise<string> {
+  }: VerifyArgs): Promise<string> {
     const sign = new Uint8Array(Buffer.from(signature, "base64"));
     const verified = await this.verifyFun(sign, message, address);
     if (verified) return address;
-    throw new ClientError(`Can not verify signature`);
+    throw new ClientErr(`Can not verify signature`);
   }
 
   /**
    * Verify signature and return did:pkh.
    * If verified return did:pkh representation of address,
-   * else throw {@link ClientError}
+   * else throw {@link ClientErr}
    * @param verifyArgs object which contains signature, message, address
    */
   async did(verifyArgs: VerifyArgs): Promise<string> {

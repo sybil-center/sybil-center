@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { ClientError, ServerError } from "../backbone/errors.js";
+import { ClientErr, ServerErr } from "../backbone/errors.js";
 import { AnyObj } from "./model.util.js";
 import { CredentialType } from "@sybil-center/sdk/types";
 import * as t from "io-ts";
@@ -51,11 +51,10 @@ const credentialTypeDescription = new Map<CredentialType, string>([
 
 const toDescription = (credentialType: CredentialType): string => {
   const description = credentialTypeDescription.get(credentialType);
-  if (!description) throw new ServerError("Internal server error", {
-    props: {
-      _place: toDescription.name,
-      _log: `No equivalent description to credential type - ${credentialType}`
-    }
+  if (!description) throw new ServerErr({
+    message: "Internal server error",
+    place: toDescription.name,
+    description: `No equivalent description to credential type - ${credentialType}`
   });
   return description;
 };
@@ -198,7 +197,7 @@ export function toIssueMessage(opt: IssueMessageOpt): string {
   return ThrowDecoder.decode(
     ObjectAsMessage,
     msgObj,
-    new ClientError("Incorrect properties")
+    new ClientErr("Incorrect properties")
   );
 }
 

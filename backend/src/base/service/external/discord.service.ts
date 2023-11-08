@@ -1,5 +1,5 @@
 import * as t from "io-ts";
-import { ServerError } from "../../../backbone/errors.js";
+import { ServerErr } from "../../../backbone/errors.js";
 import type { IOAuthService } from "../../types/oauth.js";
 import { AccessTokenResponse, OAuthState } from "../../types/oauth.js";
 import { credentialOAuthCallbackURL } from "../../../util/route.util.js";
@@ -55,12 +55,12 @@ export class DiscordService implements IOAuthService<LinkReq, URL, string> {
           },
         }
       );
-    } catch (e) {
-      throw new ServerError("Discord api error", {
-        props: {
-          _log: `Discord get user info error. Error: ${e}`,
-          _place: this.constructor.name,
-        },
+    } catch (e: any) {
+      throw new ServerErr({
+        message: "Discord api error",
+        place: this.constructor.name,
+        description: `Discord get user info error.`,
+        cause: e
       });
     }
   }
@@ -98,12 +98,12 @@ export class DiscordService implements IOAuthService<LinkReq, URL, string> {
         }
       );
       return response.access_token;
-    } catch (e) {
-      throw new ServerError("Discord api error", {
-        props: {
-          _log: `Discord get access token error. Error: ${e}`,
-          _place: this.constructor.name,
-        },
+    } catch (e: any) {
+      throw new ServerErr({
+        message: "Discord api error",
+        cause: e,
+        place: this.constructor.name,
+        description: `Discord get access token error`
       });
     }
   }

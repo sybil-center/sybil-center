@@ -2,7 +2,7 @@ import type { IssuerContainer } from "../service/issuer-container.js";
 import { genVCRotes, verifyCredentialRoute } from "./routes/credential.route.js";
 import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 import { CanIssueReq, IssueReq } from "@sybil-center/sdk/types";
-import { ClientError } from "../../backbone/errors.js";
+import { ClientErr } from "../../backbone/errors.js";
 import { ChallengeReq } from "../types/challenge.js";
 import { Credential } from "../types/credential.js";
 import { CredentialVerifier } from "../service/credential-verifivator.js";
@@ -62,7 +62,7 @@ export function credentialController(injector: Injector<Dependencies>): void {
             .checkFrontend(req)
             .checkApikey(req)
             .openOne(({ reason, errStatus }) => {
-              throw new ClientError(reason, errStatus);
+              throw new ClientErr({ message: reason, statusCode: errStatus });
             });
           await gate.build()
             .setLock(async () => {
@@ -70,10 +70,10 @@ export function credentialController(injector: Injector<Dependencies>): void {
               if (custom) return validateCustomSize(custom);
               return { opened: true, reason: "" };
             }).openAll(({ reason, errStatus }) => {
-              throw new ClientError(reason, errStatus);
+              throw new ClientErr({ message: reason, statusCode: errStatus });
             });
           req.body = ThrowDecoder
-            .decode(ChallengeReq, req.body, new ClientError("Bad request"));
+            .decode(ChallengeReq, req.body, new ClientErr("Bad request"));
         },
         handler: async (req) => {
           const challengeReq = req.body;
@@ -96,7 +96,7 @@ export function credentialController(injector: Injector<Dependencies>): void {
             .checkFrontend(req)
             .checkApikey(req)
             .openOne(({ reason, errStatus }) => {
-              throw new ClientError(reason, errStatus);
+              throw new ClientErr({ message: reason, statusCode: errStatus });
             });
         },
         handler: async (req) => {
@@ -118,7 +118,7 @@ export function credentialController(injector: Injector<Dependencies>): void {
           .checkFrontend(req)
           .checkApikey(req)
           .openOne(({ reason, errStatus }) => {
-            throw new ClientError(reason, errStatus);
+            throw new ClientErr({ message: reason, statusCode: errStatus });
           })
         ;
       },
@@ -136,7 +136,11 @@ export function credentialController(injector: Injector<Dependencies>): void {
     schema: verifyCredentialRoute.schema,
     preHandler: async (req) => {
       req.body = ThrowDecoder
-        .decode(Credential, req.body, new ClientError("Bad request"));
+        .decode(Credential, req.body, new ClientErr({
+          message: "Bad request",
+          place: credentialController.name,
+          description: "Verify credential controller bad request"
+        }));
     },
     handler: async (req) => {
       return await verifier.verify(req.body);

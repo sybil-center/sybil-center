@@ -2,7 +2,7 @@ import { Signature } from "snarkyjs";
 import Client from "mina-signer";
 import { IVerifier, SignEntry } from "../../types/verifier.js";
 import { IDName, SybilChallengeReq } from "@sybil-center/zkc-core";
-import { ClientError } from "../../../backbone/errors.js";
+import { ClientErr } from "../../../backbone/errors.js";
 
 type Options = Required<Pick<Required<SybilChallengeReq>["options"], "mina">>;
 
@@ -44,7 +44,7 @@ export class MinaVerifier implements IVerifier<Options> {
       return Object.keys(NETWORK_MAP)
         .includes(network);
     }(network);
-    if (!isNetwork) throw new ClientError(`Unsupported Mina network type`);
+    if (!isNetwork) throw new ClientErr(`Unsupported Mina network type`);
     return NETWORK_MAP[network];
   }
 }

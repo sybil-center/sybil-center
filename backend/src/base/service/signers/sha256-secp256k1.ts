@@ -2,7 +2,7 @@ import { IZKCSigner } from "../../types/zkc.signer.js";
 import * as u8a from "uint8arrays";
 import { ProofType, SybilCred, SybilID, SybilPreparator, SybilProof } from "@sybil-center/zkc-core";
 import { getTransformSchemas } from "../schemas.service.js";
-import { ServerError } from "../../../backbone/errors.js";
+import { ServerErr } from "../../../backbone/errors.js";
 import { sha256 } from "@noble/hashes/sha256";
 import { secp256k1 } from "@noble/curves/secp256k1";
 
@@ -40,11 +40,10 @@ export class Sha256Secp256k1 implements IZKCSigner {
       proofType: this.proofType
     });
     const attributeSchema = attributeSchemas.default;
-    if (!attributeSchema) throw new ServerError("Internal server error", {
-      props: {
-        _place: this.constructor.name,
-        _log: `Can not find attribute schema mina for attributes=${attributes}`
-      }
+    if (!attributeSchema) throw new ServerErr({
+      message: "Internal server error",
+      description: `Can not find attribute schema mina for attributes=${attributes}`,
+      place: this.constructor.name
     });
     const preparedAttributes = this.preparator.prepareAttributes<number[]>({
       attributes: attributes,

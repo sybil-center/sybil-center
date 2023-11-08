@@ -1,7 +1,7 @@
 import { Credential } from "../types/credential.js";
 import { generateAPIkeysRoute } from "./routes/api-key.route.js";
 import { ThrowDecoder } from "../../util/throw-decoder.util.js";
-import { ClientError } from "../../backbone/errors.js";
+import { ClientErr } from "../../backbone/errors.js";
 import { EthAccountVC } from "@sybil-center/sdk";
 import { Config } from "../../backbone/config.js";
 import { HttpServer } from "../../backbone/http-server.js";
@@ -55,12 +55,17 @@ export function apiKeyController(injector: Injector<Dependencies>): void {
         })
         .verifyCredential(credential)
         .openAll((closed) => {
-          throw new ClientError(closed.reason!, closed.errStatus);
+          throw new ClientErr({
+            message: closed.reason,
+            statusCode: closed.errStatus,
+            place: apiKeyController.name,
+            description: closed.reason
+          });
         });
       req.body.credential = ThrowDecoder.decode(
         Credential,
         credential,
-        new ClientError("Invalid credential")
+        new ClientErr("Invalid credential")
       );
     },
     handler: async (req) => {

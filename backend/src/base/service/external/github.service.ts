@@ -1,6 +1,6 @@
-import { ServerError } from "../../../backbone/errors.js";
+import { ServerErr } from "../../../backbone/errors.js";
 import * as t from "io-ts";
-import { rest }  from "../../../util/fetch.util.js";
+import { rest } from "../../../util/fetch.util.js";
 import { AccessTokenResponse, type IOAuthService, OAuthState, } from "../../types/oauth.js";
 import { credentialOAuthCallbackURL } from "../../../util/route.util.js";
 import { makeURL } from "../../../util/make-url.util.js";
@@ -35,7 +35,7 @@ const OutGithubUserAsInGithubUser = new t.Type <InGitHubUser, OutGitHubUser, Out
   (input: any): input is InGitHubUser => {
     return typeof input.id === "number" &&
       typeof input.username === "string" &&
-      typeof input.userPage === "string"
+      typeof input.userPage === "string";
   },
   (input, context) => {
     try {
@@ -43,10 +43,10 @@ const OutGithubUserAsInGithubUser = new t.Type <InGitHubUser, OutGitHubUser, Out
         id: input.id,
         username: input.login,
         userPage: input.html_url
-      }
-      return t.success(githubUser)
+      };
+      return t.success(githubUser);
     } catch (e: any) {
-      return t.failure(input, context, String(e))
+      return t.failure(input, context, String(e));
     }
   },
   (gitHubUser) => {
@@ -56,10 +56,10 @@ const OutGithubUserAsInGithubUser = new t.Type <InGitHubUser, OutGitHubUser, Out
       html_url: gitHubUser.userPage,
       name: undefined,
       url: undefined
-    }
-    return outGithubUser
+    };
+    return outGithubUser;
   }
-)
+);
 
 export const GitHubUser = OutGitHubUser.pipe(OutGithubUserAsInGithubUser);
 
@@ -101,12 +101,12 @@ export class GitHubService implements IOAuthService<LinkReq, URL, string> {
         GitHubUser,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-    } catch (e) {
-      throw new ServerError("GitHub api error", {
-        props: {
-          _log: `GitHub get user info api error. Error: ${e}`,
-          _place: this.constructor.name,
-        },
+    } catch (e: any) {
+      throw new ServerErr({
+        message: "GitHub api error",
+        description: `GitHub get user info api error`,
+        cause: e,
+        place: this.constructor.name
       });
     }
   }
@@ -140,12 +140,12 @@ export class GitHubService implements IOAuthService<LinkReq, URL, string> {
         }
       );
       return response.access_token;
-    } catch (e) {
-      throw new ServerError("GitHub api error", {
-        props: {
-          _log: `GitHub get access token api error. Error: ${e}`,
-          _place: this.constructor.name,
-        },
+    } catch (e: any) {
+      throw new ServerErr({
+        message: "GitHub api error",
+        place: this.constructor.name,
+        description: `GitHub get access token api error`,
+        cause: e
       });
     }
   }

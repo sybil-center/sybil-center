@@ -19,7 +19,7 @@ import {
 import { TimedCache } from "../../../base/service/timed-cache.js";
 import { randomUUID } from "node:crypto";
 import { type IWebhookHandler } from "../../../base/types/webhook-handler.js";
-import { ClientError, ServerError } from "../../../backbone/errors.js";
+import { ClientErr, ServerErr } from "../../../backbone/errors.js";
 import { FastifyRequest } from "fastify";
 import { ISO3166 } from "../../../util/iso-3166.js";
 import sortKeys from "sort-keys";
@@ -87,7 +87,7 @@ export class ZKCPassportIssuer
   ): Promise<PassportIT["CanIssueResp"]> {
     const session = this.sessionCache.get(refId);
     if (!session.webhookResult) return { canIssue: false };
-    if (!session.webhookResult.completed) throw new ClientError(session.webhookResult.reason!);
+    if (!session.webhookResult.completed) throw new ClientErr(session.webhookResult.reason!);
     return { canIssue: true };
   }
 
@@ -104,7 +104,7 @@ export class ZKCPassportIssuer
     }: PassportIT["IssueReq"]
   ): Promise<PassportIT["Cred"]> {
     const session = this.sessionCache.get(refId);
-    if (!session) throw new ClientError(`Session ${refId} has been expired`);
+    if (!session) throw new ClientErr(`Session ${refId} has been expired`);
     const {
       webhookResult,
       message,
@@ -119,7 +119,7 @@ export class ZKCPassportIssuer
       signEntry: { msg: message, sign: signature },
       options: options
     });
-    if (!verified) throw new ClientError(`Signature is not verified`);
+    if (!verified) throw new ClientErr(`Signature is not verified`);
     const { user } = webhookResult;
     const countryCode = this.toNumCountryCode(user.countryCode);
     const attributes: PassportCred["attributes"] = {
@@ -149,19 +149,18 @@ export class ZKCPassportIssuer
   private checkWebhook(
     webhookResult?: Inquiry["Hook"]["Return"]
   ): webhookResult is Inquiry["Hook"]["Return"] {
-    if (!webhookResult) throw new ClientError(`Your Government ID verification in process. Wait`);
-    if (!webhookResult.completed) throw new ClientError(`Your Government ID is not verified`);
+    if (!webhookResult) throw new ClientErr(`Your Government ID verification in process. Wait`);
+    if (!webhookResult.completed) throw new ClientErr(`Your Government ID is not verified`);
     return true;
   }
 
   private toNumCountryCode(countryCode: string): number {
     const numCC = ISO3166.numeric(countryCode);
     if (numCC) return numCC;
-    throw new ServerError("Internal server error", {
-      props: {
-        _place: this.constructor.name,
-        _log: `Received alphabet ${countryCode} country code has not numeric representation`
-      }
+    throw new ServerErr({
+      message: "Internal server error",
+      place: this.constructor.name,
+      description: `Received alphabet ${countryCode} country code has not numeric representation`
     });
   }
 
@@ -172,11 +171,10 @@ export class ZKCPassportIssuer
         .includes(_type);
     }(type);
     if (isPersonaIdType) return GOVERNMENT_ID_ADAPTER[type];
-    throw new ServerError(`Unsupported government id type`, {
-      props: {
-        _place: this.constructor.name,
-        _log: `Unsupported Persona government id type ${type}`
-      }
+    throw new ServerErr({
+      message: `Unsupported government id type`,
+      place: this.constructor.name,
+      description: `Unsupported Persona government id type ${type}`
     });
   }
 

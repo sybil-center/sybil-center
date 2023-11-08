@@ -4,7 +4,7 @@ import { type ICaptchaService } from "./captcha.service.js";
 import { CredentialVerifier } from "./credential-verifivator.js";
 import { FastifyRequest } from "fastify";
 import { ThrowDecoder } from "../../util/throw-decoder.util.js";
-import { ClientError, ServerError } from "../../backbone/errors.js";
+import { ClientErr, ServerErr } from "../../backbone/errors.js";
 import { credentialUtil, CredOptions } from "../../util/credential.utils.js";
 import { tokens } from "typed-inject";
 import { ApiKeyService } from "./api-key.service.js";
@@ -87,7 +87,7 @@ class Gate {
 
   validateCredential(credential: Credential, option: CredOptions): Gate {
     credential = ThrowDecoder
-      .decode(Credential, credential, new ClientError("Invalid credential"));
+      .decode(Credential, credential, new ClientErr("Invalid credential"));
     this.setLock(async () => {
       const { valid, reason } = credentialUtil.validate(credential, option);
       return {
@@ -101,7 +101,7 @@ class Gate {
 
   verifyCredential(credential: Credential): Gate {
     credential = ThrowDecoder
-      .decode(Credential, credential, new ClientError("Invalid credential"));
+      .decode(Credential, credential, new ClientErr("Invalid credential"));
     this.setLock(async () => {
       const { isVerified } = await this.credentialVerifier.verify(credential);
       return {
@@ -148,9 +148,12 @@ class Gate {
           reason: !isHuman ? `Robot action detected` : "",
           errStatus: !isHuman ? 403 : undefined
         };
-      } catch (e) {
-        throw new ServerError(`Server internal error`, {
-          props: { _place: Gate.constructor.name, _log: String(e) }
+      } catch (e: any) {
+        throw new ServerErr({
+          message: `Server internal error`,
+          place: this.constructor.name,
+          description: `Validate captcha lock is throw error`,
+          cause: e
         });
       }
     });
