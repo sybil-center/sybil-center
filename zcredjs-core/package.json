@@ -1,12 +1,13 @@
 {
-  "name": "zcred-core",
+  "name": "@zcredjs/core",
   "version": "0.0.1",
-  "description": "zcred protocol core",
+  "description": "zcred protocol core from zcred org",
   "license": "(Apache-2.0 OR MIT)",
   "keywords": [
     "zcred",
     "zero-knowledge credentials",
-    "zcred-protocol"
+    "zcred-protocol",
+    "zcredjs-core"
   ],
   "repository": {
     "type": "git",
@@ -34,6 +35,9 @@
   "scripts": {
     "build": "rm -r ./dist & ./node_modules/.bin/tsc -p tsconfig.build.json",
     "test": "npx tsm ./node_modules/uvu/bin.js ./test"
+  },
+  "dependencies": {
+    "zcred-core": "workspace:*"
   },
   "devDependencies": {
     "prettier": "^2.8.4",

@@ -3,6 +3,7 @@ packages:
   - frontend
   - sybil
   - zcred-core
+  - zcredjs-core
   - zkc-core
   - sybil.zkc-core
   - sybil.zkc-o1js
