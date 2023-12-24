@@ -9,5 +9,5 @@ export interface ICredentialVerifier<
   /** verify function */
   verify<
     TCred extends ZkCredential = ZkCredential
-  >(cred: TCred, selector?: TSelector): Promise<boolean>;
+  >(cred: TCred, selector: TSelector): Promise<boolean>;
 }

@@ -1,14 +1,15 @@
 import { Identifier, ZkCredential } from "./zk-credentials.js";
 import { SignFn } from "./wallet-adapter.js";
+export type ChallengeOptions = {
+    chainId?: string;
+};
 export type ChallengeReq = {
     subject: {
         id: Identifier;
     };
     validFrom?: string;
     validUntil?: string;
-    options?: {
-        chainId?: string;
-    };
+    options?: ChallengeOptions;
 };
 export type Challenge = {
     sessionId: string;

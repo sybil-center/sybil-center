@@ -1,5 +1,5 @@
 import type { BaseLogger, Bindings, LevelWithSilent, LogFn, Logger as PinoInstance } from "pino";
-import pino from "pino";
+import { pino } from "pino";
 
 export interface ILogger extends BaseLogger {
   child(bindings?: Bindings): ILogger;

@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@sybil-center/zkc-core": "workspace:*",
-    "o1js": "^0.13.1"
+    "o1js": "0.15.0"
   },
   "devDependencies": {
     "mina-signer": "^2.1.1",

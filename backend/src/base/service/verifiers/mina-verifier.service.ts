@@ -1,4 +1,4 @@
-import { Signature } from "snarkyjs";
+import { Signature } from "o1js";
 import Client from "mina-signer";
 import { IVerifier, SignEntry } from "../../types/verifier.js";
 import { IDName, SybilChallengeReq } from "@sybil-center/zkc-core";

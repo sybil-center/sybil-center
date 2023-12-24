@@ -8,7 +8,11 @@ export type IdentifierSchema = {
   key: string[];
 }
 
-export type AttributesSchema = string[] | { [key: string]: AttributesSchema }
+export type TrSchemaValue<TLink extends string = string> = TLink[] | { [key: string]: TrSchemaValue<TLink> }
+
+export type TrSchema<TLink extends string = string> = Record<string, TrSchemaValue<TLink>>
+
+export type AttributesSchema = TrSchema
 
 export type SignatureProof = {
   type: string;
@@ -26,7 +30,18 @@ export type SignatureProof = {
   }
 }
 
-export type Proof = SignatureProof
+/** Attributes content identifier proof */
+export type ACIProof = {
+  type: string;
+  aci: string;
+  schema: {
+    attributes: AttributesSchema;
+    type: string[];
+    aci: string[];
+  }
+}
+
+export type Proof = SignatureProof | ACIProof
 
 export type Attributes = {
   type: string;

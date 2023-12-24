@@ -7,5 +7,5 @@ export interface ICredentialVerifier<TSelector extends {
     /** proof type which verifier provide */
     proofType: string;
     /** verify function */
-    verify<TCred extends ZkCredential = ZkCredential>(cred: TCred, selector?: TSelector): Promise<boolean>;
+    verify<TCred extends ZkCredential = ZkCredential>(cred: TCred, selector: TSelector): Promise<boolean>;
 }
