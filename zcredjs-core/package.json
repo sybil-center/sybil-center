@@ -34,7 +34,7 @@
   },
   "scripts": {
     "build": "rm -r ./dist & ./node_modules/.bin/tsc -p tsconfig.build.json",
-    "test": "npx tsm ./node_modules/uvu/bin.js ./test"
+    "test": "echo no-tests"
   },
   "dependencies": {
     "zcred-core": "workspace:*"

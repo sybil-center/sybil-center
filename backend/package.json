@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "npx tsm ./src/main.ts",
-    "test": "npm run test-other && npm run test-unit && npm run test-integration",
+    "test": "pnpm run test-other && pnpm run test-unit && pnpm run test-integration",
     "test:watch": "./node_modules/.bin/watchlist src test --eager -- npm run test",
     "test-on-win": "set NODE_ENV=test && npx tsm ./node_modules/uvu/bin.js ./test",
     "test-other": "echo OTHER-TESTS && NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test/other",
