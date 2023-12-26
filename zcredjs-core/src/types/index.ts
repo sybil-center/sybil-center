@@ -14,4 +14,8 @@ export type ProofType = SignProofType | ACIProofType
 export const CRED_TYPES = ["passport"] as const;
 export type CredType = typeof CRED_TYPES[number];
 
+export const MINA_CHAINIDS = ["mina:mainnet", "mina:berkeley"] as const;
+export type MinaChainId = typeof MINA_CHAINIDS[number];
+
 export * from "./credential.js";
+export * from "./issuer.js";

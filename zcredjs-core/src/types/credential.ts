@@ -1,4 +1,4 @@
-import { type ACIProof, type Attributes, type Identifier, type SignatureProof, type ZkCredential } from "zcred-core";
+import { type ACIProof, type Attributes, type Identifier, type SignatureProof, ZkCredential } from "zcred-core";
 import { ACIProofType, CredType, IdType, SignProofType } from "./index.js";
 
 export interface ZIdentifier extends Identifier {
@@ -29,7 +29,7 @@ export interface ZACIProof extends ACIProof {
 
 export type Gender = "male" | "female" | "other"
 
-export type PassportAttributes = {
+export interface PassportAttributes extends ZAttributes {
   type: CredType;
   issuanceDate: string;
   validFrom: string;
@@ -44,7 +44,7 @@ export type PassportAttributes = {
     document: {
       id: string;
     }
-  }
+  };
 }
 
 export type PassportCred = ZkCredential<PassportAttributes>

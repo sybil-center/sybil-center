@@ -2,7 +2,8 @@ import { Identifier, ZkCredential } from "./zk-credentials.js";
 import { SignFn } from "./wallet-adapter.js";
 
 export type ChallengeOptions = {
-  chainId?: string
+  chainId?: string;
+  redirectURL?: string;
 }
 
 export type ChallengeReq = {
@@ -17,7 +18,7 @@ export type ChallengeReq = {
 export type Challenge = {
   sessionId: string;
   message: string;
-  redirectURL?: string;
+  verifyURL?: string;
 }
 
 export type CanIssueReq = {
@@ -38,18 +39,37 @@ export type WindowOptions = {
   target?: string;
 }
 
-export type IssueCredArgs = {
+export type BrowserIssueParams = {
   challengeReq: ChallengeReq;
   sign: SignFn;
   windowOptions?: WindowOptions;
 }
 
+// export type ProofInfo = {
+//   type: string;
+//   reference: string;
+//   description?: string;
+//   schemasInfo: {
+//     description: string;
+//     attributesSchema: TrSchema
+//   }[]
+// }
+
+// export type IssuerInfo = {
+//   proofsInfo: ProofInfo[];
+//   updatable: boolean;
+//   updated: string;
+//   endpoint: string;
+//   description: string;
+// }
+
 export interface IHttpIssuer {
   endpoint: URL;
   credentialType: string;
-  issueCredential<
+  // getInfo(): Promise<IssuerInfo>;
+  browserIssue?<
     TCred extends ZkCredential = ZkCredential
-  >(args: IssueCredArgs): Promise<TCred>;
+  >(args: BrowserIssueParams): Promise<TCred>;
   getChallenge(challengeReq: ChallengeReq): Promise<Challenge>;
   canIssue(canIssueReq: CanIssueReq): Promise<CanIssue>;
   issue<

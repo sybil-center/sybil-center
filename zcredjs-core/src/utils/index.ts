@@ -1,5 +1,15 @@
-import { CRED_TYPES, CredType, ID_TYPES, IdType, SIGNATURE_PROOFS, SignProofType } from "../types/index.js";
-import { ACIProof, SignatureProof } from "zcred-core";
+import {
+  CRED_TYPES,
+  CredType,
+  ID_TYPES,
+  IdType,
+  MINA_CHAINIDS,
+  MinaChainId,
+  SIGNATURE_PROOFS,
+  SignProofType,
+  ZIdentifier
+} from "../types/index.js";
+import { zcred } from "zcred-core";
 
 function isIdType(id: string): id is IdType {
   return ID_TYPES
@@ -19,32 +29,35 @@ function isCredType(credType: string): credType is CredType {
     .includes(credType);
 }
 
-function isSignatureProof(proof: any): proof is SignatureProof {
-  return typeof proof?.issuer?.id?.key === "string" &&
-    typeof proof?.issuer?.id?.type === "string" &&
-    typeof proof?.signature === "string" &&
-    typeof proof?.type === "string" &&
-    typeof proof?.schema === "object" &&
-    typeof proof?.schema?.attributes === "object" &&
-    Array.isArray(proof?.schema?.signature) &&
-    Array.isArray(proof?.schema?.issuer?.id?.key) &&
-    Array.isArray(proof?.schema?.issuer?.id?.type) &&
-    Array.isArray(proof?.schema?.type);
+function normalizeId(id: ZIdentifier): ZIdentifier {
+  if (id.type === "ethereum:address") {
+    let key = id.key.toLowerCase();
+    key = key.startsWith("0x") ? key : `0x${key}`;
+    return { type: id.type, key: key };
+  }
+  return id;
 }
 
-function isACIProof(proof: any): proof is ACIProof {
-  return typeof proof?.type === "string" &&
-    typeof proof?.aci === "string" &&
-    typeof proof?.schema === "object" &&
-    typeof proof?.schema?.attributes === "object" &&
-    Array.isArray(proof?.schema?.type) &&
-    Array.isArray(proof?.schema?.aci);
+function isMinaChainId(chainId: string): chainId is MinaChainId {
+  return MINA_CHAINIDS
+    // @ts-expect-error
+    .includes(chainId);
 }
 
-export const zcredUtil = {
+export const zcredjs = {
   isIdType,
   isSignProofType,
   isCredType,
-  isSignatureProof,
-  isACIProof
+  normalizeId,
+  issuerPath(credType: CredType) {
+    const basePath = `/api/v1/zcred/issuers/${credType}`;
+    return new (class PathProvider {
+      get challenge() { return `${basePath}/challenge`;}
+      get canIssue() { return `${basePath}/can-issue`; }
+      get issue() { return `${basePath}/issue`; }
+      endpoint(domain: string) {return new URL(basePath, domain);}
+    })();
+  },
+  isMinaChainId,
+  ...zcred
 };

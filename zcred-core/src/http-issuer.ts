@@ -1,14 +1,14 @@
 import {
+  BrowserIssueParams,
   CanIssue,
   CanIssueReq,
   Challenge,
   ChallengeReq,
   IHttpIssuer,
-  IssueCredArgs,
-  IssueReq
+  IssueReq,
 } from "./types/issuer.js";
 import { ZkCredential } from "./types/index.js";
-import { repeatUtil } from "./util.js";
+import { repeatUtil } from "./utils/repeat.js";
 
 export class HttpIssuer implements IHttpIssuer {
   readonly endpoint: URL;
@@ -62,22 +62,22 @@ export class HttpIssuer implements IHttpIssuer {
     throw new Error(body);
   }
 
-  async issueCredential<
+  async browserIssue<
     TCred extends ZkCredential = ZkCredential
   >({
     challengeReq,
     sign,
     windowOptions,
-  }: IssueCredArgs): Promise<TCred> {
+  }: BrowserIssueParams): Promise<TCred> {
     const challenge = await this.getChallenge(challengeReq);
-    if (challenge.redirectURL) {
+    if (challenge.verifyURL) {
       const popup = window.open(
-        challenge.redirectURL,
+        challenge.verifyURL,
         windowOptions?.target,
         windowOptions?.feature
       );
       if (!popup) {
-        throw new Error(`Can not open popup window to issue credential, popup URL: ${challenge.redirectURL}`);
+        throw new Error(`Can not open popup window to issue credential, popup URL: ${challenge.verifyURL}`);
       }
       const result = repeatUtil<boolean>(
         (r) => (r instanceof Error) ? true : r,

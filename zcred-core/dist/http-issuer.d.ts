@@ -1,4 +1,4 @@
-import { CanIssue, CanIssueReq, Challenge, ChallengeReq, IHttpIssuer, IssueCredArgs, IssueReq } from "./types/issuer.js";
+import { BrowserIssueParams, CanIssue, CanIssueReq, Challenge, ChallengeReq, IHttpIssuer, IssueReq } from "./types/issuer.js";
 import { ZkCredential } from "./types/index.js";
 export declare class HttpIssuer implements IHttpIssuer {
     private readonly accessToken?;
@@ -8,6 +8,6 @@ export declare class HttpIssuer implements IHttpIssuer {
     getChallenge(challengeReq: ChallengeReq): Promise<Challenge>;
     canIssue(canIssueReq: CanIssueReq): Promise<CanIssue>;
     issue<TCred extends ZkCredential = ZkCredential>(issueReq: IssueReq): Promise<TCred>;
-    issueCredential<TCred extends ZkCredential = ZkCredential>({ challengeReq, sign, windowOptions, }: IssueCredArgs): Promise<TCred>;
+    browserIssue<TCred extends ZkCredential = ZkCredential>({ challengeReq, sign, windowOptions, }: BrowserIssueParams): Promise<TCred>;
     private get headers();
 }
