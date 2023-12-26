@@ -2,26 +2,18 @@ import { ISignatureVerifier, SignEntry, SignOptions } from "./type.js";
 import { ClientErr, Err } from "../../backbone/errors.js";
 import Client from "mina-signer";
 import { Signature } from "o1js";
+import { MinaChainId, zcredjs } from "@zcredjs/core";
 
+const CLIENT_NETWORKS = ["mainnet", "testnet"] as const;
+type Network = typeof CLIENT_NETWORKS[number]
 
-const providedChainIds = ["mina:mainnet", "mina:berkeley"] as const;
-type ChainId = typeof providedChainIds[number];
-
-type NetworkName = "mainnet" | "testnet"
-
-const CHAINID_NETWORK: Record<ChainId, NetworkName> = {
+const CHAINID_NETWORK: Record<MinaChainId, Network> = {
   "mina:mainnet": "mainnet",
   "mina:berkeley": "testnet"
 };
 
-function isChainId(chainId: string): chainId is ChainId {
-  return providedChainIds
-    // @ts-expect-error
-    .includes(chainId);
-}
-
-function toChainId(chainId: string): ChainId {
-  if (isChainId(chainId)) return chainId;
+function toChainId(chainId: string): MinaChainId {
+  if (zcredjs.isMinaChainId(chainId)) return chainId;
   throw new ClientErr("Mina chain id is not correct");
 }
 
@@ -47,12 +39,12 @@ export class MinaSignatureVerifier implements ISignatureVerifier {
       });
     } catch (e: any) {
       if (e instanceof Err) throw e;
-      return e;
+      return false;
     }
 
   }
 
-  private getChainId(options?: SignOptions): ChainId {
+  private getChainId(options?: SignOptions): MinaChainId {
     if (options?.chainId) return toChainId(options.chainId);
     throw new ClientErr(`Mina chain id is undefined`);
   }

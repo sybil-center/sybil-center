@@ -8,7 +8,7 @@ export type IdentifierSchema = {
 }
 
 
-export const SCHEMA = {
+export const SCHEMAS = {
   getSignature: findSignatureSchema,
   getACI: findACISchema
 };

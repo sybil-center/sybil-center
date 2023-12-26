@@ -1,6 +1,6 @@
 import { suite } from "uvu";
 import { O1GraphLink, O1TrGraph } from "o1js-trgraph";
-import { ACIMinaPoseidonProver } from "../../../../src/service/credential-prover/aci-mina-poseidon.js";
+import { ACIMinaPoseidonProver } from "../../../../src/services/credential-prover/aci-mina-poseidon.js";
 import { Field, Poseidon, PrivateKey } from "o1js";
 import { TrSchema } from "@zcredjs/core";
 import sortKeys from "sort-keys";

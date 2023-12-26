@@ -10,11 +10,11 @@ export const ACI_PROOF_SCHEMA_MAP: Record<CredType, Record<ACIProofType, {
       attributesSchemas: {
         type: ["ascii-bytes", "bytes-uint128", "uint128-mina:field"],
         validFrom: ["isodate-unixtime", "unixtime-uint64", "uint64-mina:field"],
-        validUntil: ["isodate-unixtime", "unixtime-uint64", "uint64-mina:field"],
         subject: {
           firstName: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
           lastName: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
           birthDate: ["isodate-unixtime19", "unixtime19-uint64", "uint64-mina:field"],
+          gender: ["ascii-bytes", "bytes-uint64", "uint64-mina:field"],
           countryCode: [
             "iso3166alpha3-iso3166numeric",
             "iso3166numeric-uint16",
@@ -36,7 +36,7 @@ export type FindACISchemaEntry = {
 
 export function findACISchema(findEntry: FindACISchemaEntry): TrSchema {
   const { credentialType, proofType } = findEntry;
-  const schema = ACI_PROOF_SCHEMA_MAP[credentialType]?.[proofType];
+  const schema = ACI_PROOF_SCHEMA_MAP[credentialType]?.[proofType]?.attributesSchemas;
   if (schema) return schema;
   throw new ServerErr({
     message: "Internal server error",

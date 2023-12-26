@@ -29,6 +29,7 @@ export const SIGNATURE_PROOF_SCHEMA_MAP: Record<CredType, Record<SignProofType, 
           firstName: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
           lastName: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
           birthDate: ["isodate-unixtime19", "unixtime19-uint64", "uint64-mina:field"],
+          gender: ["ascii-bytes", "bytes-uint64", "uint64-mina:field"],
           countryCode: [
             "iso3166alpha3-iso3166numeric",
             "iso3166numeric-uint16",

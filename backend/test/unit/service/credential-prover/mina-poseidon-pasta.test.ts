@@ -1,6 +1,6 @@
 import { suite } from "uvu";
 import * as a from "uvu/assert";
-import { MinaPoseidonPastaSignProver } from "../../../../src/service/credential-prover/mina-poseidon-pasta.js";
+import { MinaPoseidonPastaSignProver } from "../../../../src/services/credential-prover/mina-poseidon-pasta.js";
 import { Field, Poseidon, PrivateKey, Signature } from "o1js";
 import { O1GraphLink, O1TrGraph, TrSchema } from "o1js-trgraph";
 import sortKeys from "sort-keys";
