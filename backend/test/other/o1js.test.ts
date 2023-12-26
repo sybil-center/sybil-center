@@ -1,5 +1,5 @@
 import { suite } from "uvu";
-import { PrivateKey, PublicKey } from "snarkyjs";
+import { PrivateKey, PublicKey } from "o1js";
 import * as a from "uvu/assert";
 
 const test = suite("OTHER: snarkyjs tests");

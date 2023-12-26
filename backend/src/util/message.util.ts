@@ -145,13 +145,13 @@ const messageAsObject = new t.Type<
         if (!key) throw new Error(`Message is incorrect`);
         json[key] = value;
       });
-      const expirationDate = json.expirationDate;
-      json.expirationDate = expirationDate ? new Date(expirationDate) : undefined;
-      json.custom = json.custom ? JSON.parse(json.custom) : undefined;
-      json.ethereumProps = json.ethereumProps ? JSON.parse(json.ethereumProps) : undefined;
-      json.discordProps = json.discordProps ? JSON.parse(json.discordProps) : undefined;
-      json.githubProps = json.githubProps ? JSON.parse(json.githubProps) : undefined;
-      json.twitterProps = json.twitterProps ? JSON.parse(json.twitterProps) : undefined;
+      const expirationDate = json["expirationDate"];
+      json["expirationDate"] = expirationDate ? new Date(expirationDate) : undefined;
+      json["custom"] = json?.["custom"] ? JSON.parse(json?.["custom"]) : undefined;
+      json["ethereumProps"] = json?.["ethereumProps"] ? JSON.parse(json?.["ethereumProps"]) : undefined;
+      json["discordProps"] = json?.["discordProps"] ? JSON.parse(json?.["discordProps"]) : undefined;
+      json["githubProps"] = json?.["githubProps"] ? JSON.parse(json?.["githubProps"]) : undefined;
+      json["twitterProps"] = json?.["twitterProps"] ? JSON.parse(json?.["twitterProps"]) : undefined;
       return t.success(json as IssueMessageObj);
     } catch (e) {
       return t.failure(input, context, String(e));

@@ -10,7 +10,7 @@ import * as a from "uvu/assert";
 import { Config } from "../../../../src/backbone/config.js";
 import crypto from "node:crypto";
 import { personaWebhookEP } from "../../../../src/base/controller/routes/persona-kyc.route.js";
-import { Field, Poseidon, PublicKey, Scalar, Signature } from "snarkyjs";
+import { Field, Poseidon, PublicKey, Scalar, Signature } from "o1js";
 import { o1jsSybil } from "@sybil-center/zkc-o1js";
 import {
   CanIssueResp,
@@ -367,7 +367,7 @@ async function preIssue(args: {
     `Webhook response body is not matched`
   );
   // Check that session cache has webhook result
-  const session = sessionCache?.get(refId);
+  const session = await sessionCache?.get(refId);
   a.ok(session?.webhookResult, "No webhook result in Passport issuer session");
 
   // Assert can issue request after webhook

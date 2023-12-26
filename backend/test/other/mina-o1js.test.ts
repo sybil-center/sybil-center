@@ -1,6 +1,6 @@
 import { suite } from "uvu";
 import Client from "mina-signer";
-import { Field, PrivateKey, Scalar, Signature } from "snarkyjs";
+import { Field, PrivateKey, Scalar, Signature } from "o1js";
 import * as a from "uvu/assert";
 
 const test = suite("Mina-Snaky.js tests");

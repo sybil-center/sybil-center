@@ -24,6 +24,13 @@ import { ZKCPassportIssuer } from "../issuers/zkc/passport/issuer.js";
 import { ZKCSignerManager } from "../base/service/signers/zkc.signer-manager.js";
 import { SignVerifierManager } from "../base/service/verifiers/sign-verifier.manager.js";
 import { ZKCIssuerManager } from "../issuers/zkc/zkc-issuer.manager.js";
+import { CredentialProver } from "../services/credential-prover/index.js";
+import { SignatureVerifier } from "../services/signature-verifier/index.js";
+import { ShuftiproKYC } from "../services/kyc/shuftipro.js";
+import { PassportIssuer } from "../issuers/zcred/passport/index.js";
+import { SHUFTI_KYC_CONTROLLER } from "../controllers/kyc/shuftipro/index.js";
+import { issuersController } from "../controllers/zcred-issuer/index.js";
+import { PrincipalIssuer } from "../issuers/zcred/index.js";
 
 type DI = {
   logger: ILogger;
@@ -44,6 +51,11 @@ type DI = {
   zkcIssuerManager: ZKCIssuerManager;
   zkcSignerManager: ZKCSignerManager;
   signVerifierManager: SignVerifierManager;
+  credentialProver: CredentialProver;
+  shuftiproKYC: ShuftiproKYC;
+  signatureVerifier: SignatureVerifier;
+  passportIssuer: PassportIssuer;
+  principalIssuer: PrincipalIssuer
 };
 
 export class App {
@@ -72,6 +84,7 @@ export class App {
   static async init(): Promise<App> {
     const app = new App();
     app.rootContext = createInjector();
+    // @ts-expect-error
     app.context = app.rootContext
       .provideClass("logger", Logger)
       .provideClass("config", Config)
@@ -97,7 +110,15 @@ export class App {
       // Zkc Issuers
       .provideClass("zkcPassportIssuer", ZKCPassportIssuer)
       // Zkc Issuer Manager
-      .provideClass("zkcIssuerManager", ZKCIssuerManager);
+      .provideClass("zkcIssuerManager", ZKCIssuerManager)
+
+      // For ZCred protocol
+      .provideClass("shuftiproKYC", ShuftiproKYC)
+      .provideClass("credentialProver", CredentialProver)
+      .provideClass("signatureVerifier", SignatureVerifier)
+      // @ts-expect-error
+      .provideClass("passportIssuer", PassportIssuer)
+      .provideClass("principalIssuer", PrincipalIssuer);
 
 
     const httpServer = app.context.resolve("httpServer");
@@ -110,6 +131,9 @@ export class App {
     configController(app.context);
     zkCredController(app.context);
     personaKYCController(app.context);
+    // ZCred controllers
+    issuersController(app.context);
+    SHUFTI_KYC_CONTROLLER.passportIssuerWebhook(app.context);
 
     const didService = app.context.resolve("didService");
     await didService.init();

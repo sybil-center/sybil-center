@@ -43,5 +43,8 @@ async function fetchDecode<A>(
 
 export const rest = {
   fetchJson: fetchJson,
-  fetchDecode: fetchDecode
-}
+  fetchDecode: fetchDecode,
+  fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    return fetch(input, init);
+  }
+};

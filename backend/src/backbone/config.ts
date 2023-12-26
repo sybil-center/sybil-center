@@ -71,6 +71,10 @@ export class Config {
   /** secp256k1 private key as hex string */
   readonly secp256k1PrivateKey: string;
 
+  readonly shuftiproClientId: string;
+  readonly shuftiproSecretKey: string;
+  readonly shuftiproPassportTamplate: string;
+
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -117,6 +121,9 @@ export class Config {
 
     this.kycSessionTtl = getNumOrThrow("KYC_SESSION_TTL");
     this.secp256k1PrivateKey = getStrOrThrow("SECP256K1_PRIVATE_KEY");
+    this.shuftiproClientId = getStrOrThrow("SHUFTIPRO_CLIENTID");
+    this.shuftiproSecretKey = getStrOrThrow("SHUFTIPRO_SECRETKEY");
+    this.shuftiproPassportTamplate = getStrOrThrow("SHUFTIPRO_PASSPORT_TAMPLATE");
   }
 }
 
