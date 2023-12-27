@@ -16,7 +16,7 @@ const TOKENS: (keyof Dependencies)[] = [
 
 const credentialType: CredType = "passport";
 
-export const SHUFTI_PASSPORT_ISSUER_ENDPOINT = `/api/v1/zcred/issuers/${credentialType}/kyc/shuftipro`;
+export const SHUFTI_PASSPORT_ISSUER_ENDPOINT = `/api/v1/zcred/issuers/${credentialType}/kyc/shuftipro/webhook`;
 
 export function shuftiproPassportIssuerController(injector: Injector<Dependencies>) {
   const {
