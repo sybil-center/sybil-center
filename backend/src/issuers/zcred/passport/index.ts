@@ -7,6 +7,8 @@ import {
   ChallengeOptions,
   CredType,
   Gender,
+  HttpCredential,
+  Info,
   IssueReq,
   IZHttpIssuer,
   PassportAttributes,
@@ -15,6 +17,7 @@ import {
   SignatureProof,
   SignProofType,
   ZChallengeReq,
+  zcredjs,
   ZkCredential
 } from "@zcredjs/core";
 import { Config } from "../../../backbone/config.js";
@@ -59,7 +62,7 @@ export class PassportIssuer
     "credentialProver"
   );
   constructor(
-    config: Config,
+    private readonly config: Config,
     private readonly shuftiproKYC: ShuftiproKYC,
     private readonly signatureVerifier: SignatureVerifier,
     private readonly credentialProver: CredentialProver
@@ -69,8 +72,33 @@ export class PassportIssuer
     this.sessionCache = new TimedCache<string, Session>(config.kycSessionTtl);
   }
 
-  get endpoint(): URL {return new URL("");};
+  get uri(): URL {
+    return zcredjs
+      .issuerPath("passport")
+      .endpoint(this.config.pathToExposeDomain.href);
+  };
   get credentialType(): CredType { return "passport";}
+
+  async getInfo(): Promise<Info> {
+    const minaIssuerReference = this.credentialProver
+      .signProver("mina:poseidon-pasta")
+      .issuerReference;
+    return {
+      credentialType: this.credentialType,
+      updatableProofs: false,
+      proofsUpdated: new Date(2024, 0, 1, 0, 0, 0).toISOString(),
+      proofsInfo: [
+        {
+          type: "mina:poseidon-pasta",
+          references: [minaIssuerReference]
+        },
+        {
+          type: "aci:mina-poseidon",
+          references: [minaIssuerReference]
+        }
+      ]
+    };
+  }
 
   async getChallenge(challengeReq: ZChallengeReq): Promise<Challenge> {
     if (!this.validateChallengeReq(challengeReq)) {
@@ -112,9 +140,8 @@ export class PassportIssuer
     this.sessionCache.set(sessionId, session);
   }
 
-
   async issue<
-    TCred extends ZkCredential = ZkCredential
+    TCred extends HttpCredential = HttpCredential
   >({ sessionId, signature }: IssueReq): Promise<TCred> {
     const session = this.sessionCache.get(sessionId);
     const { subject } = session.challengeReq;
@@ -130,6 +157,12 @@ export class PassportIssuer
     const attributes = this.toAttributes(webhookResp, session);
     const proofs = await this.createProofs(attributes);
     const credential: PassportCred = {
+      meta: {
+        issuer: {
+          type: "http",
+          uri: this.uri.href
+        }
+      },
       attributes,
       proofs
     };

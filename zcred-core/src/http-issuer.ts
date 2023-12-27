@@ -5,30 +5,40 @@ import {
   Challenge,
   ChallengeReq,
   IHttpIssuer,
+  Info,
   IssueReq,
 } from "./types/issuer.js";
-import { ZkCredential } from "./types/index.js";
+import { HttpCredential } from "./types/index.js";
 import { repeatUtil } from "./utils/repeat.js";
 
 export class HttpIssuer implements IHttpIssuer {
-  readonly endpoint: URL;
-  readonly credentialType: string;
+  readonly uri: URL;
 
   constructor(
-    endpoint: string,
+    issuerURI: string,
     private readonly accessToken?: string
   ) {
-    this.endpoint = new URL(endpoint);
-    const paths = this.endpoint.pathname;
+    this.uri = new URL(issuerURI);
+    const paths = this.uri.pathname;
     const type = paths[paths.length - 1];
     if (!type) {
-      throw new Error(`Http issuer initialization error: issuer endpoint pathname is undefined, endpoint: ${endpoint}`);
+      throw new Error(`Http issuer initialization error: issuer endpoint pathname is undefined, endpoint: ${issuerURI}`);
     }
-    this.credentialType = type;
+  }
+
+  static init(endpoint: string, accessToken?: string): IHttpIssuer {
+    return new HttpIssuer(endpoint, accessToken);
+  }
+
+  async getInfo(): Promise<Info> {
+    const resp = await fetch(new URL("./info", this.uri));
+    const body = await resp.json();
+    if (resp.ok) return body;
+    throw new Error(body);
   }
 
   async getChallenge(challengeReq: ChallengeReq): Promise<Challenge> {
-    const resp = await fetch(new URL("./challenge", this.endpoint), {
+    const resp = await fetch(new URL("./challenge", this.uri), {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify(challengeReq)
@@ -39,7 +49,7 @@ export class HttpIssuer implements IHttpIssuer {
   }
 
   async canIssue(canIssueReq: CanIssueReq): Promise<CanIssue> {
-    const resp = await fetch(new URL("./can-issue", this.endpoint), {
+    const resp = await fetch(new URL("./can-issue", this.uri), {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify(canIssueReq)
@@ -50,9 +60,9 @@ export class HttpIssuer implements IHttpIssuer {
   }
 
   async issue<
-    TCred extends ZkCredential = ZkCredential
+    TCred extends HttpCredential = HttpCredential
   >(issueReq: IssueReq): Promise<TCred> {
-    const resp = await fetch(new URL("./issue", this.endpoint), {
+    const resp = await fetch(new URL("./issue", this.uri), {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify(issueReq)
@@ -62,8 +72,21 @@ export class HttpIssuer implements IHttpIssuer {
     throw new Error(body);
   }
 
-  async browserIssue<
-    TCred extends ZkCredential = ZkCredential
+  async updateProofs?<
+    TCred extends HttpCredential = HttpCredential
+  >(cred: TCred): Promise<TCred> {
+    const resp = await fetch(new URL("./update-proofs", this.uri), {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify(cred)
+    });
+    const body = await resp.json();
+    if (resp.ok) return body;
+    throw new Error(body);
+  }
+
+  async browserIssue?<
+    TCred extends HttpCredential = HttpCredential
   >({
     challengeReq,
     sign,

@@ -2,7 +2,7 @@ import { ICredentialVerifier, ProofType, ZkCredential } from "@zcredjs/core";
 import { MinaPoseidonPastaVerifier } from "./poseidon-pasta.js";
 import { MinaACIPoseidonVerifier } from "./aci-poseidon.js";
 
-type MinaProofType = Extract<ProofType, "mina:poseidon-pasta" | "aci:mina-poseidon">
+export type MinaProofType = Extract<ProofType, "mina:poseidon-pasta" | "aci:mina-poseidon">
 
 const PROOFTYPE_VERIFIER: Record<MinaProofType, () => ICredentialVerifier> = {
   "mina:poseidon-pasta": MinaPoseidonPastaVerifier.init,

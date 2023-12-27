@@ -26,7 +26,12 @@ export class MinaPoseidonPastaSignProver implements ICredentialSignProver {
       key: this.publicKey.toBase58()
     };
   };
+
   get proofType(): SignProofType { return "mina:poseidon-pasta"; };
+
+  get issuerReference(): string {
+    return `${this.issuerId.type}:${this.issuerId.key}`;
+  }
 
   async signAttributes<
     TAttr extends ZAttributes = ZAttributes
