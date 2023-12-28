@@ -100,8 +100,6 @@ export class ShuftiproKYC {
       })
     });
     const rawBody = await resp.text();
-    console.log(rawBody);
-    console.log(JSON.parse(rawBody).verification_url);
     const headers = Object.fromEntries(resp.headers);
     this.checkHttp(headers, rawBody);
     const { verification_url } = ThrowDecoder
@@ -115,7 +113,6 @@ export class ShuftiproKYC {
 
   async handleWebhook(req: FastifyRequest): Promise<ShuftiWebhookResp> {
     await this.checkWebhook(req);
-    console.log(JSON.stringify(req.body));
     const body = req.body;
     const result = ThrowDecoder.decode(
       ShuftiResp, body,

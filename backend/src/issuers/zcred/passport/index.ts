@@ -34,6 +34,7 @@ import { CredentialProver } from "../../../services/credential-prover/index.js";
 import { SCHEMAS } from "../../../services/schema-finder/index.js";
 
 type Session = {
+  reference: string;
   challengeReq: StrictChallengeReq;
   webhookResp?: ShuftiWebhookResp;
   challenge: Challenge
@@ -104,21 +105,18 @@ export class PassportIssuer
     if (!this.validateChallengeReq(challengeReq)) {
       throw new ClientErr(`Bad request. "validUntil" and "chainId" is undefined`);
     }
-    const { subject: { id } } = challengeReq;
-    const reference = this.shuftiproKYC.createReference(`${id.type}:${id.key}`);
+    const reference = this.shuftiproKYC.createReference(crypto.randomUUID());
+    const sessionId = this.toSessionId(reference);
     const verifyURL = await this.shuftiproKYC.getVerifyURL({
       reference: reference,
       templateId: this.templateId
     });
-    const sessionId = this.toSessionId(reference);
-    const foundSession = this.sessionCache.find(sessionId);
-    if (foundSession) return foundSession.challenge;
     const challenge: Challenge = {
       sessionId: sessionId,
       verifyURL: verifyURL.href,
       message: getMessage(challengeReq)
     };
-    this.sessionCache.set(sessionId, { challenge, challengeReq });
+    this.sessionCache.set(sessionId, { reference, challenge, challengeReq });
     return challenge;
   }
 

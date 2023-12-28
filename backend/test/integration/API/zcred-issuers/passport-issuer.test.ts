@@ -170,7 +170,6 @@ async function beforeIssue({
   options
   // @ts-expect-error
 }: BeforeIssueParams): BeforeIssueResult {
-  const reference = shuptiproKYC.createReference(`${subject.id.type}:${subject.id.key}`);
   // Get challenge
   let shuftiStub = sinon
     .stub(shuptiproKYC, "getVerifyURL")
@@ -191,6 +190,7 @@ async function beforeIssue({
     `challenge response status code is not 200. Resp body: ${JSON.stringify(challengeResp.body)}`
   );
   const challenge = JSON.parse(challengeResp.body) as Challenge;
+  const reference = sessionCache.get(challenge.sessionId).reference;
 
   // Can issue request before webhook
   const canIssueBeforeResp = await fastify.inject({

@@ -31,58 +31,71 @@ export class HttpIssuer implements IHttpIssuer {
   }
 
   async getInfo(): Promise<Info> {
-    const resp = await fetch(new URL("./info", this.uri));
-    const body = await resp.json();
-    if (resp.ok) return body;
-    throw new Error(body);
+    const url = new URL("./info", this.uri);
+    const resp = await fetch(url);
+    if (resp.ok) return await resp.json();
+    const text = await resp.text();
+    throw new Error(
+      `HTTP request to '${url.href}' failed with status '${resp.statusText}': ${text}`
+    );
   }
 
   async getChallenge(challengeReq: ChallengeReq): Promise<Challenge> {
+    const url = new URL("./challenge", this.uri);
     const resp = await fetch(new URL("./challenge", this.uri), {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify(challengeReq)
     });
-    const body = await resp.json();
-    if (resp.ok) return body;
-    throw new Error(body);
+    if (resp.ok) return await resp.json();
+    const text = await resp.text();
+    throw new Error(
+      `HTTP request to '${url.href}' failed with status '${resp.statusText}': ${text}`
+    );
   }
 
   async canIssue(canIssueReq: CanIssueReq): Promise<CanIssue> {
-    const resp = await fetch(new URL("./can-issue", this.uri), {
+    const url = new URL("./can-issue", this.uri);
+    const resp = await fetch(url, {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify(canIssueReq)
     });
-    const body = await resp.json();
-    if (resp.ok) return body;
-    throw new Error(body);
+    if (resp.ok) return await resp.json();
+    const text = await resp.text();
+    throw new Error(
+      `HTTP request to '${url.href}' failed with status '${resp.statusText}': ${text}`
+    );
   }
 
   async issue<
     TCred extends HttpCredential = HttpCredential
   >(issueReq: IssueReq): Promise<TCred> {
-    const resp = await fetch(new URL("./issue", this.uri), {
+    const url = new URL("./issue", this.uri);
+    const resp = await fetch(url, {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify(issueReq)
     });
-    const body = await resp.json();
-    if (resp.ok) return body;
-    throw new Error(body);
+    if (resp.ok) return await resp.json();
+    const text = await resp.text();
+    throw new Error(
+      `HTTP request to '${url.href}' failed with status '${resp.statusText}': ${text}`
+    );
   }
 
   async updateProofs?<
     TCred extends HttpCredential = HttpCredential
   >(cred: TCred): Promise<TCred> {
-    const resp = await fetch(new URL("./update-proofs", this.uri), {
+    const url = new URL("./update-proofs", this.uri);
+    const resp = await fetch(url, {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify(cred)
     });
     const body = await resp.json();
     if (resp.ok) return body;
-    throw new Error(body);
+    throw new Error(JSON.stringify(body));
   }
 
   async browserIssue?<
@@ -102,7 +115,7 @@ export class HttpIssuer implements IHttpIssuer {
       if (!popup) {
         throw new Error(`Can not open popup window to issue credential, popup URL: ${challenge.verifyURL}`);
       }
-      const result = repeatUtil<boolean>(
+      const result = await repeatUtil<boolean>(
         (r) => (r instanceof Error) ? true : r,
         1000,
         async () => {
