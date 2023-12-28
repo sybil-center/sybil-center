@@ -99,14 +99,14 @@ export class ShuftiproKYC {
         journey_id: templateId
       })
     });
-    const rawBody = await resp.text();
+    const rawBody = await resp.json();
     const headers = Object.fromEntries(resp.headers);
     this.checkHttp(headers, rawBody);
     const { verification_url } = ThrowDecoder
       .decode(GetVerifyURLResp, JSON.parse(rawBody), new ServerErr({
         message: "Internal server error",
         place: `${this.constructor.name}.getVerifyURL`,
-        description: "Can not decode body to object"
+        description: `Can not decode body to object. Response body: ${await resp.text()}`
       }));
     return new URL(verification_url);
   }
