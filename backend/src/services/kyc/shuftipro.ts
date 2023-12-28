@@ -104,7 +104,7 @@ export class ShuftiproKYC {
     const headers = Object.fromEntries(resp.headers);
     this.checkHttp(headers, rawBody);
     const { verification_url } = ThrowDecoder
-      .decode(GetVerifyURLResp, JSON.parse(await resp.json()), new ServerErr({
+      .decode(GetVerifyURLResp, await resp.json(), new ServerErr({
         message: "Internal server error",
         place: `${this.constructor.name}.getVerifyURL`,
         description: `Can not decode body to object. Response body: ${rawBody}`
