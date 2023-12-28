@@ -100,6 +100,7 @@ export class ShuftiproKYC {
       })
     });
     const rawBody = await resp.text();
+    console.log(rawBody);
     const headers = Object.fromEntries(resp.headers);
     this.checkHttp(headers, rawBody);
     const { verification_url } = ThrowDecoder
