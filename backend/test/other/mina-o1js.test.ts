@@ -2,6 +2,8 @@ import { suite } from "uvu";
 import Client from "mina-signer";
 import { Field, PrivateKey, Scalar, Signature } from "o1js";
 import * as a from "uvu/assert";
+import { HttpIssuer, ZChallengeReq } from "@zcredjs/core";
+import { minaSupport } from "../support/chain/mina.js";
 
 const test = suite("Mina-Snaky.js tests");
 
@@ -34,6 +36,26 @@ test("invalid signature behavior", () => {
   sign.data = "hello";
   const notVerified = client.verifyMessage(sign);
   a.is(notVerified, false, `Invalid sign MUST NOT be verified`);
+});
+
+test("", async () => {
+  const client = new Client({ network: "mainnet" });
+  const privateKey = PrivateKey.fromBase58(minaSupport.privateKey);
+  const issuer = new HttpIssuer("https://api.dev.sybil.center/api/v1/zcred/issuers/passport/");
+  const challengeReq: ZChallengeReq = {
+    subject: {
+      id: { type: "mina:publickey", key: privateKey.toPublicKey().toBase58() }
+    },
+    validUntil: new Date(2030, 0, 1).toISOString(),
+    options: {
+      chainId: "mina:mainnet"
+    }
+  };
+  const challenge = await issuer.getChallenge(challengeReq);
+  console.log(JSON.stringify(challenge));
+  console.log(challenge.verifyURL);
+
+
 });
 
 test.run();

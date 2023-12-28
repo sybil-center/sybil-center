@@ -99,14 +99,14 @@ export class ShuftiproKYC {
         journey_id: templateId
       })
     });
-    const rawBody = await resp.json();
+    const rawBody = await resp.text();
     const headers = Object.fromEntries(resp.headers);
     this.checkHttp(headers, rawBody);
     const { verification_url } = ThrowDecoder
-      .decode(GetVerifyURLResp, JSON.parse(rawBody), new ServerErr({
+      .decode(GetVerifyURLResp, JSON.parse(await resp.json()), new ServerErr({
         message: "Internal server error",
         place: `${this.constructor.name}.getVerifyURL`,
-        description: `Can not decode body to object. Response body: ${await resp.text()}`
+        description: `Can not decode body to object. Response body: ${rawBody}`
       }));
     return new URL(verification_url);
   }
@@ -166,7 +166,7 @@ export class ShuftiproKYC {
       throw new ServerErr({
         message: "Internal server error",
         place: `${this.constructor.name}.checkHttp`,
-        description: "Can not verify shuftipro http instance"
+        description: `Can not verify shuftipro http instance. Headers: ${JSON.stringify(headers)}, body: ${JSON.stringify(body)}`
       });
     }
   }
