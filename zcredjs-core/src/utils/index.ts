@@ -55,6 +55,8 @@ export const zcredjs = {
       get challenge() { return `${basePath}/challenge`;}
       get canIssue() { return `${basePath}/can-issue`; }
       get issue() { return `${basePath}/issue`; }
+      get info() { return `${basePath}/info`; }
+      get updateProofs() { return `${basePath}/update-proofs`; }
       endpoint(domain: string) {return new URL(basePath, domain);}
     })();
   },

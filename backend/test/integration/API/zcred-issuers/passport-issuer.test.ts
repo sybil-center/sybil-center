@@ -11,10 +11,11 @@ import {
   Challenge,
   ChallengeReq,
   Identifier,
+  Info,
   IssueReq,
   PassportCred,
   zcredjs,
-  ZIdentifier
+  ZIdentifier,
 } from "@zcredjs/core";
 import * as a from "uvu/assert";
 import sinon from "sinon";
@@ -122,7 +123,6 @@ function getWebhookBody(reference: string) {
 let app: App;
 let shuptiproKYC: ShuftiproKYC;
 let fastify: FastifyInstance;
-// @ts-expect-error
 let config: Config;
 let passportIssuer: PassportIssuer;
 let sessionCache: PassportIssuer["sessionCache"];
@@ -278,6 +278,16 @@ test("issue passport credential with mina public key", async () => {
     `Issue response status code is not 200. Resp body: ${issueResp.body}`
   );
   const credential = JSON.parse(issueResp.body) as PassportCred;
+  a.is(
+    credential.meta.issuer.uri,
+    new URL("./api/v1/zcred/issuers/passport", config.pathToExposeDomain).href,
+    `Credential meta issuer URI is not match`
+  );
+  a.is(
+    credential.meta.issuer.type,
+    "http",
+    `Credential meta issuer type is not match`
+  );
   const issuerReference = toProofReference(minaPoseidonPastaProver.issuerId);
   a.is(
     await new MinaCredentialVerifier("mina:poseidon-pasta").verify(credential, issuerReference),
@@ -321,6 +331,16 @@ test("issue passport credential with ethereum public key", async () => {
     `Issue response status code is not 200. Issue resp: ${issueResp.body}`
   );
   const credential = JSON.parse(issueResp.body) as PassportCred;
+  a.is(
+    credential.meta.issuer.uri,
+    new URL("./api/v1/zcred/issuers/passport", config.pathToExposeDomain).href,
+    `Credential meta issuer URI is not match`
+  );
+  a.is(
+    credential.meta.issuer.type,
+    "http",
+    `Credential meta issuer type is not match`
+  );
   const issuerReference = toProofReference(minaPoseidonPastaProver.issuerId);
   a.ok(
     await new MinaCredentialVerifier("mina:poseidon-pasta").verify(credential, issuerReference),
@@ -455,6 +475,29 @@ test("invalid ethereum signature", async () => {
     issueResp.statusCode !== 200,
     `Issue response status code is not 200. Status code ${issueResp.statusCode}`
   );
+});
+
+test("get issuer info", async () => {
+  const infoResp = await fastify.inject({
+    method: "GET",
+    url: zcredjs.issuerPath("passport").info
+  });
+  a.ok(
+    infoResp.statusCode === 200,
+    `Info status response status code is not 200. Resp body: ${infoResp.body}`
+  );
+  const info = JSON.parse(infoResp.body) as Info;
+
+  const minaIssuerReference = minaPoseidonPastaProver.issuerReference;
+  a.equal(info, {
+    credentialType: "passport",
+    updatableProofs: false,
+    proofsUpdated: info.proofsUpdated,
+    proofsInfo: [
+      { type: "mina:poseidon-pasta", references: [minaIssuerReference] },
+      { type: "aci:mina-poseidon", references: [minaIssuerReference] }
+    ]
+  } as Info);
 });
 
 test.run();

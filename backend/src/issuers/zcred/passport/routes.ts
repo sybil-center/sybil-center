@@ -6,6 +6,10 @@ const tags = ["ZCred Passport Credential"];
 
 export const PASSPORT_ROUTES: ZCredRoutes = {
   credentialType: "passport",
+  info: {
+    method: "GET",
+    url: zcredjs.issuerPath("passport").info
+  },
   challenge: {
     method: "POST",
     url: zcredjs.issuerPath("passport").challenge,
@@ -72,5 +76,5 @@ export const PASSPORT_ROUTES: ZCredRoutes = {
         }
       }
     }
-  }
+  },
 };

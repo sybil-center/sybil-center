@@ -11,6 +11,7 @@ import { TrSchema } from "trgraph";
 export interface ICredentialSignProver {
   proofType: SignProofType;
   issuerId: ZIdentifier;
+  issuerReference: string;
   signAttributes<
     TAttr extends ZAttributes = ZAttributes
   >(attributes: TAttr, transSchema: TrSchema): Promise<ZSignatureProof>;

@@ -1,27 +1,36 @@
-import { Identifier, ZkCredential } from "./zk-credentials.js";
+import { HttpCredential, Identifier } from "./zk-credentials.js";
 import { SignFn } from "./wallet-adapter.js";
 
 export type ChallengeOptions = {
+  /** Chain id according CAIP-2 */
   chainId?: string;
+  /** Redirect URL after issuing or authorization */
   redirectURL?: string;
 }
 
 export type ChallengeReq = {
   subject: {
+    /** Credential subject identifier */
     id: Identifier;
   }
+  /** Date when credential becomes valid */
   validFrom?: string;
+  /** Date when credential becomes not valid */
   validUntil?: string;
   options?: ChallengeOptions
 }
 
 export type Challenge = {
+  /** Issuing session unique identifier */
   sessionId: string;
+  /** Message for signing */
   message: string;
+  /** Verification URL */
   verifyURL?: string;
 }
 
 export type CanIssueReq = {
+  /** Issuing session unique identifier */
   sessionId: string;
 }
 
@@ -30,7 +39,9 @@ export type CanIssue = {
 }
 
 export type IssueReq = {
+  /** Issuing session unique identifier */
   sessionId: string;
+  /** Signature from Challenge message */
   signature: string;
 }
 
@@ -45,34 +56,47 @@ export type BrowserIssueParams = {
   windowOptions?: WindowOptions;
 }
 
-// export type ProofInfo = {
-//   type: string;
-//   reference: string;
-//   description?: string;
-//   schemasInfo: {
-//     description: string;
-//     attributesSchema: TrSchema
-//   }[]
-// }
-
-// export type IssuerInfo = {
-//   proofsInfo: ProofInfo[];
-//   updatable: boolean;
-//   updated: string;
-//   endpoint: string;
-//   description: string;
-// }
-
-export interface IHttpIssuer {
-  endpoint: URL;
+export type Info = {
+  /** Credential type */
   credentialType: string;
-  // getInfo(): Promise<IssuerInfo>;
-  browserIssue?<
-    TCred extends ZkCredential = ZkCredential
-  >(args: BrowserIssueParams): Promise<TCred>;
+  /** If true Issuer MUST provide update proofs method */
+  updatableProofs: boolean;
+  /** ISO date when new proof types was added to credential */
+  proofsUpdated: string;
+  /** Proofs information */
+  proofsInfo: {
+    /** Proof type */
+    type: string;
+    /** References to proof */
+    references: string[]
+  }[]
+}
+
+// export type ChangeSubjectIdReq<TCred extends HttpCredential = HttpCredential> = {
+//   newSubjectId: Identifier;
+//   credential: TCred
+// }
+
+/** Http issuer interface */
+export interface IHttpIssuer {
+  /** Issuer endpoint */
+  uri: URL;
+  /** Info method */
+  getInfo(): Promise<Info>;
+  /** Challenge method */
   getChallenge(challengeReq: ChallengeReq): Promise<Challenge>;
+  /** Can issue method */
   canIssue(canIssueReq: CanIssueReq): Promise<CanIssue>;
+  /** Issue method */
   issue<
-    TCred extends ZkCredential = ZkCredential
+    TCred extends HttpCredential = HttpCredential
   >(issueReq: IssueReq): Promise<TCred>;
+  /** Update proofs method */
+  updateProofs?<
+    TCred extends HttpCredential = HttpCredential
+  >(cred: TCred): Promise<TCred>;
+  /** Change subject id method */
+  browserIssue?<
+    TCred extends HttpCredential = HttpCredential
+  >(args: BrowserIssueParams): Promise<TCred>;
 }

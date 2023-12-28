@@ -24,10 +24,18 @@ export function issuersController(injector: Injector<Dependencies>) {
   for (const routes of ZCRED_ISSUERS_ROUTES) {
     const {
       credentialType,
+      info: infoRoute,
       challenge: challengeRoute,
       canIssue: canIssueRoute,
-      issue: issueRoute
+      issue: issueRoute,
     } = routes;
+
+    fastify.route({
+      ...infoRoute,
+      handler: async () => {
+        return principalIssuer.getIssuer(credentialType).getInfo();
+      }
+    });
 
     fastify.route<{ Body: ZChallengeReq }>({
       ...challengeRoute,
