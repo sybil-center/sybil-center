@@ -57,6 +57,8 @@ export type BrowserIssueParams = {
 }
 
 export type Info = {
+  /** kid for credential JWS verification */
+  kid: string;
   /** Credential type */
   credentialType: string;
   /** If true Issuer MUST provide update proofs method */

@@ -1,6 +1,6 @@
 {
   "name": "@zcredjs/core",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "zcred protocol core from zcred org",
   "license": "(Apache-2.0 OR MIT)",
   "keywords": [

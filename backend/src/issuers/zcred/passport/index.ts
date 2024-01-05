@@ -32,6 +32,7 @@ import { SignatureVerifier } from "../../../services/signature-verifier/index.js
 import { ISO3166 } from "trgraph";
 import { CredentialProver } from "../../../services/credential-prover/index.js";
 import { SCHEMAS } from "../../../services/schema-finder/index.js";
+import { DIDService } from "../../../base/service/did.service.js";
 
 type Session = {
   reference: string;
@@ -60,13 +61,15 @@ export class PassportIssuer
     "config",
     "shuftiproKYC",
     "signatureVerifier",
-    "credentialProver"
+    "credentialProver",
+    "didService"
   );
   constructor(
     private readonly config: Config,
     private readonly shuftiproKYC: ShuftiproKYC,
     private readonly signatureVerifier: SignatureVerifier,
-    private readonly credentialProver: CredentialProver
+    private readonly credentialProver: CredentialProver,
+    private readonly didService: DIDService
   ) {
     this.secret = config.secret;
     this.templateId = config.shuftiproPassportTamplate;
@@ -85,6 +88,7 @@ export class PassportIssuer
       .signProver("mina:poseidon-pasta")
       .issuerReference;
     return {
+      kid: this.didService.verificationMethod,
       credentialType: this.credentialType,
       updatableProofs: false,
       proofsUpdated: new Date(2024, 0, 1, 0, 0, 0).toISOString(),
@@ -154,7 +158,7 @@ export class PassportIssuer
     }
     const attributes = this.toAttributes(webhookResp, session);
     const proofs = await this.createProofs(attributes);
-    const credential: PassportCred = {
+    const credential: Omit<PassportCred, "jws"> = {
       meta: {
         issuer: {
           type: "http",
@@ -164,9 +168,13 @@ export class PassportIssuer
       attributes,
       proofs
     };
+    const protectedCred: PassportCred = {
+      ...credential,
+      jws: await this.createJWS(credential)
+    };
     this.sessionCache.delete(sessionId);
     // @ts-expect-error
-    return credential;
+    return protectedCred;
   };
 
   dispose(): void | PromiseLike<void> {
@@ -258,6 +266,12 @@ export class PassportIssuer
         }
       }
     };
+  }
+
+  private async createJWS(cred: Omit<HttpCredential, "jws">): Promise<string> {
+    const dagJWS = await this.didService.createJWS(cred);
+    const [jwsSignature] = dagJWS.signatures;
+    return jwsSignature?.protected + ".." + jwsSignature?.signature;
   }
 
   private async verifySignature(signature: string, session: Session) {

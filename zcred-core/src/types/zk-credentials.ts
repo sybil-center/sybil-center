@@ -58,7 +58,7 @@ export type ZkCredential<TAttr extends Attributes = Attributes> = {
   proofs: { [key: string]: Record<string, Proof> }
 }
 
-export const META_ISSUER_TYPES = ["http"] as const
+export const META_ISSUER_TYPES = ["http"] as const;
 export type MetaIssuerType = typeof META_ISSUER_TYPES[number]
 
 export interface HttpCredential<TAttr extends Attributes = Attributes> extends ZkCredential<TAttr> {
@@ -68,4 +68,5 @@ export interface HttpCredential<TAttr extends Attributes = Attributes> extends Z
       uri: string;
     }
   };
+  jws: string;
 }
