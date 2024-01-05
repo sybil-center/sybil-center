@@ -10,12 +10,13 @@ import {
   ACIProof,
   Challenge,
   ChallengeReq,
+  HttpCredential,
   Identifier,
   Info,
   IssueReq,
   PassportCred,
   zcredjs,
-  ZIdentifier,
+  ZIdentifier
 } from "@zcredjs/core";
 import * as a from "uvu/assert";
 import sinon from "sinon";
@@ -27,6 +28,9 @@ import { ethers } from "ethers";
 import { minaSupport } from "../../../support/chain/mina.js";
 import Client from "mina-signer";
 import { Field, Scalar, Signature } from "o1js";
+import { DIDService } from "../../../../src/base/service/did.service.js";
+import sortKeys from "sort-keys";
+import { toJWTPayload } from "../../../../src/util/jwt.util.js";
 
 const test = suite("INTEGRATION API: ZCred passport issuer");
 
@@ -127,6 +131,7 @@ let config: Config;
 let passportIssuer: PassportIssuer;
 let sessionCache: PassportIssuer["sessionCache"];
 let minaPoseidonPastaProver: ICredentialSignProver;
+let didService: DIDService;
 
 test.before(async () => {
   configDotEnv({ path: support.configPath, override: true });
@@ -138,6 +143,7 @@ test.before(async () => {
   sessionCache = passportIssuer["sessionCache"];
   const credentialProover = app.context.resolve("credentialProver");
   minaPoseidonPastaProver = credentialProover["signProvers"]["mina:poseidon-pasta"];
+  didService = app.context.resolve("didService");
   // await app.run();
 });
 
@@ -245,6 +251,19 @@ async function beforeIssue({
   return challenge;
 }
 
+async function verifyCredJWS(cred: HttpCredential): Promise<boolean> {
+  try {
+    const credentialCopy = sortKeys(JSON.parse(JSON.stringify(cred)), { deep: true });
+    credentialCopy.jws = undefined;
+    const jwsPayload = toJWTPayload(credentialCopy);
+    const [jwsHeader, _, jwsSignature] = cred.jws.split(".");
+    await didService.verifyJWS(`${jwsHeader}.${jwsPayload}.${jwsSignature}`);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 test("issue passport credential with mina public key", async () => {
   const { sessionId, message } = await beforeIssue({
     subject: { id: { type: "mina:publickey", key: minaSupport.publicKey } },
@@ -299,6 +318,10 @@ test("issue passport credential with mina public key", async () => {
     true,
     "aci:mina-poseidon proof is not verified"
   );
+  a.ok(
+    await verifyCredJWS(credential),
+    `http zk-credential jws is not verified`
+  );
 });
 
 test("issue passport credential with ethereum public key", async () => {
@@ -349,6 +372,10 @@ test("issue passport credential with ethereum public key", async () => {
   a.ok(
     await new MinaCredentialVerifier("aci:mina-poseidon").verify(credential, issuerReference),
     "aci:mina-poseidon proof is not verified"
+  );
+  a.ok(
+    await verifyCredJWS(credential),
+    `http zk-credential jws is not verified`
   );
 });
 
@@ -490,6 +517,7 @@ test("get issuer info", async () => {
 
   const minaIssuerReference = minaPoseidonPastaProver.issuerReference;
   a.equal(info, {
+    kid: didService.verificationMethod,
     credentialType: "passport",
     updatableProofs: false,
     proofsUpdated: info.proofsUpdated,
