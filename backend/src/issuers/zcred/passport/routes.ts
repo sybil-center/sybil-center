@@ -8,7 +8,10 @@ export const PASSPORT_ROUTES: ZCredRoutes = {
   credentialType: "passport",
   info: {
     method: "GET",
-    url: zcredjs.issuerPath("passport").info
+    url: zcredjs.issuerPath("passport").info,
+    schema: {
+      tags: tags
+    }
   },
   challenge: {
     method: "POST",
