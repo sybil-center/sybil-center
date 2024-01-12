@@ -1,18 +1,18 @@
-# VC ISSUER
+# ZK-Credential issuer
 
----
+Zero-Knowledge credential issuer according to
+[ZCIP-2](https://github.com/zcred-org/ZCIPs/blob/main/ZCIPs/zcip-2.md)
 
-to run app local copy `dev.env` to `.env`, configure `.env` file and use command below:
+## Provided zk-credential
 
-```
-npm run dev
-```
+### Passport
 
----
+#### Development
 
-to run app from `docker` configure `.env` file in root dir and use commands below:
+Issuer URI: https://api.dev.sybil.center/api/v1/zcred/issuers/passport
 
-```
-docker build -t vc-provider .
-docker run --env-file=dev.env -p 8080:8080 vc-provider
-```
+#### Production
+
+Issuer URI: https://api.dev.sybil.center/api/v1/zcred/issuers/passport
+
+
