@@ -8,15 +8,17 @@ import { APIKeys } from "@sybil-center/sdk/types";
 import { configDotEnv } from "../../../src/util/dotenv.util.js";
 import sinon from "sinon";
 
-const test = suite("INTEGRATION API: app key service test");
+type TestContext = {
+  app: App | undefined
+}
 
-let app: App;
+const test = suite<TestContext>("INTEGRATION API: app key service test", { app: undefined });
 
-test.before(async () => {
+test.before(async (testContext) => {
   const config = new URL("../../env-config/test.env", import.meta.url);
   configDotEnv({ path: config, override: true });
-  app = await App.init();
-  const captchaService = app.context.resolve("captchaService");
+  testContext.app = await App.init();
+  const captchaService = testContext.app.context.resolve("captchaService");
   sinon.stub(captchaService, "isHuman").resolves({
     isHuman: true,
     score: 0.9,
@@ -24,22 +26,22 @@ test.before(async () => {
   });
 });
 
-test.after(async () => {
+test.after(async ({ app }) => {
   sinon.restore();
-  await app.close();
+  await app?.close();
 });
 
-test("should generate and verify app key and secret", async () => {
+test("should generate and verify app key and secret", async ({ app }) => {
   const { didPkh, address } = ethereumSupport.info.ethereum;
-  const fastify = app.context.resolve("httpServer").fastify;
-  const frontendDomain = app.context.resolve("config").frontendOrigin;
-  const apiKeyService = app.context.resolve("apiKeyService");
+  const fastify = app!.context.resolve("httpServer").fastify;
+  const frontendDomain = app!.context.resolve("config").frontendOrigin;
+  const apiKeyService = app!.context.resolve("apiKeyService");
   const expirationDate = new Date();
   expirationDate.setMinutes(expirationDate.getMinutes() + 3);
   const ethAccountVC = await appSup.issueEthAccountVC({
     subjectId: didPkh,
     signFn: ethereumSupport.sign,
-    app: app,
+    app: app!,
     opt: { expirationDate: expirationDate }
   });
   const apiKeyResp = await fastify.inject({
@@ -89,14 +91,14 @@ test("should generate and verify app key and secret", async () => {
   a.is(throwFailSecretkey, true, "fail app secret is verified");
 });
 
-test("should not generate app keys because expiration date undefined", async () => {
+test("should not generate app keys because expiration date undefined", async ({ app }) => {
   const { didPkh } = ethereumSupport.info.ethereum;
-  const frontendDomain = app.context.resolve("config").frontendOrigin;
-  const fastify = app.context.resolve("httpServer").fastify;
+  const frontendDomain = app!.context.resolve("config").frontendOrigin;
+  const fastify = app!.context.resolve("httpServer").fastify;
   const ethAccountVC = await appSup.issueEthAccountVC({
     subjectId: didPkh,
     signFn: ethereumSupport.sign,
-    app: app,
+    app: app!,
   });
   const resp = await fastify.inject({
     method: "POST",
@@ -112,20 +114,20 @@ test("should not generate app keys because expiration date undefined", async () 
   a.is(resp.statusCode, 400, `${resp.body}`);
 });
 
-test("should not generate app keys because expiration date is too large", async () => {
+test("should not generate app keys because expiration date is too large", async ({ app }) => {
   const { didPkh } = ethereumSupport.info.ethereum;
-  const fastify = app.context.resolve("httpServer").fastify;
+  const fastify = app!.context.resolve("httpServer").fastify;
   const {
     frontendOrigin: frontendDomain,
     apiKeysCredentialTTL
-  } = app.context.resolve("config");
+  } = app!.context.resolve("config");
   const expirationDate = new Date();
   expirationDate.setMinutes(expirationDate.getMinutes() + apiKeysCredentialTTL + 1);
   const ethAccountVC = await appSup.issueEthAccountVC(
     {
       subjectId: didPkh,
       signFn: ethereumSupport.sign,
-      app: app,
+      app: app!,
       opt: { expirationDate: expirationDate }
     }
   );
@@ -145,15 +147,15 @@ test("should not generate app keys because expiration date is too large", async 
   a.is(errMsg, `Credential TTL must be less then ${apiKeysCredentialTTL} MS`);
 });
 
-test("should reject app keys generation because incorrect Referer header", async () => {
+test("should reject app keys generation because incorrect Referer header", async ({ app }) => {
   const { didPkh } = ethereumSupport.info.ethereum;
-  const fastify = app.context.resolve("httpServer").fastify;
+  const fastify = app!.context.resolve("httpServer").fastify;
   const expirationDate = new Date();
   expirationDate.setMinutes(expirationDate.getMinutes() + 5);
   const ethAccountVC = await appSup.issueEthAccountVC({
     subjectId: didPkh,
     signFn: ethereumSupport.sign,
-    app: app,
+    app: app!,
     opt: { expirationDate: expirationDate }
   });
   const resp = await fastify.inject({

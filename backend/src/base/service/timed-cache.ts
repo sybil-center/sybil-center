@@ -1,6 +1,6 @@
 import type { Disposable } from "typed-inject";
-import { CacheClock } from "cache-clock";
-import { ClientError } from "../../backbone/errors.js";
+import { CacheClock } from "./../../util/cache-clock/index.js";
+import { ClientErr } from "../../backbone/errors.js";
 
 export class TimedCache<TKey, TValue> implements Disposable {
   private readonly cacheClock;
@@ -16,8 +16,13 @@ export class TimedCache<TKey, TValue> implements Disposable {
 
   get(key: TKey): TValue {
     const retrieved = this.cacheClock.get(this.toKey(key));
-    if (!retrieved) throw new ClientError(`No session with id = ${this.toKey(key)}`)
+    if (!retrieved) throw new ClientErr(`No session with id = ${this.toKey(key)}`);
     return retrieved.v as TValue;
+  }
+
+  find(key: TKey): TValue | undefined {
+    const retrieved = this.cacheClock.get(this.toKey(key));
+    return retrieved?.v as TValue | undefined;
   }
 
   /**
@@ -26,8 +31,8 @@ export class TimedCache<TKey, TValue> implements Disposable {
    * @param key - session key
    */
   delete(key: TKey): TValue | undefined {
-    const entry = this.cacheClock.del(this.toKey(key))
-    return entry as TValue | undefined
+    const entry = this.cacheClock.del(this.toKey(key));
+    return entry as TValue | undefined;
   }
 
   dispose(): void {

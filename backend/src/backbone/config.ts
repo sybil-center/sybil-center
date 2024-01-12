@@ -50,6 +50,31 @@ export class Config {
    */
   readonly captchaValidScore: number;
 
+  /** Mina private key as base58 encoding*/
+  readonly minaPrivateKey: string;
+
+  /** Persona API KEY from sandbox */
+  readonly personaApiKey: string;
+
+  /** Secret to hide subject identifier. Uses as salt in hash function */
+  readonly personaSecret: string;
+
+  /** Persona template identifier for template verification process */
+  readonly personaTemplateId: string;
+
+  /** Persona WebHook secret to verify callbacks from persona */
+  readonly personaHookSecret: string;
+
+  /** KYC session ttl in MS */
+  readonly kycSessionTtl: number;
+
+  /** secp256k1 private key as hex string */
+  readonly secp256k1PrivateKey: string;
+
+  readonly shuftiproClientId: string;
+  readonly shuftiproSecretKey: string;
+  readonly shuftiproPassportTamplate: string;
+
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -88,6 +113,17 @@ export class Config {
     this.captchaSiteKey = getStrOrThrow("CAPTCHA_SITE_KEY");
     this.captchaRequired = getBoolOrElse("CAPTCHA_REQUIRED", false);
     this.captchaValidScore = getCaptchaValidScore("CAPTCHA_VALID_SCORE", 0.7);
+    this.minaPrivateKey = getStrOrThrow("MINA_PRIVATE_KEY");
+    this.personaApiKey = getStrOrThrow("PERSONA_API_KEY");
+    this.personaSecret = getStrOrThrow("PERSONA_SECRET");
+    this.personaTemplateId = getStrOrThrow("PERSONA_TEMPLATE_ID");
+    this.personaHookSecret = getStrOrThrow("PERSONA_HOOK_SECRET");
+
+    this.kycSessionTtl = getNumOrThrow("KYC_SESSION_TTL");
+    this.secp256k1PrivateKey = getStrOrThrow("SECP256K1_PRIVATE_KEY");
+    this.shuftiproClientId = getStrOrThrow("SHUFTIPRO_CLIENTID");
+    this.shuftiproSecretKey = getStrOrThrow("SHUFTIPRO_SECRETKEY");
+    this.shuftiproPassportTamplate = getStrOrThrow("SHUFTIPRO_PASSPORT_TAMPLATE");
   }
 }
 

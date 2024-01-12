@@ -1,7 +1,7 @@
 import type { DIDService } from "./did.service.js";
 import { tokens } from "typed-inject";
 import { Credential, ProofType } from "@sybil-center/sdk/types";
-import { ClientError } from "../../backbone/errors.js";
+import { ClientErr } from "../../backbone/errors.js";
 import { toFullJWT } from "../../util/jwt.util.js";
 import { ThrowDecoder } from "../../util/throw-decoder.util.js";
 import { jwsAsDecodedJWS } from "../types/io-ts-extra.js";
@@ -33,20 +33,20 @@ export class ProofService {
   async sign(proofType: ProofType, credential: Credential): Promise<Credential> {
     const proofHandler = this.proofs.get(proofType);
     if (!proofHandler) {
-      throw new ClientError(`Proof type - ${proofHandler} is not supporter`);
+      throw new ClientErr(`Proof type - ${proofHandler} is not supporter`);
     }
     return proofHandler.sign(credential);
   }
 
   async verify(credential: Credential): Promise<boolean> {
     const proof = credential.proof;
-    if (!proof) throw new ClientError("Credential proof is empty");
-    if (!proof.type) throw new ClientError("Credential proof type is empty");
-    const proofHandler = this.proofs.get(proof.type)
+    if (!proof) throw new ClientErr("Credential proof is empty");
+    if (!proof.type) throw new ClientErr("Credential proof type is empty");
+    const proofHandler = this.proofs.get(proof.type);
     if (!proofHandler) {
       throw new Error(`Proof type - ${proof.type} verification is not supported`);
     }
-    return proofHandler.verify(credential)
+    return proofHandler.verify(credential);
   }
 
   /**

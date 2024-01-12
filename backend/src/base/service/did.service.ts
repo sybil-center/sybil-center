@@ -1,4 +1,4 @@
-import { hash } from "@stablelib/sha256";
+import { hash as sha256 } from "@stablelib/sha256";
 import { Ed25519Provider } from "key-did-provider-ed25519";
 import { DID } from "dids";
 import KeyResolver from "key-did-resolver";
@@ -16,7 +16,7 @@ export class DIDService {
 
   constructor(config: { secret: string }) {
     const secretBytes = Array.from(config.secret, (i) => i.charCodeAt(0));
-    const seed = hash(new Uint8Array(secretBytes));
+    const seed = sha256(new Uint8Array(secretBytes));
 
     const provider = new Ed25519Provider(seed);
     this.did = new DID({

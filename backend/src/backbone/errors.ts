@@ -1,19 +1,66 @@
-export class ClientError extends Error {
-  readonly statusCode;
-  constructor(message: string, statusCode?: number) {
-    super(message);
-    this.statusCode = statusCode ? statusCode : 400;
+type ErrInfo = {
+  /** Message for Client */
+  message: string;
+  /** Error rise place  */
+  place?: string;
+  /** Cause error */
+  cause?: Error;
+  /** Error description for log */
+  description?: string;
+}
+
+export class Err extends Error {
+  readonly info: ErrInfo;
+  constructor(args: ErrInfo | string) {
+    if (typeof args === "string") {
+      super(args);
+      this.info = { message: args };
+    } else {
+      super(args.message);
+      this.info = args;
+    }
   }
 }
 
-export class ServerError extends Error {
-  readonly statusCode = 500;
-  readonly _place: string;
-  readonly _log: string;
-  constructor(message: string, params: { props: Partial<{ _place: string; _log: string }> }) {
-    super(message);
-    const props = { _place: "Application", _log: "", ...params.props };
-    this._place = props._place;
-    this._log = props._log;
+interface HttpErrInfo extends ErrInfo {
+  statusCode?: number;
+}
+
+interface ReqHttpErrInfo extends HttpErrInfo {
+  statusCode: number;
+}
+
+export class ClientErr extends Err {
+  override readonly info: ReqHttpErrInfo;
+  constructor(args: HttpErrInfo | string) {
+    if (typeof args === "string") {
+      const info: ReqHttpErrInfo = { message: args, statusCode: 400 };
+      super(info);
+      this.info = info;
+    } else {
+      super(args);
+      this.info = {
+        ...args,
+        statusCode: args.statusCode ? args.statusCode : 400,
+      };
+    }
   }
 }
+
+export class ServerErr extends Err {
+  override readonly info: ReqHttpErrInfo;
+  constructor(args: HttpErrInfo | string) {
+    if (typeof args === "string") {
+      const info: ReqHttpErrInfo = { message: args, statusCode: 500 };
+      super(info);
+      this.info = info;
+    } else {
+      super(args);
+      this.info = {
+        ...args,
+        statusCode: args.statusCode ? args.statusCode : 500
+      };
+    }
+  }
+}
+

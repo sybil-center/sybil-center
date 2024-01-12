@@ -4,8 +4,10 @@
     "target": "esnext",
     /* Modules */
     "module": "esnext",
-    "moduleResolution": "node",
-    "rootDirs": ["./src"],
+    "moduleResolution": "node16",
+    "rootDirs": [
+      "./src"
+    ],
     "typeRoots": [
       ",./types/global.d.ts",
       ",./node_modules/@types"

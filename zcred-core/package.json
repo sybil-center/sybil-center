@@ -1,0 +1,44 @@
+{
+  "name": "zcred-core",
+  "version": "0.0.2",
+  "description": "zcred protocol core",
+  "license": "(Apache-2.0 OR MIT)",
+  "keywords": [
+    "zcred",
+    "zero-knowledge credentials",
+    "zcred-protocol"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zcred-org"
+  },
+  "type": "module",
+  "files": [
+    "/dist"
+  ],
+  "sideEffects": false,
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/index.d.ts"
+      ]
+    }
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "rm -r ./dist & ./node_modules/.bin/tsc -p tsconfig.build.json",
+    "test": "echo no-tests"
+  },
+  "devDependencies": {
+    "prettier": "^2.8.4",
+    "tsm": "^2.3.0",
+    "typescript": "^4.9.5",
+    "uvu": "^0.5.6"
+  }
+}

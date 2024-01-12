@@ -1,5 +1,5 @@
 import { tokens } from "typed-inject";
-import { ClientError, ServerError } from "../../backbone/errors.js";
+import { ClientErr, ServerErr } from "../../backbone/errors.js";
 import { ILogger } from "../../backbone/logger.js";
 
 /** ClassificationReason enum */
@@ -116,11 +116,10 @@ export class CaptchaService implements ICaptchaService {
         }
       })
     });
-    if (resp.status !== 200) throw new ServerError("Internal server error", {
-      props: {
-        _place: this.constructor.name,
-        _log: `reCAPTCHA assessment error. ${JSON.stringify(await resp.json())}`
-      }
+    if (resp.status !== 200) throw new ServerErr({
+      message: "Internal server error",
+      place: this.constructor.name,
+      description: `reCAPTCHA assessment error. ${JSON.stringify(await resp.json())}`
     });
     const assessment = await resp.json();
     const tokenCrateTime = assessment?.tokenProperties?.createTime;
@@ -135,10 +134,10 @@ export class CaptchaService implements ICaptchaService {
     const { tokenProperties, riskAnalysis } = await this.getAssessment(captchaToken, action);
     if (!tokenProperties.valid) {
       this.logger.error(`CAPTCHA invalid result: ${tokenProperties?.invalidReason}`);
-      throw new ClientError("CAPTCHA token is not valid");
+      throw new ClientErr("CAPTCHA token is not valid");
     }
     if (action && tokenProperties?.action !== action) {
-      throw new ClientError("Invalid action");
+      throw new ClientErr("Invalid action");
     }
     const isHuman = riskAnalysis.score >= 0.7;
     if (!isHuman) this.logger.info(`Robot try to authenticate in application: ${riskAnalysis}`);

@@ -8,7 +8,7 @@ import {
   toFullJWT,
   toJWS,
 } from "../../../src/util/jwt.util.js";
-import { DagJWS } from "dids/dist/types";
+import { DagJWS } from "dids";
 
 const test = suite("UNIT: JWT lib util test");
 
