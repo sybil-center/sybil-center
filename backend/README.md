@@ -20,5 +20,3 @@ Issuer URI: https://api.sybil.center/api/v1/zcred/issuers/passport
 
 Swagger [Docs](https://api.sybil.center/documentation) (ZCred Passport
 Credential)
-
-
