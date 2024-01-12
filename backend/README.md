@@ -11,8 +11,12 @@ Zero-Knowledge credential issuer according to
 
 Issuer URI: https://api.dev.sybil.center/api/v1/zcred/issuers/passport
 
+Swagger [Docs](https://api.dev.sybil.center/documentation) (ZCred
+Passport Credential)
+
 #### Production
 
-Issuer URI: https://api.dev.sybil.center/api/v1/zcred/issuers/passport
+Issuer URI: https://api.sybil.center/api/v1/zcred/issuers/passport
 
-
+Swagger [Docs](https://api.sybil.center/documentation) (ZCred Passport
+Credential)
