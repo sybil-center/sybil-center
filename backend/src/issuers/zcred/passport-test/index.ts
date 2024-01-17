@@ -250,7 +250,7 @@ export class PassportTestIssuer
     const { validUntil, subject: { id } } = session.challengeReq;
     const user = webhookResp.user;
     return {
-      type: "passport-test",
+      type: "passport",
       issuanceDate: new Date().toISOString(),
       validFrom: new Date(2024, 0, 0).toISOString(),
       validUntil: chooseValidUntil(validUntil, new Date(2050, 0, 0).toISOString()),
