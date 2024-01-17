@@ -69,7 +69,7 @@ export interface IAuroWallet {
   sendTransaction(args: SendTransactionArgs): Promise<{ hash: string }>;
 }
 
-export class AuraWalletAdapter implements IWalletAdapter {
+export class AuroWalletAdapter implements IWalletAdapter {
   constructor(private readonly provider: IAuroWallet) {
     this.getAddress = this.getAddress.bind(this);
     this.getSubjectId = this.getSubjectId.bind(this);
