@@ -11,7 +11,7 @@ export const ACI_PROOFS = ["aci:mina-poseidon"] as const;
 export type ACIProofType = typeof ACI_PROOFS[number]
 export type ProofType = SignProofType | ACIProofType
 
-export const CRED_TYPES = ["passport"] as const;
+export const CRED_TYPES = ["passport", "passport-test"] as const;
 export type CredType = typeof CRED_TYPES[number];
 
 export const MINA_CHAINIDS = ["mina:mainnet", "mina:berkeley"] as const;

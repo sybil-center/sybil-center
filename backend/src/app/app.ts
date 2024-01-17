@@ -31,6 +31,7 @@ import { PassportIssuer } from "../issuers/zcred/passport/index.js";
 import { SHUFTI_KYC_CONTROLLER } from "../controllers/kyc/shuftipro/index.js";
 import { issuersController } from "../controllers/zcred-issuer/index.js";
 import { PrincipalIssuer } from "../issuers/zcred/index.js";
+import { PassportTestIssuer } from "../issuers/zcred/passport-test/index.js";
 
 type DI = {
   logger: ILogger;
@@ -55,7 +56,8 @@ type DI = {
   shuftiproKYC: ShuftiproKYC;
   signatureVerifier: SignatureVerifier;
   passportIssuer: PassportIssuer;
-  principalIssuer: PrincipalIssuer
+  principalIssuer: PrincipalIssuer;
+  passportTestIssuer: PassportTestIssuer;
 };
 
 export class App {
@@ -118,6 +120,7 @@ export class App {
       .provideClass("signatureVerifier", SignatureVerifier)
       // @ts-expect-error
       .provideClass("passportIssuer", PassportIssuer)
+      .provideClass("passportTestIssuer", PassportTestIssuer)
       .provideClass("principalIssuer", PrincipalIssuer);
 
 

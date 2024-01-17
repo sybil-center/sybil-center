@@ -10,6 +10,7 @@ import { ThrowDecoder } from "../../../util/throw-decoder.util.js";
 import { rest } from "../../../util/fetch.util.js";
 import { FastifyRequest } from "fastify";
 
+
 const AccountCreateResp = t.exact(
   t.type({
     data: t.type({
@@ -208,6 +209,12 @@ export class PersonaKYC {
   ) {
     const secretBytes = u8a.fromString(config.personaSecret, "utf8");
     this.secret = sha256(secretBytes);
+  }
+
+  createReference(data: string): string {
+    return crypto.createHmac("sha256", this.config.secret)
+      .update(data)
+      .digest("base64url");
   }
 
   /** Transform Zkc Identifier to Persona reference-id */
