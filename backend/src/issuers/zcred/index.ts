@@ -4,18 +4,27 @@ import { tokens } from "typed-inject";
 import { PassportIssuer } from "./passport/index.js";
 import { ILogger } from "../../backbone/logger.js";
 import { ServerErr } from "../../backbone/errors.js";
+import { PassportTestIssuer } from "./passport-test/index.js";
 
 type Issuer = IHttpIssuer & Partial<IWebhookHandler>
 
 export class PrincipalIssuer {
   private readonly issuers: Record<CredType, Issuer>;
 
-  static inject = tokens("logger", "passportIssuer");
+  static inject = tokens(
+    "logger",
+    "passportIssuer",
+    "passportTestIssuer"
+  );
   constructor(
     logger: ILogger,
-    passportIssuer: PassportIssuer
+    passportIssuer: PassportIssuer,
+    passportTestIssuer: PassportTestIssuer
   ) {
-    this.issuers = { "passport": passportIssuer };
+    this.issuers = {
+      "passport": passportIssuer,
+      "passport-test": passportTestIssuer
+    };
     Object.keys(this.issuers)
       .forEach((type) => logger.info(`ZCred ${type} issuer initialized `));
   }

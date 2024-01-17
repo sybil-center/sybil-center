@@ -26,6 +26,28 @@ export const ACI_PROOF_SCHEMA_MAP: Record<CredType, Record<ACIProofType, {
         }
       }
     }
+  },
+  "passport-test": {
+    "aci:mina-poseidon": {
+      attributesSchemas: {
+        type: ["ascii-bytes", "bytes-uint128", "uint128-mina:field"],
+        validFrom: ["isodate-unixtime", "unixtime-uint64", "uint64-mina:field"],
+        subject: {
+          firstName: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
+          lastName: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
+          birthDate: ["isodate-unixtime19", "unixtime19-uint64", "uint64-mina:field"],
+          gender: ["ascii-bytes", "bytes-uint64", "uint64-mina:field"],
+          countryCode: [
+            "iso3166alpha3-iso3166numeric",
+            "iso3166numeric-uint16",
+            "uint16-mina:field"
+          ],
+          document: {
+            id: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"]
+          }
+        }
+      }
+    }
   }
 };
 
