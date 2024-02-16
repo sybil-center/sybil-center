@@ -5,20 +5,8 @@ import { support } from "../../../support/index.js";
 import { FastifyInstance } from "fastify";
 import { Config } from "../../../../src/backbone/config.js";
 import { PassportIssuer } from "../../../../src/issuers/zcred/passport/index.js";
-import {
-  Challenge,
-  ChallengeReq,
-  HttpCredential,
-  Identifier,
-  Info,
-  IssueReq,
-  PassportCred,
-  StrictId,
-  zcredjs,
-} from "@zcredjs/core";
-import {
-  EthSignature
-} from "@zcredjs/ethereum"
+import { Challenge, ChallengeReq, HttpCredential, Identifier, Info, IssueReq, StrictId, zcredjs, } from "@zcredjs/core";
+import { EthSignature } from "@zcredjs/ethereum";
 import * as o1js from "o1js";
 import { Field, Scalar, Signature } from "o1js";
 import { MinaPoseidonPastaVerifier } from "@zcredjs/mina";
@@ -34,6 +22,7 @@ import sortKeys from "sort-keys";
 import { toJWTPayload } from "../../../../src/util/jwt.util.js";
 import { sybil } from "../../../../src/services/sybiljs/index.js";
 import { IPassportKYCService } from "../../../../src/issuers/zcred/passport/types.js";
+import { PassportCredential } from "../../../../src/services/sybiljs/passport/types.js";
 
 const test = suite("INTEGRATION API: ZCred passport issuer");
 
@@ -219,7 +208,7 @@ test("issue passport credential with mina public key", async () => {
     issueResp.statusCode, 200,
     `Issue response status code is not 200. Resp body: ${issueResp.body}`
   );
-  const credential = JSON.parse(issueResp.body) as PassportCred;
+  const credential = JSON.parse(issueResp.body) as PassportCredential;
   a.is(
     credential.meta.issuer.uri,
     new URL("./api/v1/zcred/issuers/passport", config.pathToExposeDomain).href,
@@ -270,7 +259,7 @@ test("issue passport credential with ethereum public key", async () => {
     issueResp.statusCode, 200,
     `Issue response status code is not 200. Issue resp: ${issueResp.body}`
   );
-  const credential = JSON.parse(issueResp.body) as PassportCred;
+  const credential = JSON.parse(issueResp.body) as PassportCredential;
   a.is(
     credential.meta.issuer.uri,
     new URL("./api/v1/zcred/issuers/passport", config.pathToExposeDomain).href,
@@ -383,6 +372,80 @@ test("get issuer info", async () => {
       }
     }
   } as Info);
+});
+
+test("sybil id equals for same passport but different subject id", async () => {
+  const { sessionId: minaSessionId, message: minaMessage } = await beforeIssue({
+    subject: {
+      id: { type: "mina:publickey", key: minaSupport.publicKey }
+    },
+    validUntil: new Date(2030, 1, 1).toISOString(),
+    options: {
+      chainId: "mina:mainnet"
+    }
+  });
+  const minaClient = new Client({ network: "mainnet" });
+  const {
+    signature: {
+      field,
+      scalar
+    }
+  } = minaClient.signMessage(minaMessage, minaSupport.privateKey);
+  const minaSignature = Signature.fromObject({
+    r: Field.fromJSON(field),
+    s: Scalar.fromJSON(scalar)
+  }).toBase58();
+  const minaIssueReq: IssueReq = {
+    sessionId: minaSessionId,
+    signature: minaSignature
+  };
+  const minaIssueResp = await fastify.inject({
+    method: "POST",
+    url: sybil.issuerPath("passport").issue,
+    body: minaIssueReq
+  });
+  a.is(
+    minaIssueResp.statusCode, 200,
+    `Issue response status code is not 200. Resp body: ${minaIssueResp.body}`
+  );
+  const minaCredential = JSON.parse(minaIssueResp.body) as PassportCredential;
+
+  const { sessionId: ethSessionId, message: ethMessage } = await beforeIssue({
+    subject: {
+      id: zcredjs.normalizeId({
+        type: "ethereum:address",
+        key: ethereumSupport.info.ethereum.address.toLowerCase()
+      })
+    },
+    validUntil: new Date(2030, 1, 1).toISOString(),
+    options: {
+      chainId: "eip155:1"
+    }
+  });
+
+  const wallet = new ethers.Wallet(ethereumSupport.info.ethereum.privateKey);
+  const ethSignature = await wallet.signMessage(ethMessage);
+  const issueReq: IssueReq = {
+    sessionId: ethSessionId,
+    signature: EthSignature.toBase58(ethSignature)
+  };
+  const issueResp = await fastify.inject({
+    method: "POST",
+    url: sybil.issuerPath("passport").issue,
+    body: issueReq
+  });
+  a.is(
+    issueResp.statusCode, 200,
+    `Issue response status code is not 200. Issue resp: ${issueResp.body}`
+  );
+  const ethCredential = JSON.parse(issueResp.body) as PassportCredential;
+
+  a.is(
+    ethCredential.attributes.document.sybilId,
+    minaCredential.attributes.document.sybilId,
+    `passport sybil ids is not matched`
+  );
+
 });
 
 test.run();
