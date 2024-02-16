@@ -1,17 +1,17 @@
-import type { ICredentialIssuer, IOAuthCallback, } from "../../../base/types/issuer.js";
-import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../base/types/issuer.js";
+import type { IOAuthCallback, IVCCredentialIssuer, } from "../../../services/vc/vc-issuer.js";
+import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../services/vc/vc-issuer.js";
 import { Disposable, tokens } from "typed-inject";
-import { DiscordService, type DiscordUser } from "../../../base/service/external/discord.service.js";
-import { ProofService } from "../../../base/service/proof.service.js";
-import { DIDService } from "../../../base/service/did.service.js";
+import { DiscordService, type DiscordUser } from "../../../services/discord.service.js";
+import { VCSignatureProver } from "../../../services/vc/vc-signature-prover.js";
+import { DIDService } from "../../../services/did.service.js";
 import { ClientErr } from "../../../backbone/errors.js";
-import type { IMultiSignService } from "../../../base/service/multi-sign.service.js";
+import { VCMultiSignatureService } from "../../../services/vc/vc-sign-message/multi-sign.service.js";
 import { fromIssueMessage, toIssueMessage } from "../../../util/message.util.js";
-import { TimedCache } from "../../../base/service/timed-cache.js";
+import { TimedCache } from "../../../services/timed-cache.js";
 import { absoluteId } from "../../../util/id.util.js";
 import sortKeys from "sort-keys";
-import { OAuthState } from "../../../base/types/oauth.js";
-import { AnyObj, extractProps } from "../../../util/model.util.js";
+import { OAuthState } from "../../../types/codec/oauth.js";
+import { extractProps } from "../../../util/model.util.js";
 import {
   CanIssueReq,
   CanIssueResp,
@@ -34,7 +34,7 @@ export type GetDiscordAccountVC = {
   issuer: string;
   subjectId: string;
   discordUser: DiscordUser;
-  custom?: AnyObj;
+  custom?: Record<string, any>;
   expirationDate?: Date;
   props?: string[];
 }
@@ -61,7 +61,7 @@ export function getDiscordAccountVC(args: GetDiscordAccountVC): DiscordAccountVC
 }
 
 export class DiscordAccountIssuer
-  implements ICredentialIssuer<
+  implements IVCCredentialIssuer<
     DiscordAccountIssueReq,
     Credential,
     DiscordAccountChallengeReq,
@@ -72,8 +72,8 @@ export class DiscordAccountIssuer
     IOAuthCallback,
     Disposable {
   static inject = tokens(
-    "multiSignService",
-    "proofService",
+    "vcMultiSignatureService",
+    "vcSignatureProver",
     "didService",
     "config"
   );
@@ -82,8 +82,8 @@ export class DiscordAccountIssuer
   private readonly sessionCache: TimedCache<string, DiscordOAuthSession>;
 
   constructor(
-    private readonly multiSignService: IMultiSignService,
-    private readonly proofService: ProofService,
+    private readonly vcMultiSignatureService: VCMultiSignatureService,
+    private readonly vcSignatureProver: VCSignatureProver,
     private readonly didService: DIDService,
     config: {
       oAuthSessionTtl: number;
@@ -157,7 +157,7 @@ export class DiscordAccountIssuer
       throw new ClientErr("Discord processing your authorization. Wait!");
     }
     const { custom, expirationDate, subjectId, discordProps } = fromIssueMessage(issueMessage);
-    await this.multiSignService.verify({
+    await this.vcMultiSignatureService.verify({
       subjectId: subjectId,
       message: issueMessage,
       signature: signature
@@ -173,7 +173,7 @@ export class DiscordAccountIssuer
       expirationDate: expirationDate,
       props: discordProps
     });
-    return this.proofService.sign("JsonWebSignature2020", credential);
+    return this.vcSignatureProver.sign("JsonWebSignature2020", credential);
   }
 
   get providedCredential(): CredentialType {

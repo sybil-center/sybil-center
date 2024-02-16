@@ -1,5 +1,4 @@
 import { Challenge, ChallengeReq, Credential, IssueReq, Options } from "../../base/types/index.js";
-import { AnyObj } from "../../util/types.util.js";
 
 export type EthAccountChallengeReq = ChallengeReq & {
   props?: EthAccountProps[]
@@ -18,7 +17,7 @@ export type EthAccountVC = Credential & {
       address?: string;
       chainId?: string;
     }
-    custom?: AnyObj;
+    custom?: Record<string, any>;
   };
 }
 

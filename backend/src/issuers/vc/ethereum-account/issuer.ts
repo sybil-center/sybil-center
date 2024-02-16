@@ -1,17 +1,17 @@
 import {
   DEFAULT_CREDENTIAL_CONTEXT,
   DEFAULT_CREDENTIAL_TYPE,
-  ICredentialIssuer,
-} from "../../../base/types/issuer.js";
+  IVCCredentialIssuer,
+} from "../../../services/vc/vc-issuer.js";
 import { type Disposable, tokens } from "typed-inject";
-import { ProofService } from "../../../base/service/proof.service.js";
-import { DIDService } from "../../../base/service/did.service.js";
-import { MultiSignService } from "../../../base/service/multi-sign.service.js";
+import { VCSignatureProver } from "../../../services/vc/vc-signature-prover.js";
+import { DIDService } from "../../../services/did.service.js";
+import { VCMultiSignatureService } from "../../../services/vc/vc-sign-message/multi-sign.service.js";
 import { fromIssueMessage, toIssueMessage } from "../../../util/message.util.js";
 import { absoluteId } from "../../../util/id.util.js";
-import { TimedCache } from "../../../base/service/timed-cache.js";
+import { TimedCache } from "../../../services/timed-cache.js";
 import sortKeys from "sort-keys";
-import { AnyObj, extractProps } from "../../../util/model.util.js";
+import { extractProps } from "../../../util/model.util.js";
 import {
   CanIssueResp,
   Credential,
@@ -37,7 +37,7 @@ export interface GetEthAccountVC {
   subjectId: string;
   ethAddress: string;
   expirationDate?: Date;
-  custom?: AnyObj;
+  custom?: Record<string, any>;
   props?: string[];
 }
 
@@ -68,22 +68,22 @@ function getEthAccountVC(args: GetEthAccountVC): EthAccountVC {
 
 /** ETH Account Issuer */
 export class EthereumAccountIssuer
-  implements ICredentialIssuer<
+  implements IVCCredentialIssuer<
     EthAccountIssueReq,
     Credential,
     EthAccountChallengeReq,
     EthAccountChallenge
   >, Disposable {
   static inject = tokens(
-    "proofService",
-    "multiSignService",
+    "vcSignatureProver",
+    "vcMultiSignatureService",
     "didService",
     "config"
   );
 
   constructor(
-    private readonly proofService: ProofService,
-    private readonly multiSignService: MultiSignService,
+    private readonly vcSignatureProver: VCSignatureProver,
+    private readonly vcMultiSignatureService: VCMultiSignatureService,
     private readonly didService: DIDService,
     config: { signatureMessageTTL: number },
     private readonly sessionCache = new TimedCache<string, EthAccountSession>(
@@ -122,7 +122,7 @@ export class EthereumAccountIssuer
   }: EthAccountIssueReq): Promise<Credential> {
     const { issueMessage } = this.sessionCache.get(sessionId);
     const { custom, expirationDate, subjectId, ethereumProps } = fromIssueMessage(issueMessage);
-    const ethAddress = await this.multiSignService.ethereum.verify({
+    const ethAddress = await this.vcMultiSignatureService.ethereum.verify({
       signature: signature,
       message: issueMessage,
       address: subjectId.split(":").pop()!
@@ -136,7 +136,7 @@ export class EthereumAccountIssuer
       expirationDate: expirationDate,
       props: ethereumProps
     });
-    return this.proofService.sign("JsonWebSignature2020", vc);
+    return this.vcSignatureProver.sign("JsonWebSignature2020", vc);
   }
 
   get providedCredential(): CredentialType {

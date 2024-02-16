@@ -1,32 +1,22 @@
-import { ProofService } from "../base/service/proof.service.js";
+import { VCSignatureProver } from "../services/vc/vc-signature-prover.js";
 import { createInjector, Injector } from "typed-inject";
-import { IssuerContainer } from "../base/service/issuer-container.js";
+import { VCIssuerContainer } from "../services/vc/vc-issuer-container.js";
 import { type ILogger, Logger } from "../backbone/logger.js";
 import { HttpServer } from "../backbone/http-server.js";
-import { credentialController } from "../base/controller/credential.controller.js";
+import { VCCredentialController } from "../controllers/vc-credential.controller.js";
 import { Config } from "../backbone/config.js";
-import { DIDService } from "../base/service/did.service.js";
-import { MultiSignService } from "../base/service/multi-sign.service.js";
+import { DIDService } from "../services/did.service.js";
+import { VCMultiSignatureService } from "../services/vc/vc-sign-message/multi-sign.service.js";
 import { EthereumAccountIssuer } from "../issuers/vc/ethereum-account/index.js";
 import { TwitterAccountIssuer } from "../issuers/vc/twitter-account/index.js";
 import { GitHubAccountIssuer } from "../issuers/vc/github-account/index.js";
 import { DiscordAccountIssuer } from "../issuers/vc/discord-account/index.js";
-import { oauthController } from "../base/controller/oauth.controller.js";
-import { CredentialVerifier } from "../base/service/credential-verifivator.js";
-import { ApiKeyService } from "../base/service/api-key.service.js";
-import { apiKeyController } from "../base/controller/api-key.controller.js";
-import { CaptchaService, ICaptchaService } from "../base/service/captcha.service.js";
-import { configController } from "../base/controller/config.controller.js";
-import { GateService, type IGateService } from "../base/service/gate.service.js";
-import { zkCredController } from "../base/controller/zk-cred.controller.js";
-import { personaKYCController } from "../base/controller/persona-kyc.controller.js";
-import { ZKCPassportIssuer } from "../issuers/zkc/passport/issuer.js";
-import { ZKCSignerManager } from "../base/service/signers/zkc.signer-manager.js";
-import { SignVerifierManager } from "../base/service/verifiers/sign-verifier.manager.js";
-import { ZKCIssuerManager } from "../issuers/zkc/zkc-issuer.manager.js";
+import { oauthController } from "../controllers/oauth.controller.js";
+import { VCCredentialVerifier } from "../services/vc/vc-credential-verifivator.js";
+import { GateBuilder } from "../services/gate-builder.js";
+import { personaKYCController } from "../controllers/persona-kyc.controller.js";
 import { CredentialProver } from "../services/credential-provers/index.js";
 import { SignatureVerifier } from "../services/signature-verifier/index.js";
-import { ShuftiproKYC } from "../services/kyc/shuftipro.js";
 import { PassportIssuer } from "../issuers/zcred/passport/index.js";
 import { SHUFTI_KYC_CONTROLLER } from "../controllers/kyc/shuftipro/index.js";
 import { issuersController } from "../controllers/zcred-issuer/index.js";
@@ -38,22 +28,15 @@ type DI = {
   config: Config;
   httpServer: HttpServer;
   didService: DIDService;
-  issuerContainer: IssuerContainer;
-  multiSignService: MultiSignService;
+  issuerContainer: VCIssuerContainer;
+  vcMultiSignatureService: VCMultiSignatureService;
   ethereumAccountIssuer: EthereumAccountIssuer;
   discordAccountIssuer: DiscordAccountIssuer;
   twitterAccountIssuer: TwitterAccountIssuer;
   gitHubAccountIssuer: GitHubAccountIssuer;
-  credentialVerifier: CredentialVerifier;
-  apiKeyService: ApiKeyService;
-  captchaService: ICaptchaService;
-  gateService: IGateService;
-  zkcPassportIssuer: ZKCPassportIssuer;
-  zkcIssuerManager: ZKCIssuerManager;
-  zkcSignerManager: ZKCSignerManager;
-  signVerifierManager: SignVerifierManager;
+  vcCredentialVerifier: VCCredentialVerifier;
+  gateBuilder: GateBuilder;
   credentialProver: CredentialProver;
-  shuftiproKYC: ShuftiproKYC;
   signatureVerifier: SignatureVerifier;
   passportIssuer: PassportIssuer;
   principalIssuer: PrincipalIssuer;
@@ -86,39 +69,28 @@ export class App {
     const app = new App();
     app.rootContext = createInjector();
 
-    // @ts-expect-error
     app.context = app.rootContext
       .provideClass("logger", Logger)
       .provideClass("config", Config)
       .provideClass("httpServer", HttpServer)
       .provideClass("didService", DIDService)
-      .provideClass("multiSignService", MultiSignService)
-      .provideClass("proofService", ProofService)
-      .provideClass("credentialVerifier", CredentialVerifier)
-      .provideClass("captchaService", CaptchaService)
-      .provideClass("apiKeyService", ApiKeyService)
-      .provideClass("gateService", GateService)
-      .provideClass("zkcSignerManager", ZKCSignerManager)
-      .provideClass("signVerifierManager", SignVerifierManager)
+      .provideClass("vcMultiSignatureService", VCMultiSignatureService)
+      .provideClass("vcSignatureProver", VCSignatureProver)
+      .provideClass("vcCredentialVerifier", VCCredentialVerifier)
+      .provideClass("gateBuilder", GateBuilder)
 
-      // Issuers
+      // VC Issuers
       .provideClass("ethereumAccountIssuer", EthereumAccountIssuer)
       .provideClass("twitterAccountIssuer", TwitterAccountIssuer)
       .provideClass("gitHubAccountIssuer", GitHubAccountIssuer)
       .provideClass("discordAccountIssuer", DiscordAccountIssuer)
-      // Issuer Manager
-      .provideClass("issuerContainer", IssuerContainer)
-
-      // Zkc Issuers
-      .provideClass("zkcPassportIssuer", ZKCPassportIssuer)
-      // Zkc Issuer Manager
-      .provideClass("zkcIssuerManager", ZKCIssuerManager)
+      // VC Issuer Manager
+      .provideClass("issuerContainer", VCIssuerContainer)
 
       // For ZCred protocol
-      .provideClass("shuftiproKYC", ShuftiproKYC)
+      // .provideClass("shuftiproKYC", ShuftiproKYC)
       .provideClass("credentialProver", CredentialProver)
       .provideClass("signatureVerifier", SignatureVerifier)
-      // @ts-expect-error
       .provideClass("passportIssuer", PassportIssuer)
       .provideClass("principalIssuer", PrincipalIssuer);
 
@@ -127,11 +99,8 @@ export class App {
     await httpServer.register();
 
     // Controllers
-    credentialController(app.context);
+    VCCredentialController(app.context);
     oauthController(app.context);
-    apiKeyController(app.context);
-    configController(app.context);
-    zkCredController(app.context);
     personaKYCController(app.context);
     // ZCred controllers
     issuersController(app.context);

@@ -1,4 +1,4 @@
-import { IWebhookHandler } from "../../base/types/webhook-handler.js";
+import { IWebhookHandler } from "../../services/types/webhook-handler.js";
 import { IHttpIssuer } from "@zcredjs/core";
 import { tokens } from "typed-inject";
 import { PassportIssuer } from "./passport/index.js";

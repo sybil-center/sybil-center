@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { ClientErr, ServerErr } from "../backbone/errors.js";
-import { AnyObj } from "./model.util.js";
 import { CredentialType } from "@sybil-center/sdk/types";
 import * as t from "io-ts";
 import { ThrowDecoder } from "./throw-decoder.util.js";
@@ -8,7 +7,7 @@ import { ThrowDecoder } from "./throw-decoder.util.js";
 export type IssueMessageOpt = {
   subjectId: string;
   type: CredentialType;
-  custom?: AnyObj;
+  custom?: Record<string, any>;
   expirationDate?: Date;
   ethereumProps?: { value?: string[], default: string[] };
   githubProps?: { value?: string[], default: string[] };
@@ -21,7 +20,7 @@ export type IssueMessageObj = {
   subjectId: string;
   nonce: string;
   type?: string;
-  custom?: AnyObj;
+  custom?: Record<string, any>;
   expirationDate?: Date;
 
   ethereumProps?: string[];
@@ -135,7 +134,7 @@ const messageAsObject = new t.Type<
   (input: string, context) => {
     try {
       const sections = input.split("\n\n");
-      const json: AnyObj = {};
+      const json: Record<string, any> = {};
       sections.forEach((section) => {
         const split = section.split("\n");
         const msgKey = split[0];

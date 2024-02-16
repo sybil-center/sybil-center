@@ -16,7 +16,7 @@ export type CredOptions = {
   reason?: string; // if valid === false
 }
 
-export const credentialUtil = {
+export const vccredUtil = {
 
   validate: (credential: Credential, options: CredOptions): ValidateResult => {
     if (options.type && !credential.type.includes(options.type)) return {

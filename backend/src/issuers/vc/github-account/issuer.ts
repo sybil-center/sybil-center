@@ -1,17 +1,17 @@
-import type { ICredentialIssuer, IOAuthCallback, } from "../../../base/types/issuer.js";
-import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../base/types/issuer.js";
+import type { IOAuthCallback, IVCCredentialIssuer, } from "../../../services/vc/vc-issuer.js";
+import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../services/vc/vc-issuer.js";
 import { type Disposable, tokens } from "typed-inject";
-import { GitHubService, type GitHubUser } from "../../../base/service/external/github.service.js";
-import { ProofService } from "../../../base/service/proof.service.js";
-import { DIDService } from "../../../base/service/did.service.js";
+import { GitHubService, type GitHubUser } from "../../../services/github.service.js";
+import { VCSignatureProver } from "../../../services/vc/vc-signature-prover.js";
+import { DIDService } from "../../../services/did.service.js";
 import { ClientErr } from "../../../backbone/errors.js";
-import type { IMultiSignService } from "../../../base/service/multi-sign.service.js";
+import type { VCMultiSignatureService } from "../../../services/vc/vc-sign-message/multi-sign.service.js";
 import { fromIssueMessage, toIssueMessage } from "../../../util/message.util.js";
-import { TimedCache } from "../../../base/service/timed-cache.js";
+import { TimedCache } from "../../../services/timed-cache.js";
 import { absoluteId } from "../../../util/id.util.js";
 import sortKeys from "sort-keys";
-import { OAuthState } from "../../../base/types/oauth.js";
-import { AnyObj, extractProps } from "../../../util/model.util.js";
+import { OAuthState } from "../../../types/codec/oauth.js";
+import { extractProps } from "../../../util/model.util.js";
 import {
   CanIssueReq,
   CanIssueResp,
@@ -34,7 +34,7 @@ type GetGitHubAccountVC = {
   issuer: string;
   subjectId: string;
   gitHubUser: GitHubUser;
-  custom?: AnyObj;
+  custom?: Record<string, any>;
   expirationDate?: Date;
   props?: string[];
 }
@@ -64,7 +64,7 @@ async function getGitHubAccountVC(
 }
 
 export class GitHubAccountIssuer
-  implements ICredentialIssuer<
+  implements IVCCredentialIssuer<
     GitHubAccountIssueReq,
     Credential,
     GitHubAccountChallengeReq,
@@ -73,8 +73,8 @@ export class GitHubAccountIssuer
     IOAuthCallback,
     Disposable {
   static inject = tokens(
-    "multiSignService",
-    "proofService",
+    "vcMultiSignatureService",
+    "vcSignatureProver",
     "didService",
     "config"
   );
@@ -83,8 +83,8 @@ export class GitHubAccountIssuer
   readonly gitHubService: GitHubService;
 
   constructor(
-    private multiSignService: IMultiSignService,
-    private proofService: ProofService,
+    private vcMultiSignatureService: VCMultiSignatureService,
+    private vcSignatureProver: VCSignatureProver,
     private readonly didService: DIDService,
     config: {
       oAuthSessionTtl: number;
@@ -155,7 +155,7 @@ export class GitHubAccountIssuer
       throw new ClientErr("GitHub processing your authorization. Wait!");
     }
     const { custom, expirationDate, subjectId, githubProps } = fromIssueMessage(issueMessage);
-    await this.multiSignService.verify({
+    await this.vcMultiSignatureService.verify({
       signature: signature,
       message: issueMessage,
       subjectId: subjectId
@@ -171,7 +171,7 @@ export class GitHubAccountIssuer
       expirationDate: expirationDate,
       props: githubProps
     });
-    return this.proofService.sign("JsonWebSignature2020", vc);
+    return this.vcSignatureProver.sign("JsonWebSignature2020", vc);
   }
 
   get providedCredential(): CredentialType {

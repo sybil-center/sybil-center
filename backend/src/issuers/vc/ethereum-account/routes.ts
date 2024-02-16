@@ -1,4 +1,4 @@
-import { CredentialRoutes } from "../../../base/types/route.js";
+import { CredentialRoutes } from "../../../services/vc/vc-route.js";
 import { challengeEP, issueEP, canIssueEP } from "@sybil-center/sdk/util";
 import { ethAccountProps } from "@sybil-center/sdk/types";
 import { subjectIdRegExp } from "../../../util/route.util.js";

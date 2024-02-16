@@ -1,17 +1,17 @@
-import type { ICredentialIssuer, IOAuthCallback, } from "../../../base/types/issuer.js";
-import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../base/types/issuer.js";
+import type { IVCCredentialIssuer, IOAuthCallback, } from "../../../services/vc/vc-issuer.js";
+import { DEFAULT_CREDENTIAL_CONTEXT, DEFAULT_CREDENTIAL_TYPE } from "../../../services/vc/vc-issuer.js";
 import { Disposable, tokens } from "typed-inject";
-import { ProofService } from "../../../base/service/proof.service.js";
-import { TwitterService, type TwitterUser } from "../../../base/service/external/twitter.service.js";
-import { DIDService } from "../../../base/service/did.service.js";
+import { VCSignatureProver } from "../../../services/vc/vc-signature-prover.js";
+import { TwitterService, type TwitterUser } from "../../../services/twitter.service.js";
+import { DIDService } from "../../../services/did.service.js";
 import { absoluteId } from "../../../util/id.util.js";
 import { ClientErr } from "../../../backbone/errors.js";
-import type { IMultiSignService } from "../../../base/service/multi-sign.service.js";
+import type { VCMultiSignatureService } from "../../../services/vc/vc-sign-message/multi-sign.service.js";
 import { fromIssueMessage, toIssueMessage } from "../../../util/message.util.js";
-import { TimedCache } from "../../../base/service/timed-cache.js";
+import { TimedCache } from "../../../services/timed-cache.js";
 import sortKeys from "sort-keys";
-import { OAuthState } from "../../../base/types/oauth.js";
-import { AnyObj, extractProps } from "../../../util/model.util.js";
+import { OAuthState } from "../../../types/codec/oauth.js";
+import { extractProps } from "../../../util/model.util.js";
 import {
   CanIssueReq,
   CanIssueResp,
@@ -28,7 +28,7 @@ type GetTwitterAccountArgs = {
   issuer: string;
   subjectId: string;
   twitterUser: TwitterUser;
-  custom?: AnyObj;
+  custom?: Record<string, any>;
   expirationDate?: Date;
   props?: string[]
 }
@@ -66,7 +66,7 @@ async function getTwitterAccountVC(
 
 /** Issue Twitter account ownership VC */
 export class TwitterAccountIssuer
-  implements ICredentialIssuer<
+  implements IVCCredentialIssuer<
     TwitterAccountIssueReq,
     Credential,
     TwitterAccountChallengeReq,
@@ -75,8 +75,8 @@ export class TwitterAccountIssuer
     IOAuthCallback,
     Disposable {
   static inject = tokens(
-    "proofService",
-    "multiSignService",
+    "vcSignatureProver",
+    "vcMultiSignatureService",
     "didService",
     "config"
   );
@@ -85,8 +85,8 @@ export class TwitterAccountIssuer
   readonly twitterService: TwitterService;
 
   constructor(
-    private proofService: ProofService,
-    private multiSignService: IMultiSignService,
+    private vcSignatureProver: VCSignatureProver,
+    private vcMultiSignatureService: VCMultiSignatureService,
     private readonly didService: DIDService,
     config: {
       oAuthSessionTtl: number;
@@ -154,7 +154,7 @@ export class TwitterAccountIssuer
       throw new ClientErr("Twitter processing your authorization. Wait!");
     }
     const { custom, expirationDate, subjectId, twitterProps } = fromIssueMessage(issueMessage);
-    await this.multiSignService.verify({
+    await this.vcMultiSignatureService.verify({
       subjectId: subjectId,
       signature: signature,
       message: issueMessage
@@ -173,7 +173,7 @@ export class TwitterAccountIssuer
       expirationDate: expirationDate,
       props: twitterProps
     });
-    return this.proofService.sign("JsonWebSignature2020", vc);
+    return this.vcSignatureProver.sign("JsonWebSignature2020", vc);
   }
 
   get providedCredential(): CredentialType {
