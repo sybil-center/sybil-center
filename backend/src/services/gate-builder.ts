@@ -1,26 +1,22 @@
 import { Config } from "../backbone/config.js";
-import { VCCredential } from "./vc/consts/vc-credential.js";
-import { VCCredentialVerifier } from "./vc/vc-credential-verifivator.js";
 import { FastifyRequest } from "fastify";
-import { ThrowDecoder } from "../util/throw-decoder.util.js";
-import { ClientErr } from "../backbone/errors.js";
-import { vccredUtil, CredOptions } from "../util/credential.utils.js";
-import { tokens } from "typed-inject";
+import { Injector, INJECTOR_TOKEN, tokens } from "typed-inject";
+
+type GateDependency = {
+  config: Config
+}
 
 export class GateBuilder {
   static inject = tokens(
-    "config",
-    "vcCredentialVerifier",
+    INJECTOR_TOKEN
   );
   constructor(
-    private readonly config: Config,
-    private readonly vcCredentialVerifier: VCCredentialVerifier,
+    private readonly context: Injector<GateDependency>,
   ) {}
 
   build(): Gate {
     return new Gate(
-      this.config,
-      this.vcCredentialVerifier,
+      this.context
     );
   }
 }
@@ -39,8 +35,7 @@ class Gate {
   private readonly opens: OpenFn[] = [];
 
   constructor(
-    private readonly config: Config,
-    private readonly vcCredentialVerifier: VCCredentialVerifier,
+    private readonly context: Injector<GateDependency>
   ) {}
 
   setLock(openFn: OpenFn): Gate {
@@ -50,7 +45,7 @@ class Gate {
 
   checkFrontend(req: FastifyRequest): Gate {
     this.setLock(async () => {
-      const frontendDomain = this.config.frontendOrigin.origin;
+      const frontendDomain = this.context.resolve("config").frontendOrigin.origin;
       const referer = req.headers.referer;
       if (!referer) return {
         opened: false,
@@ -71,38 +66,10 @@ class Gate {
     return this;
   }
 
-  validateVcCredential(credential: VCCredential, option: CredOptions): Gate {
-    credential = ThrowDecoder
-      .decode(VCCredential, credential, new ClientErr("Invalid credential"));
-    this.setLock(async () => {
-      const { valid, reason } = vccredUtil.validate(credential, option);
-      return {
-        opened: valid,
-        reason: reason ? reason : "",
-        errStatus: 400
-      };
-    });
-    return this;
-  }
-
-  verifyCredential(credential: VCCredential): Gate {
-    credential = ThrowDecoder
-      .decode(VCCredential, credential, new ClientErr("Invalid credential"));
-    this.setLock(async () => {
-      const { isVerified } = await this.vcCredentialVerifier.verify(credential);
-      return {
-        opened: isVerified,
-        reason: !isVerified ? `Credential is not verified` : "",
-        errStatus: !isVerified ? 400 : undefined
-      };
-    });
-    return this;
-  }
-
   /** Check captcha */
   captchaRequired(captcha?: string): Gate {
     this.setLock(async () => {
-      if (this.config.captchaRequired && !captcha) return {
+      if (this.context.resolve("config").captchaRequired && !captcha) return {
         opened: false,
         reason: `Captcha token required`,
         errStatus: 400

@@ -15,23 +15,23 @@ import {
 } from "@zcredjs/core";
 import { hash as sha256 } from "@stablelib/sha256";
 import * as u8a from "uint8arrays";
-import { Config } from "../../../backbone/config.js";
+import { Config } from "../../backbone/config.js";
 import crypto from "node:crypto";
 import { Disposable, tokens } from "typed-inject";
-import { TimedCache } from "../../../services/timed-cache.js";
-import { ClientErr, ServerErr } from "../../../backbone/errors.js";
-import { IWebhookHandler } from "../../../services/types/webhook-handler.js";
+import { TimedCache } from "../../services/timed-cache.js";
+import { ClientErr, ServerErr } from "../../backbone/errors.js";
+import { IWebhookHandler } from "../../services/types/webhook-handler.js";
 import { FastifyRequest } from "fastify";
-import { SignatureVerifier } from "../../../services/signature-verifier/index.js";
+import { SignatureVerifier } from "../../services/signature-verifier/index.js";
 import { ISO3166 } from "trgraph";
-import { CredentialProver } from "../../../services/credential-provers/index.js";
-import { Schemas } from "../../../services/schema-finder/index.js";
-import { DIDService } from "../../../services/did.service.js";
-import { sybil } from "../../../services/sybiljs/index.js";
-import { CredentialType } from "../../../services/sybiljs/types/index.js";
+import { CredentialProver } from "../../services/credential-provers/index.js";
+import { Schemas } from "../../services/schema-finder/index.js";
+import { DIDService } from "../../services/did.service.js";
+import { sybil } from "../../services/sybiljs/index.js";
+import { CredentialType } from "../../services/sybiljs/types/index.js";
 import type { IPassportKYCService, WebhookResult } from "./types.js";
 import { StubPassportKYC } from "./kyc/stub-passport-kyc.js";
-import { PassportAttributes, PassportCredential } from "../../../services/sybiljs/passport/types.js";
+import { PassportAttributes, PassportCredential } from "../../services/sybiljs/passport/types.js";
 
 type Session = {
   reference: string;

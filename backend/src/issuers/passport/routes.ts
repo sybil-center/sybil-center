@@ -1,6 +1,6 @@
-import { ZCredRoutes } from "../../../controllers/zcred-issuer/types.js";
+import { ZCredRoutes } from "../../controllers/zcred-issuer/types.js";
 import { ID_TYPES, zcredjs } from "@zcredjs/core";
-import { sybil } from "../../../services/sybiljs/index.js";
+import { sybil } from "../../services/sybiljs/index.js";
 
 
 const tags = ["ZCred Passport Credential"];

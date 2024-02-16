@@ -1,5 +1,5 @@
 import { FastifyRequest } from "fastify";
-import { Gender } from "../../../services/sybiljs/passport/types.js";
+import { Gender } from "../../services/sybiljs/passport/types.js";
 
 export type ProcedureArgs = {
   reference: string;

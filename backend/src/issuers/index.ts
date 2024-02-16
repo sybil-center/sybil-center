@@ -1,10 +1,10 @@
-import { IWebhookHandler } from "../../services/types/webhook-handler.js";
+import { IWebhookHandler } from "../services/types/webhook-handler.js";
 import { IHttpIssuer } from "@zcredjs/core";
 import { tokens } from "typed-inject";
 import { PassportIssuer } from "./passport/index.js";
-import { ILogger } from "../../backbone/logger.js";
-import { ServerErr } from "../../backbone/errors.js";
-import { CredentialType } from "../../services/sybiljs/types/index.js";
+import { ILogger } from "../backbone/logger.js";
+import { ServerErr } from "../backbone/errors.js";
+import { CredentialType } from "../services/sybiljs/types/index.js";
 
 type Issuer = IHttpIssuer & Partial<IWebhookHandler>
 

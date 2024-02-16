@@ -1,8 +1,8 @@
 import { IPassportKYCService, ProcedureArgs, ProcedureResp, WebhookResult } from "../types.js";
-import { Config } from "../../../../backbone/config.js";
+import { Config } from "../../../backbone/config.js";
 import crypto from "node:crypto";
 import { FastifyRequest } from "fastify";
-import { ClientErr } from "../../../../backbone/errors.js";
+import { ClientErr } from "../../../backbone/errors.js";
 
 export class StubPassportKYC implements IPassportKYCService {
 

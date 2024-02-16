@@ -1,5 +1,5 @@
-import { Route } from "../../services/vc/vc-route.js";
 import { CredentialType } from "../../services/sybiljs/types/index.js";
+import { Route } from "../../types/route.js";
 
 export type ZCredRoutes = {
   info: Route;

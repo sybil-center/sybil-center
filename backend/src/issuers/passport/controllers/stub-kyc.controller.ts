@@ -1,5 +1,5 @@
-import { HttpServer } from "../../../../backbone/http-server.js";
-import { contextUtil } from "../../../../util/context.util.js";
+import { HttpServer } from "../../../backbone/http-server.js";
+import { contextUtil } from "../../../util/context.util.js";
 import { Injector } from "typed-inject";
 import { PrincipalIssuer } from "../../index.js";
 
@@ -13,7 +13,7 @@ const tokens: (keyof Dependencies)[] = [
   "principalIssuer"
 ];
 
-export function PassportStubKYCController(injector: Injector<Dependencies>) {
+export function StubKYCPassportController(injector: Injector<Dependencies>) {
   const {
     httpServer: { fastify },
     principalIssuer
