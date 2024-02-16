@@ -4,7 +4,6 @@ import { HttpServer } from "../backbone/http-server.js";
 import { Config } from "../backbone/config.js";
 import { DIDService } from "../services/did.service.js";
 import { GateBuilder } from "../services/gate-builder.js";
-import { PersonaKYCController } from "../issuers/passport/controllers/persona-kyc.controller.js";
 import { CredentialProver } from "../services/credential-provers/index.js";
 import { SignatureVerifier } from "../services/signature-verifier/index.js";
 import { PassportIssuer } from "../issuers/passport/index.js";
@@ -63,11 +62,9 @@ export class App {
       .provideClass("passportIssuer", PassportIssuer)
       .provideClass("principalIssuer", PrincipalIssuer);
 
-
     const httpServer = app.context.resolve("httpServer");
     await httpServer.register();
 
-    PersonaKYCController(app.context);
     // ZCred controllers
     ZCredIssuerController(app.context);
     StubKYCPassportController(app.context);
