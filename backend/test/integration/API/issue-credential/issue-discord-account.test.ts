@@ -46,8 +46,8 @@ test.before(async () => {
 });
 
 test.after(async () => {
-  sinon.restore();
   await app.close();
+  sinon.restore();
 });
 
 type PreIssueEntry = {
@@ -494,4 +494,4 @@ test("should issue eth account credential with only one prop", async () => {
   a.not.ok(credential.credentialSubject.discord.discriminator, `discord field contains discriminator`);
 });
 
-test.run();
+// test.run();

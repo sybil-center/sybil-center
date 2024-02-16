@@ -3,7 +3,7 @@ import { PrincipalIssuer } from "../../issuers/zcred/index.js";
 import { Injector } from "typed-inject";
 import { contextUtil } from "../../util/context.util.js";
 import { ZCRED_ISSUERS_ROUTES } from "./routes.js";
-import { CanIssueReq, IssueReq, ZChallengeReq, zcredjs } from "@zcredjs/core";
+import { CanIssueReq, IssueReq, StrictChallengeReq, zcredjs } from "@zcredjs/core";
 
 type Dependencies = {
   httpServer: HttpServer
@@ -33,15 +33,15 @@ export function issuersController(injector: Injector<Dependencies>) {
     fastify.route({
       ...infoRoute,
       handler: async () => {
-        return principalIssuer.getIssuer(credentialType).getInfo();
+        return await principalIssuer.getIssuer(credentialType).getInfo();
       }
     });
 
-    fastify.route<{ Body: ZChallengeReq }>({
+    fastify.route<{ Body: StrictChallengeReq }>({
       ...challengeRoute,
       handler: async ({ body }) => {
         const normalizedId = zcredjs.normalizeId(body.subject.id);
-        return principalIssuer
+        return await principalIssuer
           .getIssuer(credentialType)
           .getChallenge({ ...body, subject: { id: normalizedId } });
       }
@@ -50,7 +50,7 @@ export function issuersController(injector: Injector<Dependencies>) {
     fastify.route<{ Body: CanIssueReq }>({
       ...canIssueRoute,
       handler: async ({ body }) => {
-        return principalIssuer
+        return await principalIssuer
           .getIssuer(credentialType)
           .canIssue(body);
       }
@@ -59,7 +59,7 @@ export function issuersController(injector: Injector<Dependencies>) {
     fastify.route<{ Body: IssueReq }>({
       ...issueRoute,
       handler: async ({ body }) => {
-        return principalIssuer
+        return await principalIssuer
           .getIssuer(credentialType)
           .issue(body);
       }

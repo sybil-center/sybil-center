@@ -24,33 +24,14 @@ const tokens: (keyof Dependencies)[] = [
 export function personaKYCController(injector: Injector<Dependencies>) {
   const {
     httpServer: { fastify },
-    principalIssuer,
     zkcIssuerManager,
-    logger
   } = contextUtil.from(tokens, injector);
 
   fastify.route({
     ...personaWebhookRoute,
     config: { rawBody: true },
     handler: async (req: FastifyRequest, resp) => {
-      // TODO: Change it
-      let errorsCount = 0;
-      try {
-        await zkcIssuerManager.handleWebhook("passport", req);
-      } catch (e) {
-        logger.info(e);
-        errorsCount++;
-      }
-      try {
-        await principalIssuer.getIssuer("passport-test").handleWebhook?.(req);
-      } catch (e) {
-        logger.info(e);
-        errorsCount++;
-      }
-      if (errorsCount === 2) {
-        resp.statusCode = 400;
-        return { message: "bad request" };
-      }
+      await zkcIssuerManager.handleWebhook("passport", req);
       resp.statusCode = 200;
       return { message: "ok" };
     }

@@ -2,7 +2,7 @@ import { PrincipalIssuer } from "../../../issuers/zcred/index.js";
 import { HttpServer } from "../../../backbone/http-server.js";
 import { Injector } from "typed-inject";
 import { contextUtil } from "../../../util/context.util.js";
-import { CredType } from "@zcredjs/core";
+import { CredentialType } from "../../../services/sybiljs/types/index.js";
 
 type Dependencies = {
   principalIssuer: PrincipalIssuer,
@@ -14,7 +14,7 @@ const TOKENS: (keyof Dependencies)[] = [
   "httpServer"
 ];
 
-const credentialType: CredType = "passport";
+const credentialType: CredentialType = "passport";
 
 export const SHUFTI_PASSPORT_ISSUER_ENDPOINT = `/api/v1/zcred/issuers/${credentialType}/kyc/shuftipro/webhook`;
 

@@ -1,10 +1,11 @@
-import { CredType, IdType, SignProofType, TrSchema } from "@zcredjs/core";
+import { IdType, SignProofType, TrSchema } from "@zcredjs/core";
 import { O1GraphLink } from "o1js-trgraph";
 import { IdentifierSchema } from "./index.js";
 import { ServerErr } from "../../backbone/errors.js";
+import { CredentialType } from "../sybiljs/types/index.js";
 
 
-export const SIGNATURE_PROOF_SCHEMA_MAP: Record<CredType, Record<SignProofType, {
+export const SIGNATURE_PROOF_SCHEMA_MAP: Record<CredentialType, Record<SignProofType, {
   subjectIdSchema: Record<IdType, IdentifierSchema>
   attributesSchema: TrSchema<O1GraphLink>
 }>> = {
@@ -30,48 +31,15 @@ export const SIGNATURE_PROOF_SCHEMA_MAP: Record<CredType, Record<SignProofType, 
           lastName: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
           birthDate: ["isodate-unixtime19", "unixtime19-uint64", "uint64-mina:field"],
           gender: ["ascii-bytes", "bytes-uint64", "uint64-mina:field"],
-          countryCode: [
-            "iso3166alpha3-iso3166numeric",
-            "iso3166numeric-uint16",
-            "uint16-mina:field"
-          ],
-          document: {
-            id: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"]
-          }
-        }
-      }
-    }
-  },
-  "passport-test": {
-    "mina:poseidon-pasta": {
-      subjectIdSchema: {
-        "mina:publickey": {
-          type: ["ascii-bytes", "bytes-uint128", "uint128-mina:field"],
-          key: ["base58-mina:publickey", "mina:publickey-mina:fields"]
         },
-        "ethereum:address": {
-          type: ["ascii-bytes", "bytes-uint128", "uint128-mina:field"],
-          key: ["0xhex-bytes", "bytes-uint", "uint-mina:field"]
-        }
-      },
-      attributesSchema: {
-        type: ["ascii-bytes", "bytes-uint128", "uint128-mina:field"],
-        issuanceDate: ["isodate-unixtime", "unixtime-uint64", "uint64-mina:field"],
-        validFrom: ["isodate-unixtime", "unixtime-uint64", "uint64-mina:field"],
-        validUntil: ["isodate-unixtime", "unixtime-uint64", "uint64-mina:field"],
-        subject: {
-          firstName: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
-          lastName: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
-          birthDate: ["isodate-unixtime19", "unixtime19-uint64", "uint64-mina:field"],
-          gender: ["ascii-bytes", "bytes-uint64", "uint64-mina:field"],
-          countryCode: [
-            "iso3166alpha3-iso3166numeric",
-            "iso3166numeric-uint16",
-            "uint16-mina:field"
-          ],
-          document: {
-            id: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"]
-          }
+        countryCode: [
+          "iso3166alpha3-iso3166numeric",
+          "iso3166numeric-uint16",
+          "uint16-mina:field"
+        ],
+        document: {
+          id: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
+          sybilId: ["base58-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"]
         }
       }
     }
@@ -81,7 +49,7 @@ export const SIGNATURE_PROOF_SCHEMA_MAP: Record<CredType, Record<SignProofType, 
 export type FindSignSchemaEntry = {
   proofType: SignProofType;
   idType: IdType;
-  credentialType: CredType,
+  credentialType: CredentialType,
 }
 
 export function findSignatureSchema(findEntry: FindSignSchemaEntry) {

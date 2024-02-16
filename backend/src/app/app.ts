@@ -24,14 +24,14 @@ import { ZKCPassportIssuer } from "../issuers/zkc/passport/issuer.js";
 import { ZKCSignerManager } from "../base/service/signers/zkc.signer-manager.js";
 import { SignVerifierManager } from "../base/service/verifiers/sign-verifier.manager.js";
 import { ZKCIssuerManager } from "../issuers/zkc/zkc-issuer.manager.js";
-import { CredentialProver } from "../services/credential-prover/index.js";
+import { CredentialProver } from "../services/credential-provers/index.js";
 import { SignatureVerifier } from "../services/signature-verifier/index.js";
 import { ShuftiproKYC } from "../services/kyc/shuftipro.js";
 import { PassportIssuer } from "../issuers/zcred/passport/index.js";
 import { SHUFTI_KYC_CONTROLLER } from "../controllers/kyc/shuftipro/index.js";
 import { issuersController } from "../controllers/zcred-issuer/index.js";
 import { PrincipalIssuer } from "../issuers/zcred/index.js";
-import { PassportTestIssuer } from "../issuers/zcred/passport-test/index.js";
+import { PassportStubKYCController } from "../issuers/zcred/passport/controllers/kyc-stub-controller.js";
 
 type DI = {
   logger: ILogger;
@@ -57,7 +57,6 @@ type DI = {
   signatureVerifier: SignatureVerifier;
   passportIssuer: PassportIssuer;
   principalIssuer: PrincipalIssuer;
-  passportTestIssuer: PassportTestIssuer;
 };
 
 export class App {
@@ -86,6 +85,7 @@ export class App {
   static async init(): Promise<App> {
     const app = new App();
     app.rootContext = createInjector();
+
     // @ts-expect-error
     app.context = app.rootContext
       .provideClass("logger", Logger)
@@ -120,7 +120,6 @@ export class App {
       .provideClass("signatureVerifier", SignatureVerifier)
       // @ts-expect-error
       .provideClass("passportIssuer", PassportIssuer)
-      .provideClass("passportTestIssuer", PassportTestIssuer)
       .provideClass("principalIssuer", PrincipalIssuer);
 
 
@@ -137,6 +136,7 @@ export class App {
     // ZCred controllers
     issuersController(app.context);
     SHUFTI_KYC_CONTROLLER.passportIssuerWebhook(app.context);
+    PassportStubKYCController(app.context);
 
     const didService = app.context.resolve("didService");
     await didService.init();
