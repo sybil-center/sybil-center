@@ -58,9 +58,6 @@ importers:
       bitcoinjs-message:
         specifier: ^2.2.0
         version: 2.2.0
-      deep-sort-object:
-        specifier: ^1.0.2
-        version: 1.0.2
       did-jwt:
         specifier: ^6.11.0
         version: 6.11.6
@@ -76,9 +73,6 @@ importers:
       fastify:
         specifier: 4.23.2
         version: 4.23.2
-      fastify-cors:
-        specifier: ^6.1.0
-        version: 6.1.0
       fastify-raw-body:
         specifier: ^4.2.2
         version: 4.3.0
@@ -101,8 +95,8 @@ importers:
         specifier: 0.15.0
         version: 0.15.0
       o1js-trgraph:
-        specifier: 1.0.4
-        version: 1.0.4
+        specifier: 2.1.0
+        version: 2.1.0
       pino:
         specifier: ^8.10.0
         version: 8.17.1
@@ -5920,7 +5914,7 @@ packages:
     resolution: {integrity: sha512-TAlMYvOuwGyLK3PfBb5WKBXZmXz2fVCgv23d6zZFdle/q3gPjmxBaeuC0pY0Dzs5PWMSgfqqEZkrye19GlDTgw==}
     dependencies:
       archy: 1.0.0
-      debug: 4.3.4
+      debug: 4.3.4(supports-color@8.1.1)
       fastq: 1.16.0
     transitivePeerDependencies:
       - supports-color
@@ -7160,18 +7154,6 @@ packages:
       ms: 2.1.3
     dev: false
 
-  /debug@4.3.4:
-    resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
-    engines: {node: '>=6.0'}
-    peerDependencies:
-      supports-color: '*'
-    peerDependenciesMeta:
-      supports-color:
-        optional: true
-    dependencies:
-      ms: 2.1.2
-    dev: false
-
   /debug@4.3.4(supports-color@8.1.1):
     resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
     engines: {node: '>=6.0'}
@@ -7241,12 +7223,6 @@ packages:
 
   /deep-is@0.1.4:
     resolution: {integrity: sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==}
-    dev: false
-
-  /deep-sort-object@1.0.2:
-    resolution: {integrity: sha512-Ko2XVMhRhz5Mxyb+QhLX13SHgcK1vuxc6XEfOyTMlbRbv7bhSmMqUw4ywqRwKgV25W+FDIaZjPWQrdblHCTwdA==}
-    dependencies:
-      is-plain-object: 2.0.4
     dev: false
 
   /deepmerge@4.3.1:
@@ -8672,25 +8648,6 @@ packages:
     resolution: {integrity: sha512-eel5UKGn369gGEWOqBShmFJWfq/xSJvsgDzgLYC845GneayWvXBf0lJCBn5qTABfewy1ZDPoaR5OZCP+kssfuw==}
     dev: false
 
-  /fastify-cors@6.0.3:
-    resolution: {integrity: sha512-fMbXubKKyBHHCfSBtsCi3+7VyVRdhJQmGes5gM+eGKkRErCdm0NaYO0ozd31BQBL1ycoTIjbqOZhJo4RTF/Vlg==}
-    dependencies:
-      fastify-plugin: 3.0.1
-      vary: 1.1.2
-    dev: false
-
-  /fastify-cors@6.1.0:
-    resolution: {integrity: sha512-QBKz32IoY/iuT74CunRY1XOSpjSTIOh9E3FxulXIBhd0D2vdgG0kDvy0eG6HA/88sRfWHeba43LkGEXPz0Rh8g==}
-    deprecated: Please use @fastify/cors@7.0.0 instead
-    dependencies:
-      fastify-cors-deprecated: /fastify-cors@6.0.3
-      process-warning: 1.0.0
-    dev: false
-
-  /fastify-plugin@3.0.1:
-    resolution: {integrity: sha512-qKcDXmuZadJqdTm6vlCqioEbyewF60b/0LOFCcYN1B6BIZGlYJumWWOYs70SFYLDAH4YqdE1cxH/RKMG7rFxgA==}
-    dev: false
-
   /fastify-plugin@4.5.1:
     resolution: {integrity: sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==}
     dev: false
@@ -9782,13 +9739,6 @@ packages:
     engines: {node: '>=12'}
     dev: false
 
-  /is-plain-object@2.0.4:
-    resolution: {integrity: sha512-h5PpgXkWitc38BBMYawTYMWJHFZJVnBquFE57xFpjB8pJFiF6gZ+bU+WyI/yqXiFR5mdLsgYNaPe8uao6Uv9Og==}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      isobject: 3.0.1
-    dev: false
-
   /is-potential-custom-element-name@1.0.1:
     resolution: {integrity: sha512-bCYeRA2rVibKZd+s2625gGnGF/t7DSqDs4dP7CrLA1m7jKWz6pps0LpYLJN8Q64HtmPKJ1hrN3nzPNKFEKOUiQ==}
     dev: false
@@ -9894,11 +9844,6 @@ packages:
 
   /isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
-    dev: false
-
-  /isobject@3.0.1:
-    resolution: {integrity: sha512-WhB9zCku7EGTj/HQQRz5aUQEUeoQZH2bWcltRErOpymJ4boYE6wL9Tbr23krRPSZ+C5zqNSrSw+Cc7sZZ4b7vg==}
-    engines: {node: '>=0.10.0'}
     dev: false
 
   /isomorphic-fetch@3.0.0:
@@ -10693,7 +10638,7 @@ packages:
     resolution: {integrity: sha512-pJ4XLQP4Q9HTxl6RVDLJ8Cyh1uitSs0CzDBAz1uoJ4sRD/Bk7cFSXL1FUXDW3zJ7YnfliJx6eu8Jn283bpZ4Yg==}
     engines: {node: '>=10'}
     dependencies:
-      debug: 4.3.4
+      debug: 4.3.4(supports-color@8.1.1)
       rfdc: 1.3.0
       uri-js: 4.4.1
     transitivePeerDependencies:
@@ -11702,15 +11647,6 @@ packages:
 
   /nwsapi@2.2.7:
     resolution: {integrity: sha512-ub5E4+FBPKwAZx0UwIQOjYWGHTEq5sPqHQNRN8Z9e4A7u3Tj1weLJsL59yH9vmvqEtBHaOmT6cYQKIZOxp35FQ==}
-    dev: false
-
-  /o1js-trgraph@1.0.4:
-    resolution: {integrity: sha512-lbRrxi7hZs7yo+uoGe/ZheQVjpv7a4wTVA5gVcle/yauTmjamIyOTFWqbA/QPGyPIQOI0nPEctFJyUKVQgwL1Q==}
-    dependencies:
-      o1js: 0.15.0
-      trgraph: 1.0.2
-    transitivePeerDependencies:
-      - encoding
     dev: false
 
   /o1js-trgraph@2.1.0:

@@ -1,6 +1,7 @@
 import { suite } from "uvu";
 import * as a from "uvu/assert";
 import { MinaPoseidonPastaSignatureProver } from "../../../../src/services/credential-provers/mina-poseidon-pasta.js";
+import * as o1js from "o1js";
 import { Field, Poseidon, PrivateKey, Signature } from "o1js";
 import { O1GraphLink, O1TrGraph, TrSchema } from "o1js-trgraph";
 import sortKeys from "sort-keys";
@@ -37,7 +38,7 @@ test("signing attributes", async () => {
       name: ["ascii-bytes", "bytes-uint128", "uint128-mina:field"]
     }
   };
-  const tg = new O1TrGraph();
+  const tg = new O1TrGraph(o1js);
   const { linear } = tg.objectTransform<{}, Field[]>(
     attributes,
     sortKeys(attributeSchema, { deep: true })
