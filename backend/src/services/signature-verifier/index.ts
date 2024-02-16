@@ -2,7 +2,7 @@ import { IdType } from "@zcredjs/core";
 import { ISignatureVerifier, SignEntry, SignOptions } from "./type.js";
 import { MinaSignatureVerifier } from "./mina-verifier.js";
 import { ClientErr } from "../../backbone/errors.js";
-import { EthereumSignatureVerifier } from "./ethereum-verifier.js";
+import { ZcredEthSignatureVerifier } from "./zcred-eth-verifier.js";
 
 type VerifyEntry = SignEntry & {
   options: SignOptions
@@ -12,7 +12,7 @@ export class SignatureVerifier {
 
   private readonly verifiers: Record<IdType, ISignatureVerifier> = {
     "mina:publickey": new MinaSignatureVerifier(),
-    "ethereum:address": new EthereumSignatureVerifier()
+    "ethereum:address": new ZcredEthSignatureVerifier()
   };
 
   verifier(idType: string) {

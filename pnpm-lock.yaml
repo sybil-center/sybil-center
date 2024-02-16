@@ -50,11 +50,14 @@ importers:
         specifier: ^0.0.4
         version: 0.0.4
       '@zcredjs/core':
-        specifier: workspace:*
-        version: link:../zcredjs-core
+        specifier: 1.0.0
+        version: 1.0.0
+      '@zcredjs/ethereum':
+        specifier: 0.0.6
+        version: 0.0.6
       '@zcredjs/mina':
-        specifier: workspace:*
-        version: link:../zcredjs-mina
+        specifier: 1.0.3
+        version: 1.0.3
       bitcoinjs-message:
         specifier: ^2.2.0
         version: 2.2.0
@@ -141,7 +144,7 @@ importers:
         specifier: ^15.0.1
         version: 15.2.0
       tsm:
-        specifier: ^2.3.0
+        specifier: 2.3.0
         version: 2.3.0
       typescript:
         specifier: ^4.9.5
@@ -317,71 +320,6 @@ importers:
         version: 2.1.1
       prettier:
         specifier: ^2.8.8
-        version: 2.8.8
-      tsm:
-        specifier: ^2.3.0
-        version: 2.3.0
-      typescript:
-        specifier: ^4.9.5
-        version: 4.9.5
-      uvu:
-        specifier: ^0.5.6
-        version: 0.5.6
-
-  zcred-core:
-    devDependencies:
-      prettier:
-        specifier: ^2.8.4
-        version: 2.8.8
-      tsm:
-        specifier: ^2.3.0
-        version: 2.3.0
-      typescript:
-        specifier: ^4.9.5
-        version: 4.9.5
-      uvu:
-        specifier: ^0.5.6
-        version: 0.5.6
-
-  zcredjs-core:
-    dependencies:
-      zcred-core:
-        specifier: workspace:*
-        version: link:../zcred-core
-    devDependencies:
-      prettier:
-        specifier: ^2.8.4
-        version: 2.8.8
-      tsm:
-        specifier: ^2.3.0
-        version: 2.3.0
-      typescript:
-        specifier: ^4.9.5
-        version: 4.9.5
-      uvu:
-        specifier: ^0.5.6
-        version: 0.5.6
-
-  zcredjs-mina:
-    dependencies:
-      '@zcredjs/core':
-        specifier: workspace:*
-        version: link:../zcredjs-core
-      mina-signer:
-        specifier: ^2.1.0
-        version: 2.1.1
-      o1js:
-        specifier: 0.15.0
-        version: 0.15.0
-      o1js-trgraph:
-        specifier: 1.0.4
-        version: 1.0.4
-      sort-keys:
-        specifier: 5.0.0
-        version: 5.0.0
-    devDependencies:
-      prettier:
-        specifier: ^2.8.4
         version: 2.8.8
       tsm:
         specifier: ^2.3.0
@@ -5515,6 +5453,27 @@ packages:
     resolution: {integrity: sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==}
     dev: false
 
+  /@zcredjs/core@1.0.0:
+    resolution: {integrity: sha512-rtdaMTe0VxikAs5YbOTLsoaN5lDLJz4tc77d15KDJMXqNMH96l3IOoxdz9gPNuz4j8abW9/xg6u+poHwnZy30w==}
+    dev: false
+
+  /@zcredjs/ethereum@0.0.6:
+    resolution: {integrity: sha512-9BLqy5sajn8uLEPORCCXCixrr6n7EHQrheRXuR19p0KyKIbQwBi9kkJnpg4QKU+TDXHOmOyonRmYfqxtWIz9qA==}
+    dependencies:
+      '@zcredjs/core': 1.0.0
+      uint8arrays: 4.0.3
+    dev: false
+
+  /@zcredjs/mina@1.0.3:
+    resolution: {integrity: sha512-3VmP7j2yZsG1T4fZrBNql0XBjW2GghX/CmBO3jlqMozAnTrtk1ONzrIvGEnW8pMhrmrVdZMUMWosD/lBF7yh3w==}
+    dependencies:
+      '@zcredjs/core': 1.0.0
+      js-sha256: 0.11.0
+      o1js-trgraph: 2.1.0
+      randombytes: 2.1.0
+      sort-keys: 5.0.0
+    dev: false
+
   /JSONStream@1.3.5:
     resolution: {integrity: sha512-E+iruNOY8VV9s4JEbe1aNEm6MiszPRr/UfcHMz0TQh1BXSxHK+ASV1R6W4HpjBhSeS+54PIsAMCBmwD06LLsqQ==}
     hasBin: true
@@ -10625,6 +10584,10 @@ packages:
     engines: {node: '>=10'}
     dev: false
 
+  /js-sha256@0.11.0:
+    resolution: {integrity: sha512-6xNlKayMZvds9h1Y1VWc0fQHQ82BxTXizWPEtEeGvmOUYpBRy4gbWroHLpzowe6xiQhHpelCQiE7HEdznyBL9Q==}
+    dev: false
+
   /js-sha256@0.9.0:
     resolution: {integrity: sha512-sga3MHh9sgQN2+pJ9VYZ+1LPwXOxuBJBA5nrR5/ofPfuiJBE2hnjsaN8se8JznOmGLN2p49Pe5U/ttafcs/apA==}
 
@@ -11752,6 +11715,12 @@ packages:
       trgraph: 1.0.2
     transitivePeerDependencies:
       - encoding
+    dev: false
+
+  /o1js-trgraph@2.1.0:
+    resolution: {integrity: sha512-Jbz/vADrcTmb1ntPb/4AdwbZcCqvBbhDNR/kluwR7Qjl3WruYi9B28g1ogI66pHurPafzltPB27YG2daxme7ZA==}
+    dependencies:
+      trgraph: 1.0.2
     dev: false
 
   /o1js@0.15.0:
@@ -15100,6 +15069,13 @@ packages:
     resolution: {integrity: sha512-AnJNUGGDJAgFw/eWu/Xb9zrVKEGlwJJCaeInlf3BkecE/zcTobk5YXYIPNQJO1q5Hh1QZrQQHf0JvcHqz2hqoA==}
     dependencies:
       multiformats: 12.1.3
+    dev: false
+
+  /uint8arrays@4.0.3:
+    resolution: {integrity: sha512-b+aKlI2oTnxnfeSQWV1sMacqSNxqhtXySaH6bflvONGxF8V/fT3ZlYH7z2qgGfydsvpVo4JUgM/Ylyfl2YouCg==}
+    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
+    dependencies:
+      multiformats: 11.0.2
     dev: false
 
   /unbox-primitive@1.0.2:

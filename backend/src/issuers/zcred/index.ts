@@ -1,35 +1,32 @@
 import { IWebhookHandler } from "../../base/types/webhook-handler.js";
-import { CredType, IHttpIssuer } from "@zcredjs/core";
+import { IHttpIssuer } from "@zcredjs/core";
 import { tokens } from "typed-inject";
 import { PassportIssuer } from "./passport/index.js";
 import { ILogger } from "../../backbone/logger.js";
 import { ServerErr } from "../../backbone/errors.js";
-import { PassportTestIssuer } from "./passport-test/index.js";
+import { CredentialType } from "../../services/sybiljs/types/index.js";
 
 type Issuer = IHttpIssuer & Partial<IWebhookHandler>
 
 export class PrincipalIssuer {
-  private readonly issuers: Record<CredType, Issuer>;
+  private readonly issuers: Record<CredentialType, Issuer>;
 
   static inject = tokens(
     "logger",
     "passportIssuer",
-    "passportTestIssuer"
   );
   constructor(
     logger: ILogger,
     passportIssuer: PassportIssuer,
-    passportTestIssuer: PassportTestIssuer
   ) {
     this.issuers = {
       "passport": passportIssuer,
-      "passport-test": passportTestIssuer
     };
     Object.keys(this.issuers)
       .forEach((type) => logger.info(`ZCred ${type} issuer initialized `));
   }
 
-  getIssuer(credType: CredType): Issuer {
+  getIssuer(credType: CredentialType): Issuer {
     const issuer = this.issuers[credType];
     if (issuer) return issuer;
     throw new ServerErr({

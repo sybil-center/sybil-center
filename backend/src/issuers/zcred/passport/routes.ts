@@ -1,5 +1,6 @@
 import { ZCredRoutes } from "../../../controllers/type.js";
 import { ID_TYPES, zcredjs } from "@zcredjs/core";
+import { sybil } from "../../../services/sybiljs/index.js";
 
 
 const tags = ["ZCred Passport Credential"];
@@ -8,14 +9,14 @@ export const PASSPORT_ROUTES: ZCredRoutes = {
   credentialType: "passport",
   info: {
     method: "GET",
-    url: zcredjs.issuerPath("passport").info,
+    url: sybil.issuerPath("passport").info,
     schema: {
       tags: tags
     }
   },
   challenge: {
     method: "POST",
-    url: zcredjs.issuerPath("passport").challenge,
+    url: sybil.issuerPath("passport").challenge,
     schema: {
       tags: tags,
       body: {
@@ -52,7 +53,7 @@ export const PASSPORT_ROUTES: ZCredRoutes = {
 
   canIssue: {
     method: "POST",
-    url: zcredjs.issuerPath("passport").canIssue,
+    url: sybil.issuerPath("passport").canIssue,
     schema: {
       tags: tags,
       body: {
@@ -67,7 +68,7 @@ export const PASSPORT_ROUTES: ZCredRoutes = {
 
   issue: {
     method: "POST",
-    url: zcredjs.issuerPath("passport").issue,
+    url: sybil.issuerPath("passport").issue,
     schema: {
       tags: tags,
       body: {

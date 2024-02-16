@@ -1,6 +1,6 @@
 import { suite } from "uvu";
 import * as a from "uvu/assert";
-import { MinaPoseidonPastaSignProver } from "../../../../src/services/credential-prover/mina-poseidon-pasta.js";
+import { MinaPoseidonPastaSignatureProver } from "../../../../src/services/credential-provers/mina-poseidon-pasta.js";
 import { Field, Poseidon, PrivateKey, Signature } from "o1js";
 import { O1GraphLink, O1TrGraph, TrSchema } from "o1js-trgraph";
 import sortKeys from "sort-keys";
@@ -44,7 +44,7 @@ test("signing attributes", async () => {
   );
   const hash = Poseidon.hash(linear);
   const signature = Signature.create(privateKey, [hash]);
-  const signer = new MinaPoseidonPastaSignProver({ minaPrivateKey: privateKey.toBase58() });
+  const signer = new MinaPoseidonPastaSignatureProver({ minaPrivateKey: privateKey.toBase58() });
   const proof = await signer.signAttributes(attributes, attributeSchema);
   a.is(proof.signature, signature.toBase58(), "signature is not matched");
   a.equal(proof.issuer.id, {

@@ -1,43 +1,42 @@
 import {
-  ACIProof,
-  ACIProofType,
   CanIssue,
   CanIssueReq,
   Challenge,
   ChallengeOptions,
-  CredType,
   Gender,
   HttpCredential,
+  IHttpIssuer,
   Info,
   IssueReq,
-  IZHttpIssuer,
-  PassportAttributes,
-  PassportCred,
   SIGNATURE_PROOFS,
   SignatureProof,
-  SignProofType,
-  ZChallengeReq,
-  zcredjs,
+  StrictChallengeReq,
   ZkCredential
 } from "@zcredjs/core";
+import { hash as sha256 } from "@stablelib/sha256";
+import * as u8a from "uint8arrays";
 import { Config } from "../../../backbone/config.js";
 import crypto from "node:crypto";
 import { Disposable, tokens } from "typed-inject";
-import { ShuftiproKYC, ShuftiWebhookResp } from "../../../services/kyc/shuftipro.js";
 import { TimedCache } from "../../../base/service/timed-cache.js";
 import { ClientErr, ServerErr } from "../../../backbone/errors.js";
 import { IWebhookHandler } from "../../../base/types/webhook-handler.js";
 import { FastifyRequest } from "fastify";
 import { SignatureVerifier } from "../../../services/signature-verifier/index.js";
 import { ISO3166 } from "trgraph";
-import { CredentialProver } from "../../../services/credential-prover/index.js";
-import { SCHEMAS } from "../../../services/schema-finder/index.js";
+import { CredentialProver } from "../../../services/credential-provers/index.js";
+import { Schemas } from "../../../services/schema-finder/index.js";
 import { DIDService } from "../../../base/service/did.service.js";
+import { sybil } from "../../../services/sybiljs/index.js";
+import { CredentialType } from "../../../services/sybiljs/types/index.js";
+import type { IPassportKYCService, WebhookResult } from "./types.js";
+import { StubPassportKYC } from "./kyc/stub-passport-kyc.js";
+import { PassportAttributes, PassportCredential } from "../../../services/sybiljs/passport/types.js";
 
 type Session = {
   reference: string;
-  challengeReq: StrictChallengeReq;
-  webhookResp?: ShuftiWebhookResp;
+  challengeReq: ChallengeReq;
+  webhookResp?: WebhookResult;
   challenge: Challenge
 }
 
@@ -45,76 +44,81 @@ interface StrictChallengeOptions extends ChallengeOptions {
   chainId: string;
 }
 
-interface StrictChallengeReq extends ZChallengeReq {
+interface ChallengeReq extends StrictChallengeReq {
   validUntil: string;
   options: StrictChallengeOptions;
 }
 
 export class PassportIssuer
-  implements IZHttpIssuer, IWebhookHandler, Disposable {
+  implements IHttpIssuer, IWebhookHandler, Disposable {
 
-  private readonly templateId: string;
   private readonly secret: string;
   private readonly sessionCache: TimedCache<string, Session>;
+  private readonly passportKYC: IPassportKYCService;
 
   static inject = tokens(
     "config",
-    "shuftiproKYC",
     "signatureVerifier",
     "credentialProver",
     "didService"
   );
   constructor(
     private readonly config: Config,
-    private readonly shuftiproKYC: ShuftiproKYC,
     private readonly signatureVerifier: SignatureVerifier,
     private readonly credentialProver: CredentialProver,
     private readonly didService: DIDService
   ) {
     this.secret = config.secret;
-    this.templateId = config.shuftiproPassportTamplate;
     this.sessionCache = new TimedCache<string, Session>(config.kycSessionTtl);
+    this.passportKYC = new StubPassportKYC(config);
   }
 
   get uri(): URL {
-    return zcredjs
+    return sybil
       .issuerPath("passport")
       .endpoint(this.config.pathToExposeDomain.href);
   };
-  get credentialType(): CredType { return "passport";}
+
+  get credentialType(): CredentialType { return "passport";}
 
   async getInfo(): Promise<Info> {
     const minaIssuerReference = this.credentialProver
       .signProver("mina:poseidon-pasta")
       .issuerReference;
     return {
-      kid: this.didService.verificationMethod,
-      credentialType: this.credentialType,
-      updatableProofs: false,
-      proofsUpdated: new Date(2024, 0, 1, 0, 0, 0).toISOString(),
-      proofsInfo: [
-        {
-          type: "mina:poseidon-pasta",
-          references: [minaIssuerReference]
-        },
-        {
-          type: "aci:mina-poseidon",
-          references: [minaIssuerReference]
+      protection: {
+        jws: {
+          kid: this.didService.verificationMethod
         }
-      ]
+      },
+      issuer: {
+        type: "http",
+        uri: this.uri.href
+      },
+      credential: {
+        type: "passport",
+        attributesPolicy: {
+          validUntil: "custom",
+          validFrom: "strict"
+        }
+      },
+      proofs: {
+        updatable: false,
+        updatedAt: new Date(2024, 0, 1, 0, 0, 0).toISOString(),
+        types: {
+          "mina:poseidon-pasta": [minaIssuerReference]
+        }
+      }
     };
   }
 
-  async getChallenge(challengeReq: ZChallengeReq): Promise<Challenge> {
+  async getChallenge(challengeReq: ChallengeReq): Promise<Challenge> {
     if (!this.validateChallengeReq(challengeReq)) {
       throw new ClientErr(`Bad request. "validUntil" and "chainId" is undefined`);
     }
-    const reference = this.shuftiproKYC.createReference(crypto.randomUUID());
+    const reference = this.passportKYC.createReference(crypto.randomUUID());
     const sessionId = this.toSessionId(reference);
-    const verifyURL = await this.shuftiproKYC.getVerifyURL({
-      reference: reference,
-      templateId: this.templateId
-    });
+    const { verifyURL } = await this.passportKYC.initializeProcedure({ reference });
     const challenge: Challenge = {
       sessionId: sessionId,
       verifyURL: verifyURL.href,
@@ -135,7 +139,7 @@ export class PassportIssuer
   };
 
   async handleWebhook(req: FastifyRequest): Promise<any> {
-    const webhookResp = await this.shuftiproKYC.handleWebhook(req);
+    const webhookResp = await this.passportKYC.handleWebhook(req);
     const sessionId = this.toSessionId(webhookResp.reference);
     const session = this.sessionCache.get(sessionId);
     session.webhookResp = webhookResp;
@@ -158,19 +162,42 @@ export class PassportIssuer
     }
     const attributes = this.toAttributes(webhookResp, session);
     const proofs = await this.createProofs(attributes);
-    const credential: Omit<PassportCred, "jws"> = {
+    const credential: Omit<PassportCredential, "protection"> = {
       meta: {
         issuer: {
           type: "http",
           uri: this.uri.href
-        }
+        },
+        attributesDefinition: {
+          type: "document type (passport)",
+          validFrom: "passport valid from date",
+          issuanceDate: "passport issuance date",
+          validUntil: "passport valid until",
+          subject: {
+            id: {
+              type: "passport owner public key type",
+              key: "passport owner public key"
+            },
+            firstName: "passport owner first name",
+            lastName: "passport owner last name",
+            birthDate: "passport owner birth date",
+            gender: "passport owner gender"
+          },
+          countryCode: "passport country code",
+          document: {
+            id: "passport id (should be private)",
+            sybilId: "document unique public id"
+          },
+        },
       },
-      attributes,
+      attributes: attributes,
       proofs
     };
-    const protectedCred: PassportCred = {
+    const protectedCred: PassportCredential = {
       ...credential,
-      jws: await this.createJWS(credential)
+      protection: {
+        jws: await this.createJWS(credential)
+      }
     };
     this.sessionCache.delete(sessionId);
     // @ts-expect-error
@@ -188,15 +215,8 @@ export class PassportIssuer
       reference: string,
       proof: SignatureProof
     }> = {};
-    const aciProofsInfo: Record<string, {
-      reference: string,
-      proof: ACIProof
-    }> = {};
-    const aciProofsForSign: Record<SignProofType, ACIProofType> = {
-      "mina:poseidon-pasta": "aci:mina-poseidon"
-    };
     for (const signProofType of SIGNATURE_PROOFS) {
-      const transSchema = SCHEMAS.getSignature({
+      const transSchema = Schemas.getSignature({
         proofType: signProofType,
         credentialType: "passport",
         idType: attributes.subject.id.type
@@ -210,24 +230,6 @@ export class PassportIssuer
         proof: signProof
       };
     }
-    for (const proofType of Object.keys(signProofsInfo)) {
-      const aciReference = signProofsInfo[proofType]!.reference;
-      const aciProofType = aciProofsForSign[proofType as SignProofType];
-      if (aciProofType) {
-        const transSchema = SCHEMAS.getACI({
-          credentialType: "passport",
-          proofType: aciProofType
-        });
-        const aciProof = await this.credentialProver.createACIProof(aciProofType, {
-          attributes,
-          transSchema
-        });
-        aciProofsInfo[aciProofType] = {
-          reference: aciReference,
-          proof: aciProof
-        };
-      }
-    }
     // set proofs
     const target: ZkCredential["proofs"] = {};
     for (const signProofType of Object.keys(signProofsInfo)) {
@@ -235,40 +237,51 @@ export class PassportIssuer
       if (!target[signProofType]) target[signProofType] = {};
       (target[signProofType] as any)[reference] = proof;
     }
-    for (const aciProofType of Object.keys(aciProofsInfo)) {
-      const { reference, proof } = aciProofsInfo[aciProofType]!;
-      if (!target[aciProofType]) target[aciProofType] = {};
-      (target[aciProofType] as any)[reference] = proof;
-    }
     return target;
   }
 
   private toAttributes(
-    webhookResp: ShuftiWebhookResp,
+    webhookResp: WebhookResult,
     session: Session
   ): PassportAttributes {
     const { validUntil, subject: { id } } = session.challengeReq;
-    const passport = webhookResp.verification_data.document;
+    const passport = webhookResp.passport;
+    const sybilId = this.getSybilId(passport);
     return {
       type: "passport",
       issuanceDate: new Date().toISOString(),
-      validFrom: passport.issue_date,
-      validUntil: chooseValidUntil(validUntil, passport.expiry_date),
+      validFrom: passport.validFrom,
+      validUntil: chooseValidUntil(validUntil, passport.validUntil),
       subject: {
         id: { type: id.type, key: id.key },
-        firstName: passport.name.first_name.toUpperCase(),
-        lastName: passport.name.last_name.toUpperCase(),
-        birthDate: passport.dob,
-        gender: toGender(passport.gender),
-        countryCode: toAlpha3CC(passport.country),
-        document: {
-          id: passport.document_number
-        }
+        firstName: passport.subject.firstName,
+        lastName: passport.subject.lastName,
+        birthDate: passport.subject.birthDate,
+        gender: passport.subject.gender,
+      },
+      countryCode: passport.countryCode,
+      document: {
+        id: passport.document.id,
+        sybilId: sybilId
       }
     };
   }
 
-  private async createJWS(cred: Omit<HttpCredential, "jws">): Promise<string> {
+  private getSybilId(passport: WebhookResult["passport"]) {
+    const birthDate = new Date(passport.subject.birthDate);
+    const bdYear = String(birthDate.getUTCFullYear());
+    const month = birthDate.getUTCMonth().toString();
+    const bdMonth = month.length === 1 ? `0${month}` : month;
+    const day = birthDate.getUTCDate().toString();
+    const bdDay = day.length === 1 ? `0${day}` : day;
+    const input = u8a.fromString([
+      bdYear, bdMonth, bdDay, passport.countryCode, passport.document.id
+    ].join(""));
+    const hash = sha256(input);
+    return u8a.toString(hash.slice(12), "base58btc");
+  }
+
+  private async createJWS(cred: Omit<HttpCredential, "protection">): Promise<string> {
     const dagJWS = await this.didService.createJWS(cred);
     const [jwsSignature] = dagJWS.signatures;
     return jwsSignature?.protected + ".." + jwsSignature?.signature;
@@ -285,14 +298,14 @@ export class PassportIssuer
     });
   }
 
-  private checkWebhookResp(webhookResp: ShuftiWebhookResp) {
-    if (webhookResp.verifyResult !== "accepted") {
+  private checkWebhookResp(webhookResp: WebhookResult) {
+    if (!webhookResp.verified) {
       this.sessionCache.delete(this.toSessionId(webhookResp.reference));
       throw new ClientErr(`Verification is not passed`);
     }
   }
 
-  private validateChallengeReq(req: ZChallengeReq): req is StrictChallengeReq {
+  private validateChallengeReq(req: ChallengeReq): req is ChallengeReq {
     return !!(req.validUntil && req.options?.chainId);
   }
 
@@ -311,6 +324,8 @@ function chooseValidUntil(chosenValidUntil: string, docValidUntil: string | null
   else return chosenValidUntil;
 }
 
+// TODO put it to shuftypro if get agreement
+// @ts-expect-error
 function toAlpha3CC(alpha2: string): string {
   const isAlpha2 = ISO3166.isAlpha2(alpha2);
   if (!isAlpha2) throw new ServerErr({
@@ -341,6 +356,8 @@ function getMessage<TReq extends StrictChallengeReq = StrictChallengeReq>({
   ].join("\n\n");
 }
 
+// TODO put it to shuftypro if we get agreement
+// @ts-expect-error
 function toGender(gender: string): Gender {
   const GENDER_MAP: Record<string, Gender> = {
     "M": "male",
