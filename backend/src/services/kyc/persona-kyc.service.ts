@@ -1,8 +1,5 @@
 import { Config } from "../../backbone/config.js";
 import { tokens } from "typed-inject";
-import { ZkcID } from "@sybil-center/zkc-core";
-import { hash as sha256 } from "@stablelib/sha256";
-import * as u8a from "uint8arrays";
 import * as t from "io-ts";
 import crypto from "node:crypto";
 import { ClientErr, ServerErr } from "../../backbone/errors.js";
@@ -201,28 +198,15 @@ type InqCompletedEvent = t.TypeOf<typeof InqCompletedEvent>
 
 export class PersonaKYC {
 
-  private readonly secret: Uint8Array;
-
   static inject = tokens("config");
   constructor(
     private readonly config: Config
-  ) {
-    const secretBytes = u8a.fromString(config.personaSecret, "utf8");
-    this.secret = sha256(secretBytes);
-  }
+  ) {}
 
   createReference(data: string): string {
     return crypto.createHmac("sha256", this.config.secret)
       .update(data)
       .digest("base64url");
-  }
-
-  /** Transform Zkc Identifier to Persona reference-id */
-  refId(zkcId: ZkcID): string {
-    const strId = `${String(zkcId.t)}:${zkcId.k}`;
-    const refId = crypto.createHmac("sha256", this.secret);
-    refId.update(strId);
-    return refId.digest("hex");
   }
 
   /** Create Persona account by args */
