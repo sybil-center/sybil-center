@@ -43,12 +43,6 @@ test.before(async () => {
   didService = app.context.resolve("didService");
 });
 
-test.after(async () => {
-  console.log("app close start");
-  await app.close();
-  console.log("app close end");
-});
-
 type BeforeIssueParams = {
   subject: {
     id: StrictId;
@@ -418,7 +412,12 @@ test("sybil id equals for same passport but different subject id", async () => {
     minaCredential.attributes.document.sybilId,
     `passport sybil ids is not matched`
   );
+});
 
+test.after(async () => {
+  console.log("app close start");
+  await app.close();
+  console.log("app close end");
 });
 
 test.run();

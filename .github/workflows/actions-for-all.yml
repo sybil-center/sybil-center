@@ -16,7 +16,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 18.16.0
+          node-version: 18.18.2
 
       - uses: pnpm/action-setup@v2
         name: Install pnpm
