@@ -32,6 +32,7 @@ let passportKYC: IPassportKYCService;
 test.before(async () => {
   configDotEnv({ path: testUtil.envPath, override: true });
   app = await App.init();
+  console.log(`App initialized`);
   fastify = app.context.resolve("httpServer").fastify;
   config = app.context.resolve("config");
   passportIssuer = app.context.resolve("passportIssuer");
@@ -40,11 +41,12 @@ test.before(async () => {
   const credentialProver = app.context.resolve("credentialProver");
   minaPoseidonPastaProver = credentialProver["signProvers"]["mina:poseidon-pasta"];
   didService = app.context.resolve("didService");
-  await app.run();
 });
 
 test.after(async () => {
+  console.log("app close start");
   await app.close();
+  console.log("app close end");
 });
 
 type BeforeIssueParams = {

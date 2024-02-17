@@ -6,12 +6,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "npx tsm ./src/main.ts",
-    "test": "pnpm run test-other && pnpm run test-unit && pnpm run test-integration",
+    "test": "NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test",
     "test:watch": "./node_modules/.bin/watchlist src test --eager -- npm run test",
-    "test-on-win": "set NODE_ENV=test && npx tsm ./node_modules/uvu/bin.js ./test",
-    "test-other": "echo OTHER-TESTS && NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test/other",
-    "test-unit": "echo UNIT-TESTS && NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test/unit",
-    "test-integration": "echo INTEGRATION-TESTS && NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test/integration"
+    "test-on-win": "set NODE_ENV=test && npx tsm ./node_modules/uvu/bin.js ./test"
   },
   "keywords": [],
   "type": "module",
