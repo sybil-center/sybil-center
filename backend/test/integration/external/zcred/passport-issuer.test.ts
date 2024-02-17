@@ -1,22 +1,16 @@
 import { suite } from "uvu";
 import { App } from "../../../../src/app/app.js";
 import { configDotEnv } from "../../../../src/util/dotenv.util.js";
-import { support } from "../../../support/index.js";
+import { testUtil } from "../../../test-util/index.js";
 import { FastifyInstance } from "fastify";
 import { Config } from "../../../../src/backbone/config.js";
 import { PassportIssuer } from "../../../../src/issuers/passport/index.js";
 import { Challenge, ChallengeReq, HttpCredential, Identifier, Info, IssueReq, StrictId, zcredjs, } from "@zcredjs/core";
-import { EthSignature } from "@zcredjs/ethereum";
 import * as o1js from "o1js";
-import { Field, Scalar, Signature } from "o1js";
 import { MinaPoseidonPastaVerifier } from "@zcredjs/mina";
 import * as a from "uvu/assert";
 import sinon from "sinon";
 import { ICredentialSignProver } from "../../../../src/services/credential-provers/type.js";
-import { ethereumSupport } from "../../../support/chain/ethereum.js";
-import { ethers } from "ethers";
-import { minaSupport } from "../../../support/chain/mina.js";
-import Client from "mina-signer";
 import { DIDService } from "../../../../src/services/did.service.js";
 import sortKeys from "sort-keys";
 import { toJWTPayload } from "../../../../src/util/jwt.util.js";
@@ -36,7 +30,7 @@ let didService: DIDService;
 let passportKYC: IPassportKYCService;
 
 test.before(async () => {
-  configDotEnv({ path: support.configPath, override: true });
+  configDotEnv({ path: testUtil.envPath, override: true });
   app = await App.init();
   fastify = app.context.resolve("httpServer").fastify;
   config = app.context.resolve("config");
@@ -177,24 +171,14 @@ async function verifyCredJWS(cred: HttpCredential): Promise<boolean> {
 test("issue passport credential with mina public key", async () => {
   const { sessionId, message } = await beforeIssue({
     subject: {
-      id: { type: "mina:publickey", key: minaSupport.publicKey }
+      id: { type: "mina:publickey", key: testUtil.mina.publicKey }
     },
     validUntil: new Date(2030, 1, 1).toISOString(),
     options: {
       chainId: "mina:mainnet"
     }
   });
-  const minaClient = new Client({ network: "mainnet" });
-  const {
-    signature: {
-      field,
-      scalar
-    }
-  } = minaClient.signMessage(message, minaSupport.privateKey);
-  const signature = Signature.fromObject({
-    r: Field.fromJSON(field),
-    s: Scalar.fromJSON(scalar)
-  }).toBase58();
+  const signature = await testUtil.mina.signMessage(message, "mina:mainnet");
   const issueReq: IssueReq = {
     sessionId: sessionId,
     signature: signature
@@ -235,7 +219,7 @@ test("issue passport credential with ethereum public key", async () => {
     subject: {
       id: zcredjs.normalizeId({
         type: "ethereum:address",
-        key: ethereumSupport.info.ethereum.address.toLowerCase()
+        key: testUtil.ethereum.address.toLowerCase()
       })
     },
     validUntil: new Date(2030, 1, 1).toISOString(),
@@ -243,12 +227,10 @@ test("issue passport credential with ethereum public key", async () => {
       chainId: "eip155:1"
     }
   });
-
-  const wallet = new ethers.Wallet(ethereumSupport.info.ethereum.privateKey);
-  const signature = await wallet.signMessage(message);
+  const signature = await testUtil.ethereum.signMessage(message);
   const issueReq: IssueReq = {
     sessionId,
-    signature: EthSignature.toBase58(signature)
+    signature: signature
   };
   const issueResp = await fastify.inject({
     method: "POST",
@@ -286,7 +268,7 @@ test("invalid mina signature", async () => {
     subject: {
       id: zcredjs.normalizeId({
         type: "mina:publickey",
-        key: minaSupport.publicKey
+        key: testUtil.mina.publicKey
       }),
     },
     validUntil: new Date(2030, 1, 1).toISOString(),
@@ -314,7 +296,7 @@ test("invalid ethereum signature", async () => {
     subject: {
       id: zcredjs.normalizeId({
         type: "ethereum:address",
-        key: ethereumSupport.info.ethereum.address
+        key: testUtil.ethereum.address
       }),
     },
     validUntil: new Date(2030, 1, 1).toISOString(),
@@ -377,24 +359,14 @@ test("get issuer info", async () => {
 test("sybil id equals for same passport but different subject id", async () => {
   const { sessionId: minaSessionId, message: minaMessage } = await beforeIssue({
     subject: {
-      id: { type: "mina:publickey", key: minaSupport.publicKey }
+      id: { type: "mina:publickey", key: testUtil.mina.publicKey }
     },
     validUntil: new Date(2030, 1, 1).toISOString(),
     options: {
       chainId: "mina:mainnet"
     }
   });
-  const minaClient = new Client({ network: "mainnet" });
-  const {
-    signature: {
-      field,
-      scalar
-    }
-  } = minaClient.signMessage(minaMessage, minaSupport.privateKey);
-  const minaSignature = Signature.fromObject({
-    r: Field.fromJSON(field),
-    s: Scalar.fromJSON(scalar)
-  }).toBase58();
+  const minaSignature = await testUtil.mina.signMessage(minaMessage, "mina:mainnet");
   const minaIssueReq: IssueReq = {
     sessionId: minaSessionId,
     signature: minaSignature
@@ -414,7 +386,7 @@ test("sybil id equals for same passport but different subject id", async () => {
     subject: {
       id: zcredjs.normalizeId({
         type: "ethereum:address",
-        key: ethereumSupport.info.ethereum.address.toLowerCase()
+        key: testUtil.ethereum.address.toLowerCase()
       })
     },
     validUntil: new Date(2030, 1, 1).toISOString(),
@@ -423,11 +395,10 @@ test("sybil id equals for same passport but different subject id", async () => {
     }
   });
 
-  const wallet = new ethers.Wallet(ethereumSupport.info.ethereum.privateKey);
-  const ethSignature = await wallet.signMessage(ethMessage);
+  const ethSignature = await testUtil.ethereum.signMessage(ethMessage);
   const issueReq: IssueReq = {
     sessionId: ethSessionId,
-    signature: EthSignature.toBase58(ethSignature)
+    signature: ethSignature
   };
   const issueResp = await fastify.inject({
     method: "POST",

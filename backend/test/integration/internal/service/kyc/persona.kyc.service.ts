@@ -2,12 +2,12 @@ import { suite } from "uvu";
 import { Config } from "../../../../../src/backbone/config.js";
 import { PersonaKYC } from "../../../../../src/services/kyc/persona-kyc.service.js";
 import { createInjector, Injector } from "typed-inject";
-import { support } from "../../../../support/index.js";
+import { testUtil } from "../../../../test-util/index.js";
 import { configDotEnv } from "../../../../../src/util/dotenv.util.js";
-import { minaSupport } from "../../../../support/chain/mina.js";
 import sinon from "sinon";
 import { rest } from "../../../../../src/util/fetch.util.js";
 import * as a from "uvu/assert";
+import crypto from "node:crypto";
 
 
 type Context = {
@@ -22,7 +22,7 @@ let context: Injector<Context>;
 let persona: PersonaKYC;
 
 test.before(async () => {
-  configDotEnv({ path: support.configPath, override: true });
+  configDotEnv({ path: testUtil.envPath, override: true });
   context = createInjector()
     .provideClass("config", Config)
     .provideClass("personaKYC", PersonaKYC);
@@ -204,8 +204,7 @@ const inqCreateResp = {
 test("create inquiry", async () => {
   sinon.stub(rest, "fetchJson").resolves(inqCreateResp);
   const inqId = "inq_ZEbFxoGdE4s8UdFUEBurhy63";
-  const publicKey = minaSupport.publicKey;
-  const refId = persona.refId({ t: 0, k: publicKey });
+  const refId = persona.createReference(crypto.randomUUID());
   const inq = await persona.createInquiry({ referenceId: refId });
   a.is(
     inq.inquiryId, inqId,
