@@ -9,9 +9,6 @@ export class Config {
   /**  Secret phrase for generating DID */
   readonly secret: string;
 
-  /** Size limit in bytes for custom property for Verifiable Credential */
-  readonly customSizeLimit: number;
-
   /**  Url of ethereum node */
   readonly ethNodeUrl: string;
   /** TTL for signature message cache in ms */
@@ -28,9 +25,6 @@ export class Config {
   readonly twitterClientSecret: string;
 
   readonly frontendOrigin: URL;
-
-  /** Credential TTL (expiration date - issuing date) for generate API keys  */
-  readonly apiKeysCredentialTTL: number;
 
   /** Google Cloud Project ID */
   readonly gcProjectId: string;
@@ -90,8 +84,6 @@ export class Config {
 
     this.secret = getStrOrThrow("SECRET");
 
-    this.customSizeLimit = getNumOrElse("CUSTOM_SIZE_LIMIT", 51200);
-
     this.ethNodeUrl = getStrOrThrow("ETH_NODE_URL");
     this.signatureMessageTTL = getNumOrThrow("SIGNATURE_MESSAGE_TTL");
     this.oAuthSessionTtl = getNumOrThrow("OAUTH_SESSION_TTL");
@@ -106,7 +98,6 @@ export class Config {
     this.twitterClientSecret = getStrOrThrow("TWITTER_CLIENT_SECRET");
 
     this.frontendOrigin = new URL(getStrOrThrow("FRONTEND_ORIGIN"));
-    this.apiKeysCredentialTTL = getNumOrThrow("API_KEYS_CREDENTIAL_TTL");
 
     this.gcProjectId = getStrOrThrow("GC_PROJECT_ID");
     this.captchaApiKey = getStrOrThrow("CAPTCHA_API_KEY");
@@ -147,6 +138,7 @@ function getNumOrThrow(envVar: string): number {
   return Number(getStrOrThrow(envVar));
 }
 
+// @ts-expect-error
 function getNumOrElse(envVar: string, defaultNum: number): number {
   const num = process.env[envVar];
   return num ? Number(num) : defaultNum;

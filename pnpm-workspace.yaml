@@ -2,6 +2,3 @@ packages:
   - backend
   - frontend
   - sybil
-  - zkc-core
-  - sybil.zkc-core
-  - sybil.zkc-o1js

@@ -1,5 +1,5 @@
 import { HttpServer } from "../../backbone/http-server.js";
-import { PrincipalIssuer } from "../../issuers/zcred/index.js";
+import { PrincipalIssuer } from "../../issuers/index.js";
 import { Injector } from "typed-inject";
 import { contextUtil } from "../../util/context.util.js";
 import { ZCRED_ISSUERS_ROUTES } from "./routes.js";
@@ -15,7 +15,7 @@ const TOKENS: (keyof Dependencies)[] = [
   "httpServer",
 ];
 
-export function issuersController(injector: Injector<Dependencies>) {
+export function ZCredIssuerController(injector: Injector<Dependencies>) {
   const {
     httpServer: { fastify },
     principalIssuer,
