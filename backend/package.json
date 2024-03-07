@@ -34,7 +34,7 @@
     "@solana/web3.js": "^1.73.3",
     "@stablelib/sha256": "^1.0.1",
     "@sybil-center/sdk": "workspace:*",
-    "@zcredjs/core": "1.0.0",
+    "@zcredjs/core": "1.0.1",
     "@zcredjs/ethereum": "0.0.6",
     "@zcredjs/mina": "1.0.3",
     "bitcoinjs-message": "^2.2.0",

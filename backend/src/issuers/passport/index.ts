@@ -168,27 +168,29 @@ export class PassportIssuer
           type: "http",
           uri: this.uri.href
         },
-        attributesDefinition: {
-          type: "document type (passport)",
-          validFrom: "passport valid from date",
-          issuanceDate: "passport issuance date",
-          validUntil: "passport valid until",
-          subject: {
-            id: {
-              type: "passport owner public key type",
-              key: "passport owner public key"
+        definitions: {
+          attributes: {
+            type: "document type (passport)",
+            validFrom: "passport valid from date",
+            issuanceDate: "passport issuance date",
+            validUntil: "passport valid until",
+            subject: {
+              id: {
+                type: "passport owner public key type",
+                key: "passport owner public key"
+              },
+              firstName: "passport owner first name",
+              lastName: "passport owner last name",
+              birthDate: "passport owner birth date",
+              gender: "passport owner gender"
             },
-            firstName: "passport owner first name",
-            lastName: "passport owner last name",
-            birthDate: "passport owner birth date",
-            gender: "passport owner gender"
-          },
-          countryCode: "passport country code",
-          document: {
-            id: "passport id (should be private)",
-            sybilId: "document unique public id"
-          },
-        },
+            countryCode: "passport country code",
+            document: {
+              id: "passport id (should be private)",
+              sybilId: "document unique public id"
+            },
+          }
+        }
       },
       attributes: attributes,
       proofs
