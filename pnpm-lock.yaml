@@ -38,8 +38,8 @@ importers:
         specifier: workspace:*
         version: link:../sybil
       '@zcredjs/core':
-        specifier: 1.0.0
-        version: 1.0.0
+        specifier: 1.0.1
+        version: 1.0.1
       '@zcredjs/ethereum':
         specifier: 0.0.6
         version: 0.0.6
@@ -5357,6 +5357,10 @@ packages:
 
   /@zcredjs/core@1.0.0:
     resolution: {integrity: sha512-rtdaMTe0VxikAs5YbOTLsoaN5lDLJz4tc77d15KDJMXqNMH96l3IOoxdz9gPNuz4j8abW9/xg6u+poHwnZy30w==}
+    dev: false
+
+  /@zcredjs/core@1.0.1:
+    resolution: {integrity: sha512-SWJvhqbCgPXvKI0eQBf7+XzYtspcETSlFQcoHBxZYiSjBg0B/yAAHdah+qgZ+4uuLqet5DUmiB3UX+B9PCxxSg==}
     dev: false
 
   /@zcredjs/ethereum@0.0.6:
