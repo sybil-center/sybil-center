@@ -32,7 +32,6 @@ let passportKYC: IPassportKYCService;
 test.before(async () => {
   configDotEnv({ path: testUtil.envPath, override: true });
   app = await App.init();
-  console.log(`App initialized`);
   fastify = app.context.resolve("httpServer").fastify;
   config = app.context.resolve("config");
   passportIssuer = app.context.resolve("passportIssuer");
@@ -342,6 +341,7 @@ test("get issuer info", async () => {
         validFrom: "strict"
       }
     },
+    definitions: info.definitions,
     proofs: {
       updatable: false,
       updatedAt: info.proofs.updatedAt,
@@ -415,9 +415,7 @@ test("sybil id equals for same passport but different subject id", async () => {
 });
 
 test.after(async () => {
-  console.log("app close start");
   await app.close();
-  console.log("app close end");
 });
 
 test.run();

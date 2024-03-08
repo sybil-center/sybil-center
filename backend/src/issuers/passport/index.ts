@@ -49,6 +49,28 @@ interface ChallengeReq extends StrictChallengeReq {
   options: StrictChallengeOptions;
 }
 
+const ATTRIBUTES_DEF = {
+  type: "document type (passport)",
+  validFrom: "passport valid from date",
+  issuanceDate: "passport issuance date",
+  validUntil: "passport valid until",
+  subject: {
+    id: {
+      type: "passport owner public key type",
+      key: "passport owner public key"
+    },
+    firstName: "passport owner first name",
+    lastName: "passport owner last name",
+    birthDate: "passport owner birth date",
+    gender: "passport owner gender"
+  },
+  countryCode: "passport country code",
+  document: {
+    id: "passport id (should be private)",
+    sybilId: "document unique public id"
+  },
+};
+
 export class PassportIssuer
   implements IHttpIssuer, IWebhookHandler, Disposable {
 
@@ -101,6 +123,9 @@ export class PassportIssuer
           validUntil: "custom",
           validFrom: "strict"
         }
+      },
+      definitions: {
+        attributes: ATTRIBUTES_DEF
       },
       proofs: {
         updatable: false,
@@ -168,29 +193,7 @@ export class PassportIssuer
           type: "http",
           uri: this.uri.href
         },
-        definitions: {
-          attributes: {
-            type: "document type (passport)",
-            validFrom: "passport valid from date",
-            issuanceDate: "passport issuance date",
-            validUntil: "passport valid until",
-            subject: {
-              id: {
-                type: "passport owner public key type",
-                key: "passport owner public key"
-              },
-              firstName: "passport owner first name",
-              lastName: "passport owner last name",
-              birthDate: "passport owner birth date",
-              gender: "passport owner gender"
-            },
-            countryCode: "passport country code",
-            document: {
-              id: "passport id (should be private)",
-              sybilId: "document unique public id"
-            },
-          }
-        }
+        definitions: { attributes: ATTRIBUTES_DEF }
       },
       attributes: attributes,
       proofs
