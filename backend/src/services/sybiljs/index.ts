@@ -1,9 +1,6 @@
-import { CredentialType } from "./types/index.js";
-
-
 export const sybil = {
-  issuerPath(credType: CredentialType) {
-    const basePath = `/api/v1/zcred/issuers/${credType}`;
+  issuerPath(id: string) {
+    const basePath = `/issuers/${id}`;
     return new (class PathProvider {
       get challenge() { return `${basePath}/challenge`;}
       get canIssue() { return `${basePath}/can-issue`; }

@@ -1,4 +1,4 @@
-import { type SignProofType, type StrictAttributes, type StrictId, type SignatureProof } from "@zcredjs/core";
+import { Attributes, type SignatureProof, type SignProofType, type StrictId } from "@zcredjs/core";
 import { TrSchema } from "trgraph";
 
 export interface ICredentialSignProver {
@@ -6,6 +6,6 @@ export interface ICredentialSignProver {
   issuerId: StrictId;
   issuerReference: string;
   signAttributes<
-    TAttr extends StrictAttributes = StrictAttributes
+    TAttr extends Attributes = Attributes
   >(attributes: TAttr, transSchema: TrSchema): Promise<SignatureProof>;
 }

@@ -1,22 +1,22 @@
 import { HttpServer } from "../../../backbone/http-server.js";
 import { contextUtil } from "../../../util/context.util.js";
 import { Injector } from "typed-inject";
-import { PrincipalIssuer } from "../../index.js";
+import { IssuerSupervisor } from "../../issuer-supervisor.js";
 
 type Dependencies = {
   httpServer: HttpServer
-  principalIssuer: PrincipalIssuer
+  issuerSupervisor: IssuerSupervisor
 }
 
 const tokens: (keyof Dependencies)[] = [
   "httpServer",
-  "principalIssuer"
+  "issuerSupervisor"
 ];
 
 export function StubKYCPassportController(injector: Injector<Dependencies>) {
   const {
     httpServer: { fastify },
-    principalIssuer
+    issuerSupervisor
   } = contextUtil.from(tokens, injector);
 
   fastify.route({
@@ -31,7 +31,7 @@ export function StubKYCPassportController(injector: Injector<Dependencies>) {
     method: "GET",
     url: "/api/v1/stub-kyc/webhook",
     handler: async (req) => {
-      await principalIssuer.getIssuer("passport").handleWebhook?.(req);
+      await issuerSupervisor.getIssuer("passport").handleWebhook?.(req);
       return { message: "ok" };
     }
   });

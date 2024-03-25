@@ -1,26 +1,25 @@
-import { PrincipalIssuer } from "../../index.js";
 import { HttpServer } from "../../../backbone/http-server.js";
 import { Injector } from "typed-inject";
 import { contextUtil } from "../../../util/context.util.js";
-import { CredentialType } from "../../../services/sybiljs/types/index.js";
+import { IssuerSupervisor } from "../../issuer-supervisor.js";
 
 type Dependencies = {
-  principalIssuer: PrincipalIssuer,
+  issuerSupervisor: IssuerSupervisor,
   httpServer: HttpServer
 }
 
 const TOKENS: (keyof Dependencies)[] = [
-  "principalIssuer",
+  "issuerSupervisor",
   "httpServer"
 ];
 
-const PASSPORT_TYPE: CredentialType = "passport";
+const PASSPORT_TYPE = "passport";
 
-export const SHUFTI_PASSPORT_ISSUER_ENDPOINT = `/api/v1/zcred/issuers/${PASSPORT_TYPE}/kyc/shuftipro/webhook`;
+export const SHUFTI_PASSPORT_ISSUER_ENDPOINT = `/issuers/${PASSPORT_TYPE}/webhook/kyc/shuftipro`;
 
 export function ShuftyproKYCPassportController(injector: Injector<Dependencies>) {
   const {
-    principalIssuer,
+    issuerSupervisor,
     httpServer: { fastify }
   } = contextUtil.from(TOKENS, injector);
 
@@ -32,7 +31,7 @@ export function ShuftyproKYCPassportController(injector: Injector<Dependencies>)
     },
     config: { rawBody: true },
     handler: async (req) => {
-      await principalIssuer.getIssuer(PASSPORT_TYPE)?.handleWebhook?.(req);
+      await issuerSupervisor.getIssuer("passport")?.handleWebhook?.(req);
       return { message: "ok" };
     }
   });

@@ -5,10 +5,11 @@ import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import fastifyStatic from "@fastify/static";
-import { ClientErr, ServerErr } from "./errors.js";
+import { ClientErr, IssuerException, ServerErr } from "./errors.js";
 import type { Config } from "./config.js";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
+import { IEC, IECode, JsonIssuerException } from "@zcredjs/core";
 
 export class HttpServer implements Disposable {
   static inject = tokens("logger", "config");
@@ -73,28 +74,33 @@ export class HttpServer implements Disposable {
     await this.fastify.register(import("fastify-raw-body"), {
       global: false,
     });
-    await this.fastify.setErrorHandler<Error>((error, req, reply) => {
-      if (error instanceof ClientErr) {
-        this.logger.error(error.info, "Client error information");
+    await this.fastify.setErrorHandler<Error>((e, req, reply) => {
+      if (e instanceof ClientErr) {
+        this.logger.error(e.info, "Client error information");
         reply
-          .status(error.info.statusCode)
-          .send({ message: error.info.message });
+          .status(e.info.statusCode)
+          .send({ message: e.info.message });
 
-      } else if (error instanceof ServerErr) {
-        this.logger.error(error.info, `Server error information`);
+      } else if (e instanceof ServerErr) {
+        this.logger.error(e.info, `Server error information`);
         this.logger.error(req, `Server error request`);
         reply
-          .status(error.info.statusCode)
-          .send({ message: error.info.message });
-
+          .status(e.info.statusCode)
+          .send({ message: e.info.message });
+      } else if (e instanceof IssuerException) {
+        this.logger.error(e, `Issuer exception informaion`);
+        reply
+          .status(isAccessTokenException(e.code) ? 401 : 400)
+          .send({
+            code: e.code,
+            message: e.msg
+          } satisfies JsonIssuerException);
       } else {
-        this.logger.error(new ClientErr({
-          message: error.message,
-          cause: error,
-          description: `Unexpected error`
-        }).info, `Unexpected error`);
-        reply.status(400)
-          .send({ message: "Bad request or server error" });
+        this.logger.error(e, `Unexpected error`);
+        this.logger.error(req, `Error request`);
+        reply
+          .status(500)
+          .send({ message: `Interal server error` });
       }
     });
   }
@@ -110,4 +116,9 @@ export class HttpServer implements Disposable {
     this.logger.info("Closing server...");
     await this.fastify.close();
   }
+}
+
+function isAccessTokenException(code: IECode) {
+  const codes: number[] = [IEC.INVALID_ACCESS_TOKEN, IEC.NO_ACCESS_TOKEN];
+  return codes.includes(code);
 }

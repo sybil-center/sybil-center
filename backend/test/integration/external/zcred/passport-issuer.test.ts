@@ -4,8 +4,18 @@ import { configDotEnv } from "../../../../src/util/dotenv.util.js";
 import { testUtil } from "../../../test-util/index.js";
 import { FastifyInstance } from "fastify";
 import { Config } from "../../../../src/backbone/config.js";
-import { PassportIssuer } from "../../../../src/issuers/passport/index.js";
-import { Challenge, ChallengeReq, HttpCredential, Identifier, Info, IssueReq, StrictId, zcredjs, } from "@zcredjs/core";
+import {
+  Challenge,
+  ChallengeReq,
+  HttpCredential,
+  Identifier,
+  IEC,
+  Info,
+  isJsonIssuerException,
+  IssueReq,
+  StrictId,
+  zcredjs
+} from "@zcredjs/core";
 import * as o1js from "o1js";
 import { MinaPoseidonPastaVerifier } from "@zcredjs/mina";
 import * as a from "uvu/assert";
@@ -17,6 +27,7 @@ import { toJWTPayload } from "../../../../src/util/jwt.util.js";
 import { sybil } from "../../../../src/services/sybiljs/index.js";
 import { IPassportKYCService } from "../../../../src/issuers/passport/types.js";
 import { PassportCredential } from "../../../../src/services/sybiljs/passport/types.js";
+import { PassportIssuer } from "../../../../src/issuers/passport/issuer.js";
 
 const test = suite("INTEGRATION API: ZCred passport issuer");
 
@@ -34,6 +45,7 @@ test.before(async () => {
   app = await App.init();
   fastify = app.context.resolve("httpServer").fastify;
   config = app.context.resolve("config");
+  // @ts-expect-error
   passportIssuer = app.context.resolve("passportIssuer");
   passportKYC = passportIssuer["passportKYC"];
   sessionCache = passportIssuer["sessionCache"];
@@ -190,7 +202,7 @@ test("issue passport credential with mina public key", async () => {
   const credential = JSON.parse(issueResp.body) as PassportCredential;
   a.is(
     credential.meta.issuer.uri,
-    new URL("./api/v1/zcred/issuers/passport", config.pathToExposeDomain).href,
+    new URL("./issuers/passport", config.pathToExposeDomain).href,
     `Credential meta issuer URI is not match`
   );
   a.is(
@@ -239,7 +251,7 @@ test("issue passport credential with ethereum public key", async () => {
   const credential = JSON.parse(issueResp.body) as PassportCredential;
   a.is(
     credential.meta.issuer.uri,
-    new URL("./api/v1/zcred/issuers/passport", config.pathToExposeDomain).href,
+    new URL("./issuers/passport", config.pathToExposeDomain).href,
     `Credential meta issuer URI is not match`
   );
   a.is(
@@ -281,9 +293,12 @@ test("invalid mina signature", async () => {
     body: issueReq
   });
   a.ok(
-    issueResp.statusCode !== 200,
-    `Issue response status code is not 200. Status code ${issueResp.statusCode}`
+    issueResp.statusCode === 400,
+    `Issue response status code is not 400. Status code ${issueResp.statusCode}`
   );
+  const body = JSON.parse(issueResp.body);
+  a.ok(isJsonIssuerException(body), `Error response is not issuer exception`);
+  a.is(body.code, IEC.ISSUE_BAD_SIGNATURE, `Issuer exception code not matched`);
 });
 
 test("invalid ethereum signature", async () => {
@@ -309,9 +324,12 @@ test("invalid ethereum signature", async () => {
     body: issueReq
   });
   a.ok(
-    issueResp.statusCode !== 200,
-    `Issue response status code is not 200. Status code ${issueResp.statusCode}`
+    issueResp.statusCode === 400,
+    `Issue response status code is not 400. Status code ${issueResp.statusCode}`
   );
+  const body = JSON.parse(issueResp.body);
+  a.ok(isJsonIssuerException(body), `Error response is not issuer exception`);
+  a.is(body.code, IEC.ISSUE_BAD_SIGNATURE, `Issuer exception code not matched`);
 });
 
 test("get issuer info", async () => {

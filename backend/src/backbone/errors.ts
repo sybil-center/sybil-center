@@ -1,3 +1,5 @@
+import { IECode, IssuerException as IssuerExceptionOrigin } from "@zcredjs/core";
+
 type ErrInfo = {
   /** Message for Client */
   message: string;
@@ -61,6 +63,33 @@ export class ServerErr extends Err {
         statusCode: args.statusCode ? args.statusCode : 500
       };
     }
+  }
+}
+
+export type IssuerExceptionInfo = {
+  /**  */
+  code: IECode;
+  /** Message for client */
+  msg?: string;
+  /** Description for logs */
+  desc?: string;
+  cause?: Error;
+}
+
+export class IssuerException extends IssuerExceptionOrigin {
+  readonly msg: IssuerExceptionInfo["msg"];
+  readonly desc: IssuerExceptionInfo["desc"];
+  override readonly cause: IssuerExceptionInfo["cause"];
+  constructor({
+    code,
+    msg,
+    desc,
+    cause
+  }: IssuerExceptionInfo) {
+    super(code, msg);
+    this.msg = msg;
+    this.cause = cause;
+    this.desc = desc;
   }
 }
 

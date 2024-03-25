@@ -3,24 +3,25 @@ import {
   CanIssueReq,
   Challenge,
   ChallengeOptions,
-  Gender,
+  ChallengeReq,
   HttpCredential,
-  IHttpIssuer,
+  ID_TYPES,
+  IEC,
   Info,
+  isStrictId,
   IssueReq,
   SIGNATURE_PROOFS,
   SignatureProof,
-  StrictChallengeReq,
+  StrictChallengeReq as StrictChallengeReqOrigin,
   ZkCredential
 } from "@zcredjs/core";
 import { hash as sha256 } from "@stablelib/sha256";
 import * as u8a from "uint8arrays";
 import { Config } from "../../backbone/config.js";
 import crypto from "node:crypto";
-import { Disposable, tokens } from "typed-inject";
+import { tokens } from "typed-inject";
 import { TimedCache } from "../../services/timed-cache.js";
-import { ClientErr, ServerErr } from "../../backbone/errors.js";
-import { IWebhookHandler } from "../../services/types/webhook-handler.js";
+import { ClientErr, IssuerException, ServerErr } from "../../backbone/errors.js";
 import { FastifyRequest } from "fastify";
 import { SignatureVerifier } from "../../services/signature-verifier/index.js";
 import { ISO3166 } from "trgraph";
@@ -32,10 +33,12 @@ import { CredentialType } from "../../services/sybiljs/types/index.js";
 import type { IPassportKYCService, WebhookResult } from "./types.js";
 import { StubPassportKYC } from "./kyc/stub-passport-kyc.js";
 import { PassportAttributes, PassportCredential } from "../../services/sybiljs/passport/types.js";
+import { IIssuer } from "../../types/issuer.js";
+import { ILogger } from "../../backbone/logger.js";
 
 type Session = {
   reference: string;
-  challengeReq: ChallengeReq;
+  challengeReq: StrictChallengeReq;
   webhookResp?: WebhookResult;
   challenge: Challenge
 }
@@ -44,9 +47,34 @@ interface StrictChallengeOptions extends ChallengeOptions {
   chainId: string;
 }
 
-interface ChallengeReq extends StrictChallengeReq {
+interface StrictChallengeReq extends StrictChallengeReqOrigin {
   validUntil: string;
   options: StrictChallengeOptions;
+}
+
+function isStrictChallengeReq(req: ChallengeReq): req is StrictChallengeReq {
+  if (!isStrictId(req.subject.id)) {
+    throw new IssuerException({
+      code: IEC.CHALLENGE_BAD_REQ,
+      msg: `Bad challenge request. Invalid subject id type. Valid subject id types: ${ID_TYPES.join(", ")}`,
+      desc: `"passport" issuer. On get challenge, invalid subject id type, id type: ${req.subject.id.type}`
+    });
+  }
+  if (!("options" in req) || req.options === null || typeof req.options !== "object") {
+    throw new IssuerException({
+      code: IEC.CHALLENGE_BAD_REQ,
+      msg: `Bad challenge request. "options" MUST be in JSON body as object`,
+      desc: `"passport" issuer. On get challenge, no "options" parameter`
+    });
+  }
+  if (!("chainId" in req.options) || typeof req.options.chainId !== "string") {
+    throw new IssuerException({
+      code: IEC.CHALLENGE_BAD_REQ,
+      msg: `Bad challenge request. "chainId" MUST be defined in "options"`,
+      desc: `"passport" issuer. On get challenge, no "chainId" in "options"`
+    });
+  }
+  return true;
 }
 
 const ATTRIBUTES_DEF = {
@@ -71,20 +99,24 @@ const ATTRIBUTES_DEF = {
   },
 };
 
-export class PassportIssuer
-  implements IHttpIssuer, IWebhookHandler, Disposable {
+export type PassportIssuer = Issuer;
+
+export class Issuer
+  implements IIssuer<PassportCredential> {
 
   private readonly secret: string;
   private readonly sessionCache: TimedCache<string, Session>;
   private readonly passportKYC: IPassportKYCService;
 
   static inject = tokens(
+    "logger",
     "config",
     "signatureVerifier",
     "credentialProver",
     "didService"
   );
   constructor(
+    logger: ILogger,
     private readonly config: Config,
     private readonly signatureVerifier: SignatureVerifier,
     private readonly credentialProver: CredentialProver,
@@ -93,6 +125,7 @@ export class PassportIssuer
     this.secret = config.secret;
     this.sessionCache = new TimedCache<string, Session>(config.kycSessionTtl);
     this.passportKYC = new StubPassportKYC(config);
+    logger.info(`Issuer "passport" initialized`);
   }
 
   get uri(): URL {
@@ -100,6 +133,8 @@ export class PassportIssuer
       .issuerPath("passport")
       .endpoint(this.config.pathToExposeDomain.href);
   };
+
+  id = "passport";
 
   get credentialType(): CredentialType { return "passport";}
 
@@ -138,9 +173,10 @@ export class PassportIssuer
   }
 
   async getChallenge(challengeReq: ChallengeReq): Promise<Challenge> {
-    if (!this.validateChallengeReq(challengeReq)) {
-      throw new ClientErr(`Bad request. "validUntil" and "chainId" is undefined`);
-    }
+    if (!isStrictChallengeReq(challengeReq)) throw new IssuerException({
+      code: IEC.CHALLENGE_BAD_REQ,
+      msg: `Bad challenge request`
+    });
     const reference = this.passportKYC.createReference(crypto.randomUUID());
     const sessionId = this.toSessionId(reference);
     const { verifyURL } = await this.passportKYC.initializeProcedure({ reference });
@@ -171,19 +207,23 @@ export class PassportIssuer
     this.sessionCache.set(sessionId, session);
   }
 
-  async issue<
-    TCred extends HttpCredential = HttpCredential
-  >({ sessionId, signature }: IssueReq): Promise<TCred> {
+  async issue({ sessionId, signature }: IssueReq): Promise<PassportCredential> {
     const session = this.sessionCache.get(sessionId);
     const { subject } = session.challengeReq;
     const webhookResp = session.webhookResp;
     if (!webhookResp) {
-      throw new ClientErr(`Verification process has not been completed`);
+      throw new IssuerException({
+        code: IEC.ISSUE_DENIED,
+        msg: `Verification process has not been completed`
+      });
     }
     this.checkWebhookResp(webhookResp);
     const verified = await this.verifySignature(signature, session);
     if (!verified) {
-      throw new ClientErr(`Signature is not verified for ${subject.id.key}`);
+      throw new IssuerException({
+        code: IEC.ISSUE_BAD_SIGNATURE,
+        msg: `Signature is not verified for ${subject.id.key}`
+      });
     }
     const attributes = this.toAttributes(webhookResp, session);
     const proofs = await this.createProofs(attributes);
@@ -205,7 +245,6 @@ export class PassportIssuer
       }
     };
     this.sessionCache.delete(sessionId);
-    // @ts-expect-error
     return protectedCred;
   };
 
@@ -310,10 +349,6 @@ export class PassportIssuer
     }
   }
 
-  private validateChallengeReq(req: ChallengeReq): req is ChallengeReq {
-    return !!(req.validUntil && req.options?.chainId);
-  }
-
   private toSessionId(reference: string) {
     return crypto.createHmac("sha256", this.secret)
       .update(reference)
@@ -379,3 +414,5 @@ function toGender(gender: string): Gender {
     description: `Can not find standard gender alias for ${gender}`
   });
 }
+
+type Gender = "male" | "female" | "other"

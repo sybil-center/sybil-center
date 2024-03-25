@@ -6,12 +6,13 @@ import { DIDService } from "../services/did.service.js";
 import { GateBuilder } from "../services/gate-builder.js";
 import { CredentialProver } from "../services/credential-provers/index.js";
 import { SignatureVerifier } from "../services/signature-verifier/index.js";
-import { PassportIssuer } from "../issuers/passport/index.js";
-import { ZCredIssuerController } from "../controllers/zcred-issuer/index.js";
-import { PrincipalIssuer } from "../issuers/index.js";
 import { StubKYCPassportController } from "../issuers/passport/controllers/stub-kyc.controller.js";
+import { getHttpIssuerControllerConstructorMap, getIssuerConstructorMap } from "../util/index.js";
+import { HttpIssuerControllerSupervisor } from "../issuers/http-issuer-controller-supervisor.js";
+import { IssuerSupervisor } from "../issuers/issuer-supervisor.js";
+import { HttpZcredController } from "../controllers/http-zcred-controller.js";
 
-type DI = {
+type PreDI = {
   logger: ILogger;
   config: Config;
   httpServer: HttpServer;
@@ -19,8 +20,11 @@ type DI = {
   gateBuilder: GateBuilder;
   credentialProver: CredentialProver;
   signatureVerifier: SignatureVerifier;
-  passportIssuer: PassportIssuer;
-  principalIssuer: PrincipalIssuer;
+}
+
+export type DI = PreDI & {
+  issuerSupervisor: IssuerSupervisor;
+  httpIssuerControllerSupervisor: HttpIssuerControllerSupervisor;
 };
 
 export class App {
@@ -50,7 +54,7 @@ export class App {
     const app = new App();
     app.rootContext = createInjector();
 
-    app.context = app.rootContext
+    let context: Injector<PreDI> = app.rootContext
       .provideClass("logger", Logger)
       .provideClass("config", Config)
       .provideClass("httpServer", HttpServer)
@@ -59,14 +63,29 @@ export class App {
       // For ZCred protocol
       .provideClass("credentialProver", CredentialProver)
       .provideClass("signatureVerifier", SignatureVerifier)
-      .provideClass("passportIssuer", PassportIssuer)
-      .provideClass("principalIssuer", PrincipalIssuer);
+
+    const issuerConstructorMap = await getIssuerConstructorMap();
+    for (const [token, constructor] of issuerConstructorMap.entries()) {
+      // @ts-expect-error
+      context = context.provideClass(token, constructor);
+    }
+
+    const httpIssuerControllerConstructorMap = await getHttpIssuerControllerConstructorMap();
+    for (const [token, constructor] of httpIssuerControllerConstructorMap.entries()) {
+      // @ts-expect-error
+      context = context.provideClass(token, constructor);
+    }
+    app.context = context
+      .provideClass("issuerSupervisor", IssuerSupervisor)
+      .provideClass("httpIssuerControllerSupervisor", HttpIssuerControllerSupervisor);
+
 
     const httpServer = app.context.resolve("httpServer");
     await httpServer.register();
 
     // ZCred controllers
-    ZCredIssuerController(app.context);
+    // ZCredIssuerController(app.context);
+    HttpZcredController(app.context);
     StubKYCPassportController(app.context);
 
     const didService = app.context.resolve("didService");
