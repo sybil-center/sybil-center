@@ -35,9 +35,9 @@ let minaPoseidonPastaProver: ICredentialSignProver;
 let didService: DIDService;
 let passportKYC: IPassportKYCService;
 
-const test = suite("passport credential issuer tests");
+const Test = suite("passport credential issuer tests");
 
-test.before(async () => {
+Test.before(async () => {
   configDotEnv({ path: testUtil.envPath, override: true });
   application = await App.init();
   fastify = application.context.resolve("httpServer").fastify;
@@ -51,7 +51,7 @@ test.before(async () => {
   didService = application.context.resolve("didService");
 });
 
-test.after(async () => {
+Test.after(async () => {
   await application.close();
 });
 
@@ -164,7 +164,7 @@ async function beforeIssue({
 }
 
 
-test("issue passport credential with mina public key", async () => {
+Test("issue passport credential with mina public key", async () => {
   const { sessionId, message } = await beforeIssue({
     subject: {
       id: { type: "mina:publickey", key: testUtil.mina.publicKey }
@@ -210,7 +210,7 @@ test("issue passport credential with mina public key", async () => {
   );
 });
 
-test("issue passport credential with ethereum public key", async () => {
+Test("issue passport credential with ethereum public key", async () => {
   const { sessionId, message } = await beforeIssue({
     subject: {
       id: zcredjs.normalizeId({
@@ -259,7 +259,7 @@ test("issue passport credential with ethereum public key", async () => {
   );
 });
 
-test("invalid mina signature", async () => {
+Test("invalid mina signature", async () => {
   const { sessionId } = await beforeIssue({
     subject: {
       id: zcredjs.normalizeId({
@@ -290,7 +290,7 @@ test("invalid mina signature", async () => {
   a.is(body.code, IEC.ISSUE_BAD_SIGNATURE, `Issuer exception code not matched`);
 });
 
-test("invalid ethereum signature", async () => {
+Test("invalid ethereum signature", async () => {
   const { sessionId } = await beforeIssue({
     subject: {
       id: zcredjs.normalizeId({
@@ -321,7 +321,7 @@ test("invalid ethereum signature", async () => {
   a.is(body.code, IEC.ISSUE_BAD_SIGNATURE, `Issuer exception code not matched`);
 });
 
-test("get issuer info", async () => {
+Test("get issuer info", async () => {
   const infoResp = await fastify.inject({
     method: "GET",
     url: sybil.issuerPath("passport").info
@@ -359,7 +359,7 @@ test("get issuer info", async () => {
   } as Info);
 });
 
-test("sybil id equals for same passport but different subject id", async () => {
+Test("sybil id equals for same passport but different subject id", async () => {
   const { sessionId: minaSessionId, message: minaMessage } = await beforeIssue({
     subject: {
       id: { type: "mina:publickey", key: testUtil.mina.publicKey }
@@ -421,4 +421,4 @@ test("sybil id equals for same passport but different subject id", async () => {
   );
 });
 
-test.run();
+Test.run();
