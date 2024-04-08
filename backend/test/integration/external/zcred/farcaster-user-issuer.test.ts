@@ -13,21 +13,21 @@ import { MinaPoseidonPastaVerifier } from "@zcredjs/mina";
 import * as o1js from "o1js";
 import { CredentialProver } from "../../../../src/services/credential-provers/index.js";
 
-const Test = suite("farcaster-user credential issuer tests");
+const test = suite("farcaster-user credential issuer tests");
 
 let application: App;
 let fastify: FastifyInstance;
 let farquestService: FarquestService;
 let credProver: CredentialProver;
 
-Test.before(async () => {
+test.before(async () => {
   application = await App.init();
   fastify = application.context.resolve("httpServer").fastify;
   farquestService = application.context.resolve("farquestService");
   credProver = application.context.resolve("credentialProver");
 });
 
-Test.after(async () => {
+test.after(async () => {
   await (await application).close();
 });
 
@@ -93,7 +93,7 @@ async function beforeIssue(challengeReq: StrictChallengeReq) {
   return challenge;
 }
 
-Test("Issue farcaster user credential", async () => {
+test("Issue farcaster user credential", async () => {
   const ethereumAddress = testUtil.ethereum.address;
   const ethereumPrivateKey = testUtil.ethereum.privateKey;
   const STUBS = [
@@ -137,4 +137,4 @@ Test("Issue farcaster user credential", async () => {
   STUBS.forEach((it) => it.restore());
 });
 
-Test.run();
+test.run();
