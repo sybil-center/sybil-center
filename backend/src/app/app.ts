@@ -11,6 +11,7 @@ import { getHttpIssuerControllerConstructorMap, getIssuerConstructorMap } from "
 import { HttpIssuerControllerSupervisor } from "../issuers/http-issuer-controller-supervisor.js";
 import { IssuerSupervisor } from "../issuers/issuer-supervisor.js";
 import { HttpZcredController } from "../controllers/http-zcred-controller.js";
+import { FarquestService } from "../services/farquest.service.js";
 
 type PreDI = {
   logger: ILogger;
@@ -20,6 +21,7 @@ type PreDI = {
   gateBuilder: GateBuilder;
   credentialProver: CredentialProver;
   signatureVerifier: SignatureVerifier;
+  farquestService: FarquestService;
 }
 
 export type DI = PreDI & {
@@ -60,9 +62,10 @@ export class App {
       .provideClass("httpServer", HttpServer)
       .provideClass("didService", DIDService)
       .provideClass("gateBuilder", GateBuilder)
+      .provideClass("farquestService", FarquestService)
       // For ZCred protocol
       .provideClass("credentialProver", CredentialProver)
-      .provideClass("signatureVerifier", SignatureVerifier)
+      .provideClass("signatureVerifier", SignatureVerifier);
 
     const issuerConstructorMap = await getIssuerConstructorMap();
     for (const [token, constructor] of issuerConstructorMap.entries()) {

@@ -7,7 +7,6 @@ import { Config } from "../../../../src/backbone/config.js";
 import {
   Challenge,
   ChallengeReq,
-  HttpCredential,
   Identifier,
   IEC,
   Info,
@@ -22,16 +21,12 @@ import * as a from "uvu/assert";
 import sinon from "sinon";
 import { ICredentialSignProver } from "../../../../src/services/credential-provers/type.js";
 import { DIDService } from "../../../../src/services/did.service.js";
-import sortKeys from "sort-keys";
-import { toJWTPayload } from "../../../../src/util/jwt.util.js";
 import { sybil } from "../../../../src/services/sybiljs/index.js";
 import { IPassportKYCService } from "../../../../src/issuers/passport/types.js";
 import { PassportCredential } from "../../../../src/services/sybiljs/passport/types.js";
 import { PassportIssuer } from "../../../../src/issuers/passport/issuer.js";
 
-const test = suite("INTEGRATION API: ZCred passport issuer");
-
-let app: App;
+let application: App;
 let fastify: FastifyInstance;
 let config: Config;
 let passportIssuer: PassportIssuer;
@@ -40,18 +35,24 @@ let minaPoseidonPastaProver: ICredentialSignProver;
 let didService: DIDService;
 let passportKYC: IPassportKYCService;
 
+const test = suite("passport credential issuer tests");
+
 test.before(async () => {
   configDotEnv({ path: testUtil.envPath, override: true });
-  app = await App.init();
-  fastify = app.context.resolve("httpServer").fastify;
-  config = app.context.resolve("config");
+  application = await App.init();
+  fastify = application.context.resolve("httpServer").fastify;
+  config = application.context.resolve("config");
   // @ts-expect-error
-  passportIssuer = app.context.resolve("passportIssuer");
+  passportIssuer = application.context.resolve("passportIssuer");
   passportKYC = passportIssuer["passportKYC"];
   sessionCache = passportIssuer["sessionCache"];
-  const credentialProver = app.context.resolve("credentialProver");
+  const credentialProver = application.context.resolve("credentialProver");
   minaPoseidonPastaProver = credentialProver["signProvers"]["mina:poseidon-pasta"];
-  didService = app.context.resolve("didService");
+  didService = application.context.resolve("didService");
+});
+
+test.after(async () => {
+  await application.close();
 });
 
 type BeforeIssueParams = {
@@ -162,18 +163,6 @@ async function beforeIssue({
   return challenge;
 }
 
-async function verifyCredJWS(cred: HttpCredential): Promise<boolean> {
-  try {
-    const credentialCopy = sortKeys(JSON.parse(JSON.stringify(cred)), { deep: true });
-    credentialCopy.protection = undefined;
-    const jwsPayload = toJWTPayload(credentialCopy);
-    const [jwsHeader, _, jwsSignature] = cred.protection.jws.split(".");
-    await didService.verifyJWS(`${jwsHeader}.${jwsPayload}.${jwsSignature}`);
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
 
 test("issue passport credential with mina public key", async () => {
   const { sessionId, message } = await beforeIssue({
@@ -216,7 +205,7 @@ test("issue passport credential with mina public key", async () => {
     `mina:poseidon-pasta signature proof is not verified`
   );
   a.ok(
-    await verifyCredJWS(credential),
+    await testUtil.verifyCredJWS(credential),
     `http zk-credential jws is not verified`
   );
 });
@@ -265,7 +254,7 @@ test("issue passport credential with ethereum public key", async () => {
     `mina:poseidon-pasta signature proof is not verified`
   );
   a.ok(
-    await verifyCredJWS(credential),
+    await testUtil.verifyCredJWS(credential),
     `http zk-credential jws is not verified`
   );
 });
@@ -430,10 +419,6 @@ test("sybil id equals for same passport but different subject id", async () => {
     minaCredential.attributes.document.sybilId,
     `passport sybil ids is not matched`
   );
-});
-
-test.after(async () => {
-  await app.close();
 });
 
 test.run();

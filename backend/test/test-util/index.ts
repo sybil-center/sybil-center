@@ -2,6 +2,7 @@ import { bitcoinTestUtil } from "./chain/bitcoin.js";
 import { celoTestUtil, ethereumTestUtil, polygonTestUtil } from "./chain/ethereum.js";
 import { minaTestUtil } from "./chain/mina.js";
 import { solanaTestUtil } from "./chain/solana.js";
+import { verifyCredJWS } from "./zcred/index.js";
 
 export const testUtil = {
   envPath: new URL(`../env-config/test.env`, import.meta.url),
@@ -11,5 +12,6 @@ export const testUtil = {
   celo: celoTestUtil,
   polygon: polygonTestUtil,
   mina: minaTestUtil,
-  solana: solanaTestUtil
+  solana: solanaTestUtil,
+  verifyCredJWS: verifyCredJWS
 };

@@ -69,6 +69,9 @@ export class Config {
   readonly shuftiproSecretKey: string;
   readonly shuftiproPassportTamplate: string;
 
+  /** Farquest (API provider for Farcaster) API KEY */
+  readonly farquestApiKey: string;
+
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -115,6 +118,8 @@ export class Config {
     this.shuftiproClientId = getStrOrThrow("SHUFTIPRO_CLIENTID");
     this.shuftiproSecretKey = getStrOrThrow("SHUFTIPRO_SECRETKEY");
     this.shuftiproPassportTamplate = getStrOrThrow("SHUFTIPRO_PASSPORT_TAMPLATE");
+
+    this.farquestApiKey = getStrOrThrow("FAR_QUEST_API_KEY");
   }
 }
 
