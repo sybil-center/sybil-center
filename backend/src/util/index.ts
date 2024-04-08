@@ -51,7 +51,8 @@ export async function getIssuerConstructorMap(): Promise<Map<string, { new(...ar
 }
 
 export function toIssuerToken(issuerId: string): string {
-  return `${issuerId}Issuer`;
+  const camelCase = issuerId.replace(/-./g, x=>x[1]!.toUpperCase())
+  return `${camelCase}Issuer`;
 }
 
 export async function getHttpIssuerControllerConstructorMap(): Promise<Map<string, {
@@ -85,5 +86,6 @@ export async function getHttpIssuerControllerConstructorMap(): Promise<Map<strin
 }
 
 export function toHttpIssuerControllerToken(id: string): string {
-  return `${id}HttpIssuerController`;
+  const camelCase = id.replace(/-./g, x=>x[1]!.toUpperCase())
+  return `${camelCase}HttpIssuerController`;
 }

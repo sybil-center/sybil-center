@@ -2,7 +2,6 @@ import { suite } from "uvu";
 import * as a from "uvu/assert";
 import { toCredentialType, urlCredentialType } from "@sybil-center/sdk/util";
 
-
 const test = suite("UNIT: VC Type test");
 
 test("should convert url vc type to VCType enum", async () => {

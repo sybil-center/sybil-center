@@ -5,7 +5,7 @@ import { ClientErr } from "../../backbone/errors.js";
 import { ZcredEthSignatureVerifier } from "./zcred-eth-verifier.js";
 
 type VerifyEntry = SignEntry & {
-  options: SignOptions
+  options?: SignOptions
 };
 
 export class SignatureVerifier {

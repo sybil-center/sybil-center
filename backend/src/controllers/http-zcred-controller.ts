@@ -7,10 +7,11 @@ import {
   type HttpCredential,
   IEC,
   isCanIssueReq,
-  isChallengeReq,
   isIssueReq,
+  isStrictChallengeReq,
   type IssueReq,
-  isZkCredential
+  isZkCredential,
+  zcredjs
 } from "@zcredjs/core";
 import { IssuerException } from "../backbone/errors.js";
 import { FastifyRequest } from "fastify";
@@ -41,11 +42,12 @@ export function HttpZcredController(injector: Injector<Dependencies>) {
 
     fastify.post(`/issuers/${id}/challenge`, async (req: FastifyRequest<{ Body: ChallengeReq }>) => {
       const body = req.body;
-      if (!isChallengeReq(body)) throw new IssuerException({
+      if (!isStrictChallengeReq(body)) throw new IssuerException({
         code: IEC.CHALLENGE_BAD_REQ,
         msg: `Bad "challenge" request, body: ${JSON.stringify(body)}`,
         desc: `Bad "challenge" req for issuer with id: ${id}, body: ${JSON.stringify(body)}`
       });
+      req.body.subject.id = zcredjs.normalizeId(body.subject.id);
       return await controllerSupervisor.getController(id).onGetChallenge(req);
     });
 
