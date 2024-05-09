@@ -12,6 +12,7 @@ import { EthSignature } from "@zcredjs/ethereum";
 import { MinaPoseidonPastaVerifier } from "@zcredjs/mina";
 import * as o1js from "o1js";
 import { CredentialProver } from "../../../../src/services/credential-provers/index.js";
+import { configDotEnv } from "../../../../src/util/dotenv.util.js";
 
 const test = suite("farcaster-user credential issuer tests");
 
@@ -21,6 +22,7 @@ let farquestService: FarquestService;
 let credProver: CredentialProver;
 
 test.before(async () => {
+  configDotEnv({ path: testUtil.envPath, override: true });
   application = await App.init();
   fastify = application.context.resolve("httpServer").fastify;
   farquestService = application.context.resolve("farquestService");
