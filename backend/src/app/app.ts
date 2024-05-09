@@ -53,55 +53,67 @@ export class App {
   }
 
   static async init(): Promise<App> {
-    const app = new App();
-    app.rootContext = createInjector();
+    try {
+      const app = new App();
+      app.rootContext = createInjector();
 
-    let context: Injector<PreDI> = app.rootContext
-      .provideClass("logger", Logger)
-      .provideClass("config", Config)
-      .provideClass("httpServer", HttpServer)
-      .provideClass("didService", DIDService)
-      .provideClass("gateBuilder", GateBuilder)
-      .provideClass("farquestService", FarquestService)
-      // For ZCred protocol
-      .provideClass("credentialProver", CredentialProver)
-      .provideClass("signatureVerifier", SignatureVerifier);
+      let context: Injector<PreDI> = app.rootContext
+        .provideClass("logger", Logger)
+        .provideClass("config", Config)
+        .provideClass("httpServer", HttpServer)
+        .provideClass("didService", DIDService)
+        .provideClass("gateBuilder", GateBuilder)
+        .provideClass("farquestService", FarquestService)
+        // For ZCred protocol
+        .provideClass("credentialProver", CredentialProver)
+        .provideClass("signatureVerifier", SignatureVerifier);
 
-    const issuerConstructorMap = await getIssuerConstructorMap();
-    for (const [token, constructor] of issuerConstructorMap.entries()) {
-      // @ts-expect-error
-      context = context.provideClass(token, constructor);
+      const issuerConstructorMap = await getIssuerConstructorMap();
+      for (const [token, constructor] of issuerConstructorMap.entries()) {
+        // @ts-expect-error
+        context = context.provideClass(token, constructor);
+      }
+
+      const httpIssuerControllerConstructorMap = await getHttpIssuerControllerConstructorMap();
+      for (const [token, constructor] of httpIssuerControllerConstructorMap.entries()) {
+        // @ts-expect-error
+        context = context.provideClass(token, constructor);
+      }
+      app.context = context
+        .provideClass("issuerSupervisor", IssuerSupervisor)
+        .provideClass("httpIssuerControllerSupervisor", HttpIssuerControllerSupervisor);
+
+
+      const httpServer = app.context.resolve("httpServer");
+      await httpServer.register();
+
+      // ZCred controllers
+      // ZCredIssuerController(app.context);
+      HttpZcredController(app.context);
+      StubKYCPassportController(app.context);
+
+      const didService = app.context.resolve("didService");
+      await didService.init();
+      return app;
+    } catch (e: any) {
+      console.log(`Init issuer app error. Message: ${e.message}`);
+      throw e;
     }
 
-    const httpIssuerControllerConstructorMap = await getHttpIssuerControllerConstructorMap();
-    for (const [token, constructor] of httpIssuerControllerConstructorMap.entries()) {
-      // @ts-expect-error
-      context = context.provideClass(token, constructor);
-    }
-    app.context = context
-      .provideClass("issuerSupervisor", IssuerSupervisor)
-      .provideClass("httpIssuerControllerSupervisor", HttpIssuerControllerSupervisor);
-
-
-    const httpServer = app.context.resolve("httpServer");
-    await httpServer.register();
-
-    // ZCred controllers
-    // ZCredIssuerController(app.context);
-    HttpZcredController(app.context);
-    StubKYCPassportController(app.context);
-
-    const didService = app.context.resolve("didService");
-    await didService.init();
-    return app;
   }
 
   async run() {
-    if (!this.context) throw new Error("Use App.init method before");
-    const httpServer = this.context.resolve("httpServer");
-    await httpServer.listen();
-    const didService = this.context.resolve("didService");
-    this.context.resolve("logger").info(`Using DID ${didService.id}`);
+    try {
+      if (!this.context) throw new Error("Use App.init method before");
+      const httpServer = this.context.resolve("httpServer");
+      await httpServer.listen();
+      const didService = this.context.resolve("didService");
+      this.context.resolve("logger").info(`Using DID ${didService.id}`);
+    } catch (e: any) {
+      console.log(`Run issuer app error. Message: ${e.message}`);
+      throw e;
+    }
+
   }
 
   async close() {

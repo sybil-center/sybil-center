@@ -143,12 +143,6 @@ function getNumOrThrow(envVar: string): number {
   return Number(getStrOrThrow(envVar));
 }
 
-// @ts-expect-error
-function getNumOrElse(envVar: string, defaultNum: number): number {
-  const num = process.env[envVar];
-  return num ? Number(num) : defaultNum;
-}
-
 function getBoolOrElse(envVar: string, defaultBool: boolean): boolean {
   const variable = process.env[envVar];
   if (!variable) return defaultBool;
