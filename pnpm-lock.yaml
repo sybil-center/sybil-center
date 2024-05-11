@@ -86,8 +86,8 @@ importers:
         specifier: 0.15.0
         version: 0.15.0
       o1js-trgraph:
-        specifier: 2.1.0
-        version: 2.1.0
+        specifier: 2.2.0
+        version: 2.2.0
       pino:
         specifier: ^8.10.0
         version: 8.17.1
@@ -98,8 +98,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       trgraph:
-        specifier: 1.0.2
-        version: 1.0.2
+        specifier: 1.1.2
+        version: 1.1.2
       twitter-api-v2:
         specifier: ^1.14.0
         version: 1.15.2
@@ -11573,7 +11573,13 @@ packages:
   /o1js-trgraph@2.1.0:
     resolution: {integrity: sha512-Jbz/vADrcTmb1ntPb/4AdwbZcCqvBbhDNR/kluwR7Qjl3WruYi9B28g1ogI66pHurPafzltPB27YG2daxme7ZA==}
     dependencies:
-      trgraph: 1.0.2
+      trgraph: 1.1.2
+    dev: false
+
+  /o1js-trgraph@2.2.0:
+    resolution: {integrity: sha512-FhAZ4E+Xtb+RGljtBKjwcxqYGFfI+m3Ku4tnEHHGeEc4drrEhWzuRtcIrxCsdyE/hieqrRLjNGpaDJASiFcNpw==}
+    dependencies:
+      trgraph: 1.1.2
     dev: false
 
   /o1js@0.15.0:
@@ -14721,8 +14727,8 @@ packages:
       punycode: 2.3.1
     dev: false
 
-  /trgraph@1.0.2:
-    resolution: {integrity: sha512-o+Wgkr84lQlff/XAoWUXzeKf0xgq4SSz/M0tAWpf3zmV3f/+NOvjsDGwcNKTfVyHG8elp1X2XvZ4VRN6ZAgCTw==}
+  /trgraph@1.1.2:
+    resolution: {integrity: sha512-3+VD07lsKwSRmleC6nWg7Dg6qsJU1ObDl1nWBjtVpELa8M7ycuOcw3h9tFDXxaZlTEYoHGgooD2+0JEm412JjQ==}
     dependencies:
       ieee754: 1.2.1
       sort-keys: 5.0.0
