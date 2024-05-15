@@ -12,6 +12,7 @@ import { HttpIssuerControllerSupervisor } from "../issuers/http-issuer-controlle
 import { IssuerSupervisor } from "../issuers/issuer-supervisor.js";
 import { HttpZcredController } from "../controllers/http-zcred-controller.js";
 import { FarquestService } from "../services/farquest.service.js";
+import { NeuroVisionKYCPassportController } from "../issuers/passport/controllers/neuro-vision-kyc.controller.js";
 
 type PreDI = {
   logger: ILogger;
@@ -91,6 +92,7 @@ export class App {
       // ZCredIssuerController(app.context);
       HttpZcredController(app.context);
       StubKYCPassportController(app.context);
+      NeuroVisionKYCPassportController(app.context);
 
       const didService = app.context.resolve("didService");
       await didService.init();
