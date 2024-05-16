@@ -23,13 +23,13 @@ export const SIGNATURE_PROOF_SCHEMA_MAP: Record<CredentialType, Record<SignProof
       },
       attributesSchema: {
         type: ["ascii-bytes", "bytes-uint128", "uint128-mina:field"],
-        issuanceDate: ["isodate-unixtime", "unixtime-uint64", "uint64-mina:field"],
-        validFrom: ["isodate-unixtime", "unixtime-uint64", "uint64-mina:field"],
-        validUntil: ["isodate-unixtime", "unixtime-uint64", "uint64-mina:field"],
+        issuanceDate: ["isodate-bytesdate", "bytesdate-unixtime", "unixtime-uint64", "uint64-mina:field"],
+        validFrom: ["isodate-bytesdate", "bytesdate-unixtime", "unixtime-uint64", "uint64-mina:field"],
+        validUntil: ["isodate-bytesdate", "bytesdate-unixtime", "unixtime-uint64", "uint64-mina:field"],
         subject: {
           firstName: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
           lastName: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
-          birthDate: ["isodate-unixtime19", "unixtime19-uint64", "uint64-mina:field"],
+          birthDate: ["isodate-bytesdate", "bytesdate-unixtime19", "unixtime19-uint64", "uint64-mina:field"],
           gender: ["ascii-bytes", "bytes-uint64", "uint64-mina:field"],
         },
         countryCode: [
