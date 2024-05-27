@@ -13,17 +13,18 @@ type Dependencies = {
 const tokens: (keyof Dependencies)[] = [
   "httpServer",
   "issuerSupervisor",
-  "logger"
+  "logger",
 ];
 
 export function NeuroVisionKYCPassportController(injector: Injector<Dependencies>) {
   const {
     httpServer: { fastify },
-    logger
+    logger,
+    issuerSupervisor
   } = contextUtil.from(tokens, injector);
 
 
-  fastify.post("/issuers/passport/kyc/neuro-vision", {
+  fastify.post("/issuers/passport/kyc/neuro-vision/webhook", {
     config: {
       rawBody: true
     }
@@ -31,5 +32,10 @@ export function NeuroVisionKYCPassportController(injector: Injector<Dependencies
     logger.info(req);
     logger.info(req.rawBody);
     logger.info(req.body);
+    return await issuerSupervisor.getIssuer("passport").handleWebhook!(req)
   });
+
+  fastify.get("/issuers/passport/kyc/neuro-vision/start", async (_,resp) => {
+    await resp.sendFile("kyc/neuro-vision.html")
+  })
 }
