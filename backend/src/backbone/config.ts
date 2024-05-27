@@ -72,6 +72,9 @@ export class Config {
   /** Farquest (API provider for Farcaster) API KEY */
   readonly farquestApiKey: string;
 
+  readonly neuroVisionSchemaId: string;
+  readonly neuroVisionSecretKey: string;
+
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -120,6 +123,10 @@ export class Config {
     this.shuftiproPassportTamplate = getStrOrThrow("SHUFTIPRO_PASSPORT_TAMPLATE");
 
     this.farquestApiKey = getStrOrThrow("FAR_QUEST_API_KEY");
+
+    this.neuroVisionSchemaId = getStrOrThrow("NEURO_VISION_SCHEMA_ID");
+    this.neuroVisionSecretKey = getStrOrThrow("NEURO_VISION_SECRET_KEY");
+
   }
 }
 

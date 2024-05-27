@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sybil-Center KYC</title>
+</head>
+<body>
+<!-- Подключение скрипта -->
+<script src="https://kyc.neuro-vision.ru/lib/widget-lib.js"></script>
+
+<!-- Пример запуска виджета-->
+<script>
+
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const schemaId = urlParams.get("schemaId");
+  const clientKey = urlParams.get("clientKey");
+  console.log(`schemaId`, schemaId);
+  console.log(`clientKey`, clientKey);
+
+  const openWidget = () => {
+    window.KYCWidget.setupKYC({
+      schemaId: schemaId,
+      clientKey: clientKey
+    });
+  };
+
+  openWidget();
+
+</script>
+</body>
+</html>

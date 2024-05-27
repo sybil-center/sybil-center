@@ -31,10 +31,10 @@ import { DIDService } from "../../services/did.service.js";
 import { sybil } from "../../services/sybiljs/index.js";
 import { CredentialType } from "../../services/sybiljs/types/index.js";
 import type { IPassportKYCService, WebhookResult } from "./types.js";
-import { StubPassportKYC } from "./kyc/stub-passport-kyc.js";
 import { PassportAttributes, PassportCredential } from "../../services/sybiljs/passport/types.js";
 import { IIssuer } from "../../types/issuer.js";
 import { ILogger } from "../../backbone/logger.js";
+import { NeuroVisionPassportKYC } from "./kyc/neuro-vision-passport-kyc.js";
 
 type Session = {
   reference: string;
@@ -124,7 +124,7 @@ export class Issuer
   ) {
     this.secret = config.secret;
     this.sessionCache = new TimedCache<string, Session>(config.kycSessionTtl);
-    this.passportKYC = new StubPassportKYC(config);
+    this.passportKYC = new NeuroVisionPassportKYC(config);
     logger.info(`Issuer "passport" initialized`);
   }
 
