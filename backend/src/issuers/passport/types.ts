@@ -23,6 +23,7 @@ export type WebhookResult = {
       birthDate: string;
       gender: Gender
     }
+    /** 3 Alphabet ISO 3166 country code */
     countryCode: string;
     document: { id: string }
   }

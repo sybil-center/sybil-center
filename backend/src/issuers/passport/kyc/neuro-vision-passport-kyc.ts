@@ -1,14 +1,87 @@
 import { IPassportKYCService, ProcedureArgs, ProcedureResp, WebhookResult } from "../types.js";
 import { FastifyRequest } from "fastify";
-import { Config } from "../../../backbone/config.js";
 import crypto from "node:crypto";
+import { ClientErr } from "../../../backbone/errors.js";
+import { Gender } from "../../../services/sybiljs/passport/types.js";
+
+
+type WebhookBody = {
+  clientId: string;
+  createdAt: string;
+  results: {
+    status: string;
+    type: string;
+    spent: number;
+    errors: [];
+    tries: number;
+    docName: string;
+    checks: [];
+    ocr: {
+      status: string;
+      fields: [
+        {
+          title: string;
+          value: string;
+        }
+      ]
+    }
+  }[];
+  sessionId: string;
+  spent: number;
+  status: string;
+  clientKey: string;
+  schemaId: string;
+}
+
+function isWebhookBody(body: unknown): body is WebhookBody {
+  return (
+    typeof body === "object" && body !== null &&
+    "clientId" in body && typeof body.clientId === "string" &&
+    "createdAt" in body && typeof body.createdAt === "string" &&
+    "results" in body && Array.isArray(body.results) &&
+    !(body.results.find((it) => !isWebhookBodyResult(it))) &&
+    "sessionId" in body && typeof body.sessionId === "string" &&
+    "spent" in body && typeof body.spent === "number" &&
+    "status" in body && typeof body.status === "string" &&
+    "clientKey" in body && typeof body.clientKey === "string" &&
+    "schemaId" in body && typeof body.schemaId === "string"
+  );
+}
+
+function isWebhookBodyResult(o: unknown): o is WebhookBody["results"][number] {
+  return (
+    typeof o === "object" && o !== null &&
+    "status" in o && typeof o.status === "string" &&
+    "type" in o && typeof o.type === "string" &&
+    "spent" in o && typeof o.spent === "number" &&
+    "errors" in o && Array.isArray(o.errors) &&
+    "tries" in o && typeof o.tries === "number" &&
+    "docName" in o && typeof o.docName === "string" &&
+    "checks" in o && Array.isArray(o.checks) &&
+    "ocr" in o && typeof o.ocr === "object" && o.ocr !== null &&
+    "status" in o.ocr && typeof o.ocr.status === "string" &&
+    "fields" in o.ocr && Array.isArray(o.ocr.fields) &&
+    !(o.ocr.fields.find(it => !isNVField(it)))
+  );
+}
+
+function isNVField(o: unknown): o is WebhookBody["results"][number]["ocr"]["fields"][number] {
+  return (
+    typeof o === "object" && o !== null &&
+    "title" in o && typeof o.title === "string" &&
+    "value" in o && typeof o.value === "string"
+  );
+}
 
 export class NeuroVisionPassportKYC implements IPassportKYCService {
 
   constructor(
-    private readonly config: Config
-  ) {
-  }
+    private readonly config: {
+      neuroVisionSecretKey: string,
+      neuroVisionSchemaId: string,
+      pathToExposeDomain: URL
+    }
+  ) {}
 
   createReference(clientKey: string): string {
     console.log(`CLIENT KEY:`, clientKey);
@@ -42,8 +115,150 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
     };
   }
 
-  // @ts-expect-error
-  handleWebhook(req: FastifyRequest): Promise<WebhookResult> {
-    console.log(req.rawBody);
+
+  async handleWebhook(req: FastifyRequest): Promise<WebhookResult> {
+    const body = req.body;
+    if (!isWebhookBody(body)) throw new ClientErr({
+      statusCode: 400,
+      message: `Neuro-vision webhook body is not correct. Body: ${JSON.stringify(body, null, 2)}`,
+      place: `${this.constructor.name}.handleWebhook`
+    });
+    const { result, fields } = extractPassportData(body);
+    const verified = body.status === "success"
+      && result.status === "success"
+      && result.ocr.status === "success";
+    const { passport } = toPassportFormat(fields);
+    return {
+      verified,
+      reference: body.clientKey,
+      passport
+    };
+
+  };
+
+}
+
+type RawFields = {
+  validUntil: string;
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  gender: string;
+  docId: string;
+  countryCode: string;
+}
+
+function isRawFields(o: unknown): o is RawFields {
+  return (
+    typeof o === "object" && o !== null &&
+    "validUntil" in o && typeof o.validUntil === "string" &&
+    "firstName" in o && typeof o.firstName === "string" &&
+    "lastName" in o && typeof o.lastName === "string" &&
+    "birthDate" in o && typeof o.birthDate === "string" &&
+    "gender" in o && typeof o.gender === "string" &&
+    "docId" in o && typeof o.docId === "string" &&
+    "countryCode" in o && typeof o.countryCode === "string"
+  );
+}
+
+const FIELD_TITLES = [
+  "IssuingStateCode",
+  "DocumentNumber",
+  "DateOfBirth",
+  "Sex",
+  "DateOfExpiry",
+  "Surname",
+  "GivenNames"
+] as const;
+
+type FieldTitle = typeof FIELD_TITLES[number];
+
+function extractPassportData(body: WebhookBody): {
+  result: WebhookBody["results"][number];
+  fields: RawFields
+} {
+  const fields: Record<string, string> = {};
+  let result: WebhookBody["results"][number] | null = null;
+  const fieldTitleMap: Record<FieldTitle, (value: string) => void> = {
+    "IssuingStateCode": (value) => fields["countryCode"] = value,
+    "DocumentNumber": (value) => fields["docId"] = value,
+    "DateOfBirth": (value) => fields["birthDate"] = value,
+    "Sex": (value) => fields["gender"] = value,
+    "DateOfExpiry": (value) => fields["validUntil"] = value,
+    "Surname": (value) => fields["lastName"] = value,
+    "GivenNames": (value) => fields["firstName"] = value
+  };
+  for (const r of body.results) {
+    const fields = r.ocr.fields;
+    if (containsRequiredFields(fields)) {
+      result = r;
+      for (const field of fields) {
+        // @ts-expect-error
+        const putInField = fieldTitleMap[field.title];
+        if (putInField) putInField(field.value);
+      }
+    }
+  }
+  if (result && isRawFields(fields)) return { result, fields };
+  throw new ClientErr({
+    message: `Parsing webhook body result to extract passport data`,
+    statusCode: 400,
+    place: `file: ${new URL("./neuro-vision-passport-kyc.ts", import.meta.url).href}, funciton: extractPassportData`
+  });
+}
+
+function containsRequiredFields(fields: WebhookBody["results"][number]["ocr"]["fields"]): boolean {
+  let matchCount = 0;
+  for (const field of fields) {
+    // @ts-expect-error
+    if (FIELD_TITLES.includes(field.title)) matchCount++;
+  }
+  return matchCount === FIELD_TITLES.length;
+}
+
+const sexMap = new Map<string, Gender>([
+  ["M", "male"],
+  ["F", "female"],
+  ["X", "other"]
+]);
+
+function toPassportFormat(fields: RawFields): Omit<WebhookResult, "verified" | "reference"> {
+  const now = new Date();
+  const currentYear = Number(now.getUTCFullYear().toString().slice(2, 4));
+  const currentCentury = Number(now.getUTCFullYear().toString().slice(0, 2)) + 1;
+  const validFrom = new Date().toISOString();
+  const vuYear = Number(`20${fields.validUntil.slice(0, 2)}`);
+  const vuMonth = Number(fields.validUntil.slice(2, 4));
+  const vuDay = Number(fields.validUntil.slice(4, 6));
+  const firstName = fields.firstName;
+  const lastName = fields.lastName;
+
+  const bdYaer = Number(Number(fields.birthDate.slice(0, 2)) > currentYear
+    ? `${(currentCentury - 2).toString()}${fields.birthDate.slice(0, 2)}`
+    : `${(currentCentury - 1).toString()}${fields.birthDate.slice(0, 2)}`
+  ).toString();
+  const bdMonth = Number(fields.birthDate.slice(2, 4));
+  const bdDay = Number(fields.birthDate.slice(4, 6));
+
+  const gender = sexMap.get(fields.gender);
+  if (!gender) throw new ClientErr({
+    message: `Unsupported gender`,
+    place: `Neuro-Vision KYC transformRawFields`,
+    description: `Unsupported gender: ${fields.gender}`
+  });
+  const countryCode = fields.countryCode;
+  return {
+    passport: {
+      validFrom,
+      validUntil: `${vuYear}-${vuMonth < 10 ? `0` + vuMonth : vuMonth}-${vuDay < 10 ? `0` + vuDay : vuDay}T00:00:00.000Z`,
+      subject: {
+        firstName,
+        lastName,
+        birthDate: `${bdYaer}-${bdMonth < 10 ? `0` + bdMonth : bdMonth}-${bdDay < 10 ? `0` + bdDay : bdDay}T00:00:00.000Z`,
+        gender
+      },
+      countryCode,
+      document: { id: fields.docId }
+    }
   };
 }
