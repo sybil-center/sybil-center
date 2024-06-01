@@ -40,7 +40,46 @@ export function HttpZcredController(injector: Injector<Dependencies>) {
       return await controllerSupervisor.getController(id).onGetInfo();
     });
 
-    fastify.post(`/issuers/${id}/challenge`, async (req: FastifyRequest<{ Body: ChallengeReq }>) => {
+    fastify.post(`/issuers/${id}/challenge`, {
+      schema: {
+        body: {
+          type: "object",
+          required: ["subject"],
+          properties: {
+            subject: {
+              type: "object",
+              required: ["id"],
+              properties: {
+                id: {
+                  type: "object",
+                  required: ["type", "key"],
+                  properties: {
+                    type: { type: "string" },
+                    key: { type: "string" }
+                  }
+                }
+              }
+            },
+            validFrom: {
+              type: "string",
+              format: "date-time",
+              nullable: true
+            },
+            validUntil: {
+              type: "string",
+              format: "date-time",
+              nullable: true
+            },
+            options: {
+              type: "object",
+              properties: {
+                chainId: { type: "string" }
+              }
+            }
+          }
+        }
+      }
+    }, async (req: FastifyRequest<{ Body: ChallengeReq }>) => {
       const body = req.body;
       if (!isStrictChallengeReq(body)) throw new IssuerException({
         code: IEC.CHALLENGE_BAD_REQ,

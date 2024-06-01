@@ -60,6 +60,13 @@ function isStrictChallengeReq(req: ChallengeReq): req is StrictChallengeReq {
       desc: `"passport" issuer. On get challenge, invalid subject id type, id type: ${req.subject.id.type}`
     });
   }
+  if (!("validUntil" in req) || (req.validUntil === null) || (typeof req.validUntil !== "string")) {
+    throw new IssuerException({
+      code: IEC.CHALLENGE_BAD_REQ,
+      msg: `Bad challenge request. "validUntil" MUST be string format ISO date-time`,
+      desc: `"passport" issuer. On get challenge, no "validUntil" parameter`
+    });
+  }
   if (!("options" in req) || req.options === null || typeof req.options !== "object") {
     throw new IssuerException({
       code: IEC.CHALLENGE_BAD_REQ,
@@ -356,7 +363,7 @@ export class Issuer
   }
 }
 
-function chooseValidUntil(chosenValidUntil: string | undefined, docValidUntil: string) {
+function chooseValidUntil(chosenValidUntil: string, docValidUntil: string) {
   if (!chosenValidUntil) return docValidUntil;
   const docExpDate = new Date(docValidUntil).getTime();
   const chosenExpDate = new Date(chosenValidUntil).getTime();
