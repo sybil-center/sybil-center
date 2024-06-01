@@ -386,7 +386,7 @@ function toAlpha3CC(alpha2: string): string {
 
 function getMessage<TReq extends StrictChallengeReq = StrictChallengeReq>({
   subject,
-  validFrom,
+  validUntil,
 }: TReq): string {
   const nonce = crypto.randomUUID();
   const description = `Sign the message to get Passport Zero-Knowledge Credential`;
@@ -397,7 +397,7 @@ function getMessage<TReq extends StrictChallengeReq = StrictChallengeReq>({
     "Description:" + "\n" + description,
     "Address type:" + "\n" + addressType,
     "Address:" + "\n" + address,
-    "Expiration date:" + "\n" + validFrom,
+    "Expiration date:" + "\n" + validUntil,
     "Issuer:" + "\n" + "Sybil Center",
     "nonce:" + "\n" + nonce
   ].join("\n\n");
