@@ -1,7 +1,13 @@
 import type { HttpCredential, StrictAttributes, StrictId } from "@zcredjs/core";
 import { CredentialType } from "../types/index.js";
 
-export type Gender = "male" | "female" | "other" | "unknown"
+const GENDERS = ["male", "female", "other", "unknown"] as const;
+
+export type Gender = typeof GENDERS[number]
+
+export function isGender(gender: string) {
+  return GENDERS.includes(gender as Gender);
+}
 
 export interface PassportAttributes extends StrictAttributes {
   type: CredentialType;

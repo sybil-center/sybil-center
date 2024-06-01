@@ -1,7 +1,7 @@
 import { suite } from "uvu";
-import { NeuroVisionPassportKYC } from "../../../../../src/issuers/passport/kyc/neuro-vision-passport-kyc.js";
-import * as a from "uvu/assert";
 import { WebhookResult } from "../../../../../src/issuers/passport/types.js";
+import { NeuroVisionPassportKYC } from "../../../../../src/issuers/passport/kyc/neuro-vision-passport-kyc.js";
+import * as a from "uvu/assert"
 
 const test = suite("Neuro vision passport kyc");
 
@@ -32,7 +32,7 @@ const webhookBody = {
         "fields": [
           {
             "title": "MRZStrings",
-            "value": "P<RUSPAL<<PAVEL<<<<<<<<<<<<<<<<<<<<<<<<^1112223339RUS0771029M2908253<<<<<<<<<<<<<<04",
+            "value": "P<RUSPAL<<PAVEL<<<<<<<<<<<<<<<<<<<<<<<<<<<<<^4382475852RUS7705256M2901019<<<<<<<<<<<<<<02",
             "conf": "high",
             "isUnreadable": false,
             "isModified": false,
@@ -228,7 +228,7 @@ const webhookBody = {
   "schemaId": "11111111-2222-3333-4444-555555555555"
 };
 
-test("handleWebhook test", async () => {
+test("handleWebhook", async () => {
   const kyc = new NeuroVisionPassportKYC({
     neuroVisionSecretKey: "123",
     neuroVisionSchemaId: "456",
@@ -240,20 +240,21 @@ test("handleWebhook test", async () => {
     verified: true,
     reference: "11111111-2222-3333-4444-555555555555",
     passport: {
-      validFrom: result.passport.validFrom,
-      validUntil: `2029-08-25T00:00:00.000Z`,
+      validFrom: result!.passport!.validFrom,
+      validUntil: `2029-01-01T00:00:00.000Z`,
       subject: {
         firstName: "PAVEL",
         lastName: "PAL",
-        birthDate: "1977-10-29T00:00:00.000Z",
+        birthDate: "1977-05-25T00:00:00.000Z",
         gender: "male"
       },
       countryCode: "RUS",
       document: {
-        id: "111222333"
+        id: "438247585"
       }
     }
   } satisfies WebhookResult)
+
 });
 
 test.run();

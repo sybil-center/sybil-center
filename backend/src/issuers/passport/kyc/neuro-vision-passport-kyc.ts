@@ -1,8 +1,9 @@
-import { IPassportKYCService, ProcedureArgs, ProcedureResp, WebhookResult } from "../types.js";
+import { IPassportKYCService, ProcedureArgs, ProcedureResp, WebhookResult, WebhookResultOK } from "../types.js";
 import { FastifyRequest } from "fastify";
 import crypto from "node:crypto";
 import { ClientErr } from "../../../backbone/errors.js";
 import { Gender } from "../../../services/sybiljs/passport/types.js";
+import { parse as mrzParse } from "mrz";
 
 
 type WebhookBody = {
@@ -73,6 +74,7 @@ function isNVField(o: unknown): o is WebhookBody["results"][number]["ocr"]["fiel
   );
 }
 
+/** Only for Foreign Passports */
 export class NeuroVisionPassportKYC implements IPassportKYCService {
 
   constructor(
@@ -123,7 +125,11 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
       message: `Neuro-vision webhook body is not correct. Body: ${JSON.stringify(body, null, 2)}`,
       place: `${this.constructor.name}.handleWebhook`
     });
-    const { result, fields } = extractPassportData(body);
+    const passportData = extractPassportData(body);
+    if (!isPassportDataOK(passportData)) {
+      return { verified: false, reference: body.clientKey };
+    }
+    const { result, fields } = passportData;
     const verified = body.status === "success"
       && result.status === "success"
       && result.ocr.status === "success";
@@ -131,8 +137,8 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
     return {
       verified,
       reference: body.clientKey,
-      passport
-    };
+      passport: passport
+    } satisfies WebhookResultOK;
 
   };
 
@@ -143,86 +149,75 @@ type RawFields = {
   firstName: string;
   lastName: string;
   birthDate: string;
-  gender: string;
+  gender: "male" | "female" | "nonspecified";
   docId: string;
   countryCode: string;
 }
 
-function isRawFields(o: unknown): o is RawFields {
-  return (
-    typeof o === "object" && o !== null &&
-    "validUntil" in o && typeof o.validUntil === "string" &&
-    "firstName" in o && typeof o.firstName === "string" &&
-    "lastName" in o && typeof o.lastName === "string" &&
-    "birthDate" in o && typeof o.birthDate === "string" &&
-    "gender" in o && typeof o.gender === "string" &&
-    "docId" in o && typeof o.docId === "string" &&
-    "countryCode" in o && typeof o.countryCode === "string"
-  );
+type PassportData = {
+  result?: WebhookBody["results"][number];
+  fields?: RawFields,
+  isVerified: boolean
 }
 
-const FIELD_TITLES = [
-  "IssuingStateCode",
-  "DocumentNumber",
-  "DateOfBirth",
-  "Sex",
-  "DateOfExpiry",
-  "Surname",
-  "GivenNames"
-] as const;
+type PassportDateOK = Required<PassportData> & { isVerified: true }
 
-type FieldTitle = typeof FIELD_TITLES[number];
+function isPassportDataOK(o: PassportData): o is PassportDateOK {
+  return o.isVerified;
+}
 
-function extractPassportData(body: WebhookBody): {
-  result: WebhookBody["results"][number];
-  fields: RawFields
-} {
-  const fields: Record<string, string> = {};
-  let result: WebhookBody["results"][number] | null = null;
-  const fieldTitleMap: Record<FieldTitle, (value: string) => void> = {
-    "IssuingStateCode": (value) => fields["countryCode"] = value,
-    "DocumentNumber": (value) => fields["docId"] = value,
-    "DateOfBirth": (value) => fields["birthDate"] = value,
-    "Sex": (value) => fields["gender"] = value,
-    "DateOfExpiry": (value) => fields["validUntil"] = value,
-    "Surname": (value) => fields["lastName"] = value,
-    "GivenNames": (value) => fields["firstName"] = value
-  };
-  for (const r of body.results) {
-    const fields = r.ocr.fields;
-    if (containsRequiredFields(fields)) {
-      result = r;
-      for (const field of fields) {
-        // @ts-expect-error
-        const putInField = fieldTitleMap[field.title];
-        if (putInField) putInField(field.value);
+function extractPassportData(body: WebhookBody): PassportData {
+  for (const result of body.results) {
+    const fields = result.ocr.fields;
+    const mrzStringField = getMRZStringField(fields);
+    if (mrzStringField) {
+      const {
+        fields: {
+          firstName,
+          lastName,
+          sex, // male // female // nonspecified
+          expirationDate,
+          documentNumber,
+          issuingState,
+          birthDate
+        }
+      } = mrzParse(mrzStringField.value.split("^"));
+      if (firstName && lastName && sex && expirationDate && documentNumber && issuingState && birthDate) {
+        return {
+          isVerified: true,
+          result: result,
+          fields: {
+            firstName: firstName,
+            lastName: lastName,
+            gender: sex as "male" | "female" | "nonspecified",
+            birthDate: birthDate,
+            docId: documentNumber,
+            countryCode: issuingState,
+            validUntil: expirationDate
+          }
+        };
       }
     }
   }
-  if (result && isRawFields(fields)) return { result, fields };
-  throw new ClientErr({
-    message: `Parsing webhook body result to extract passport data`,
-    statusCode: 400,
-    place: `file: ${new URL("./neuro-vision-passport-kyc.ts", import.meta.url).href}, funciton: extractPassportData`
-  });
+  return { isVerified: false };
 }
 
-function containsRequiredFields(fields: WebhookBody["results"][number]["ocr"]["fields"]): boolean {
-  let matchCount = 0;
+function getMRZStringField(
+  fields: WebhookBody["results"][number]["ocr"]["fields"]
+): WebhookBody["results"][number]["ocr"]["fields"][number] | null {
   for (const field of fields) {
-    // @ts-expect-error
-    if (FIELD_TITLES.includes(field.title)) matchCount++;
+    if (field.title === "MRZStrings") return field;
   }
-  return matchCount === FIELD_TITLES.length;
+  return null;
 }
 
 const sexMap = new Map<string, Gender>([
-  ["M", "male"],
-  ["F", "female"],
-  ["X", "other"]
+  ["male", "male"],
+  ["female", "female"],
+  ["nonspecified", "other"]
 ]);
 
-function toPassportFormat(fields: RawFields): Omit<WebhookResult, "verified" | "reference"> {
+function toPassportFormat(fields: RawFields): Omit<WebhookResultOK, "verified" | "reference"> {
   const now = new Date();
   const currentYear = Number(now.getUTCFullYear().toString().slice(2, 4));
   const currentCentury = Number(now.getUTCFullYear().toString().slice(0, 2)) + 1;

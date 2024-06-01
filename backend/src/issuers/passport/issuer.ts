@@ -30,7 +30,7 @@ import { Schemas } from "../../services/schema-finder/index.js";
 import { DIDService } from "../../services/did.service.js";
 import { sybil } from "../../services/sybiljs/index.js";
 import { CredentialType } from "../../services/sybiljs/types/index.js";
-import type { IPassportKYCService, WebhookResult } from "./types.js";
+import { IPassportKYCService, isWebhookResultOK, WebhookResult, WebhookResultOK } from "./types.js";
 import { PassportAttributes, PassportCredential } from "../../services/sybiljs/passport/types.js";
 import { IIssuer } from "../../types/issuer.js";
 import { ILogger } from "../../backbone/logger.js";
@@ -108,6 +108,7 @@ const ATTRIBUTES_DEF = {
 
 export type PassportIssuer = Issuer;
 
+/** Only foreign passports */
 export class Issuer
   implements IIssuer<PassportCredential> {
 
@@ -201,8 +202,15 @@ export class Issuer
     if (!fountSession) {
       throw new ClientErr(`No session with id ${sessionId}`);
     }
-    if (!fountSession.webhookResp) return { canIssue: false };
-    this.checkWebhookResp(fountSession.webhookResp);
+    const webhookResp = fountSession.webhookResp;
+    if (!webhookResp) return { canIssue: false };
+    if (!isWebhookResultOK(webhookResp) || !webhookResp.verified) {
+      this.sessionCache.delete(this.toSessionId(webhookResp.reference));
+      throw new IssuerException({
+        code: IEC.ISSUE_DENIED,
+        msg: "Your passport is not verified",
+      });
+    }
     return { canIssue: true };
   };
 
@@ -224,7 +232,13 @@ export class Issuer
         msg: `Verification process has not been completed`
       });
     }
-    this.checkWebhookResp(webhookResp);
+    if (!isWebhookResultOK(webhookResp) || !webhookResp.verified) {
+      this.sessionCache.delete(this.toSessionId(webhookResp.reference));
+      throw new IssuerException({
+        code: IEC.ISSUE_DENIED,
+        msg: "Your passport is not verified",
+      });
+    }
     const verified = await this.verifySignature(signature, session);
     if (!verified) {
       throw new IssuerException({
@@ -292,7 +306,7 @@ export class Issuer
   }
 
   private toAttributes(
-    webhookResp: WebhookResult,
+    webhookResp: WebhookResultOK,
     session: Session
   ): PassportAttributes {
     const { validUntil, subject: { id } } = session.challengeReq;
@@ -318,7 +332,7 @@ export class Issuer
     };
   }
 
-  private getSybilId(passport: WebhookResult["passport"]) {
+  private getSybilId(passport: WebhookResultOK["passport"]) {
     const birthDate = new Date(passport.subject.birthDate);
     const bdYear = String(birthDate.getUTCFullYear());
     const month = birthDate.getUTCMonth().toString();
@@ -347,13 +361,6 @@ export class Issuer
       message: message,
       options: options
     });
-  }
-
-  private checkWebhookResp(webhookResp: WebhookResult) {
-    if (!webhookResp.verified) {
-      this.sessionCache.delete(this.toSessionId(webhookResp.reference));
-      throw new ClientErr(`Verification is not passed`);
-    }
   }
 
   private toSessionId(reference: string) {
