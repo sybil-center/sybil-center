@@ -356,8 +356,8 @@ export class Issuer
   }
 }
 
-function chooseValidUntil(chosenValidUntil: string, docValidUntil: string | null) {
-  if (!docValidUntil) return chosenValidUntil;
+function chooseValidUntil(chosenValidUntil: string | undefined, docValidUntil: string) {
+  if (!chosenValidUntil) return docValidUntil;
   const docExpDate = new Date(docValidUntil).getTime();
   const chosenExpDate = new Date(chosenValidUntil).getTime();
   if (chosenExpDate > docExpDate) return docValidUntil;

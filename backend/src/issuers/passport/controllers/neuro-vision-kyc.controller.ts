@@ -32,10 +32,11 @@ export function NeuroVisionKYCPassportController(injector: Injector<Dependencies
     logger.info(req);
     logger.info(req.rawBody);
     logger.info(req.body);
-    return await issuerSupervisor.getIssuer("passport").handleWebhook!(req)
+    await issuerSupervisor.getIssuer("passport").handleWebhook!(req);
+    return { message: "ok" };
   });
 
-  fastify.get("/issuers/passport/kyc/neuro-vision/start", async (_,resp) => {
-    await resp.sendFile("kyc/neuro-vision.html")
-  })
+  fastify.get("/issuers/passport/kyc/neuro-vision/start", async (_, resp) => {
+    await resp.sendFile("kyc/neuro-vision.html");
+  });
 }
