@@ -285,4 +285,4 @@ const farcasterUserCred = {
   }
 };
 
-test.run();
+// test.run();

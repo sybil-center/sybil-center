@@ -1,7 +1,6 @@
 import { JalProgram } from "@jaljs/core";
 import { JalTarget, ProvingResult, Selector } from "./index.js";
 import { Identifier, JsonZcredException } from "@zcredjs/core";
-import { FastifyRequest } from "fastify";
 
 export type JalProgramInfo<
   TTarget extends JalTarget = JalTarget,
@@ -11,16 +10,16 @@ export type JalProgramInfo<
   proposalComment: string;
 }
 
-export type OnExceptionResult = {
+export type OnExceptionResult<T extends unknown = unknown> = {
   subjectId: Identifier;
   exception: JsonZcredException;
-  req: FastifyRequest
+  session: T
 }
 
-export type OnSuccessResult<T extends FastifyRequest = FastifyRequest>= {
+export type OnSuccessResult<T extends unknown = unknown> = {
   provingResult: ProvingResult;
   subjectId: Identifier;
-  req: T
+  session: T;
 }
 
 export interface IZcredResultHandler {

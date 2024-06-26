@@ -12,6 +12,7 @@ import { ZkProgramInputTransformer, ZkProgramTranslator } from "@jaljs/o1js";
 import Client from "mina-signer";
 import { InputTransformer } from "@jaljs/core";
 import { O1TrGraph } from "o1js-trgraph";
+import crypto from "crypto";
 import { SEC } from "@zcredjs/core";
 import { Config } from "../../../../../src/backbone/config.js";
 
@@ -39,14 +40,20 @@ test.after(async () => {
 test("Success flow", async () => {
   const privateKey = o1js.PrivateKey.fromBase58("EKE8VhKY6wGgeWS7fpPhzQDsf9yjkiHfnzM3AEeCH5wc2pxqGsHF");
   const publicKey = privateKey.toPublicKey();
+  const clientSession = crypto.randomUUID();
   // Get proposal
   const proposalResp = await fastify.inject({
-    method: "GET",
+    method: "POST",
     url: `/api/zcred/proposal/${verifierId}`,
-    query: {
-      "subject.id.type": "mina:publickey",
-      "subject.id.key": publicKey.toBase58(),
-      "verifier-id": "mina-passport"
+    body: {
+      subject: {
+        id: {
+          type: "mina:publickey",
+          key: publicKey.toBase58()
+        }
+      },
+      clientSession: clientSession,
+      redirectURL: new URL("https://example.com").href
     }
   });
   a.is(
@@ -306,12 +313,17 @@ test("reject authentication", async () => {
   const privateKey = o1js.PrivateKey.fromBase58("EKE8VhKY6wGgeWS7fpPhzQDsf9yjkiHfnzM3AEeCH5wc2pxqGsHF");
   const publicKey = privateKey.toPublicKey();
   const proposalResp = await fastify.inject({
-    method: "GET",
+    method: "POST",
     url: `/api/zcred/proposal/${verifierId}`,
-    query: {
-      "subject.id.type": "mina:publickey",
-      "subject.id.key": publicKey.toBase58(),
-      "verifier-id": "mina-passport"
+    body: {
+      subject: {
+        id: {
+          type: "mina:publickey",
+          key: publicKey.toBase58()
+        }
+      },
+      clientSession: crypto.randomUUID(),
+      redirectURL: "https://example.com"
     }
   });
   a.is(

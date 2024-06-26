@@ -1,5 +1,5 @@
 import { IZcredResultHandler, OnExceptionResult, OnSuccessResult } from "../../types/verifiers.type.js";
-import { getHtmlURL } from "../../controllers/verifier.controller.js";
+import { getHtmlURL, SessionData } from "../../controllers/verifier.controller.js";
 import { Config } from "../../backbone/config.js";
 import { tokens } from "typed-inject";
 import { Identifier, isStrictId, StrictId, VEC } from "@zcredjs/core";
@@ -8,8 +8,6 @@ import { EthSybilStore } from "../../stores/eth-sybil.store.js";
 import secp256k1 from "secp256k1";
 import { getBytes, hexlify, keccak256 } from "ethers";
 import * as u8a from "uint8arrays";
-import { FastifyRequest } from "fastify";
-
 
 type PublicInput = {
   context: {
@@ -66,10 +64,8 @@ export class ZcredResultHandler implements IZcredResultHandler {
   async onSuccess({
     provingResult,
     subjectId,
-    req
-  }: OnSuccessResult<FastifyRequest<{
-    Querystring: { redirect?: string } & { [key: string]: string | undefined }
-  }>>): Promise<URL> {
+    session
+  }: OnSuccessResult<SessionData>): Promise<URL> {
     const publicInput = provingResult.publicInput;
     if (!isPublicInput(publicInput)) throw new VerifierException({
       code: VEC.VERIFY_NOT_PASSED,
@@ -87,7 +83,7 @@ export class ZcredResultHandler implements IZcredResultHandler {
       }
     } = publicInput;
     this.checkContextDate(context.now);
-    const redirect = req.query.redirect;
+    const redirect = session.body.redirectURL;
     if (!redirect) throw new VerifierException({
       code: VEC.VERIFY_BAD_REQ,
       msg: "Redirect URL is undefined"

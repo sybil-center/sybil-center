@@ -51,14 +51,17 @@ test("Success flow", async () => {
   const clientSession = crypto.randomUUID();
   // Get proposal
   const proposalResp = await fastify.inject({
-    method: "GET",
+    method: "POST",
     url: `/api/zcred/proposal/${verifierId}`,
-    query: {
-      "subject.id.type": "ethereum:address",
-      "subject.id.key": address,
-      "verifier-id": "ethereum-passport",
-      "client-session": clientSession,
-      "redirect": redirectURL.href
+    body: {
+      subject: {
+        id: {
+          type: "ethereum:address",
+          key: address
+        }
+      },
+      clientSession: clientSession,
+      redirectURL: redirectURL.href
     }
   });
   a.is(
@@ -130,10 +133,10 @@ test("Success flow", async () => {
   a.ok(authResult.redirectURL, `"redirect url is undefined"`);
   a.type(authResult.redirectURL, "string", `"redirect url is not string"`);
   const receivedRedirectURL = new URL(authResult.redirectURL);
-  const clientSessionQuery = receivedRedirectURL.searchParams.get("client-session");
-  a.is(clientSessionQuery, clientSession, `Client session not defined in query`);
+  const receivedClientSession = receivedRedirectURL.searchParams.get("clientSession");
+  a.is(receivedClientSession, clientSession, `Client session not defined in query`);
   a.is(receivedRedirectURL.origin, redirectURL.origin, "Redirect URL not match");
-
+  console.log(receivedRedirectURL.href);
   const getEthSybilResp = await fastify.inject({
     path: `/api/eth-sybil/${address}`,
     method: "GET"

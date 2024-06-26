@@ -3,7 +3,7 @@ import { isProvingResult, Proposal } from "../types/index.js";
 import { ChallengeMessage } from "../services/challenge-message.js";
 import crypto from "node:crypto";
 import { verifySignature } from "../services/signature-verifier.js";
-import { ID_TYPES, IdType, isJsonZcredException, VEC, zcredjs } from "@zcredjs/core";
+import { ID_TYPES, isJsonZcredException, StrictId, VEC, zcredjs } from "@zcredjs/core";
 import { VerifierException } from "../backbone/exception.js";
 import { Injector } from "typed-inject";
 import { createZkProofVerifier, getVerifiersIds } from "../services/verifiers-initialize.js";
@@ -18,82 +18,83 @@ export function VerifierController(injector: Injector<DI>) {
   const config = injector.resolve("config");
   const cacheClient = injector.resolve("cacheClient");
 
-  const cache = cacheClient.createTtlCache<CacheValue>({
+  const cache = cacheClient.createTtlCache<SessionData>({
     namespace: "verifier-ttl-cache",
   });
   const zkProofVerifierCache: Record<string, Promise<IZkProofVerifier>> = {};
 
   for (const verifierId of getVerifiersIds()) {
 
-    fastify.get<{
-      Querystring: {
-        "subject.id.key": string;
-        "subject.id.type": IdType;
-        "verifier-id": string;
-      } & { [key: string]: string | undefined }
-    }>(`/api/zcred/proposal/${verifierId}`,
-      {
-        schema: {
-          tags: [`${verifierId}`],
-          querystring: {
-            type: "object",
-            required: ["subject.id.key", "subject.id.type"],
-            properties: {
-              "subject.id.key": { type: "string" },
-              "subject.id.type": { enum: ID_TYPES },
+    fastify.post<{
+      Body: SessionData["body"]
+    }>(`/api/zcred/proposal/${verifierId}`, {
+      schema: {
+        body: {
+          type: "object",
+          required: ["subject", "clientSession"],
+          additionalProperties: true,
+          properties: {
+            subject: {
+              type: "object",
+              required: ["id"],
+              additionalProperties: true,
+              properties: {
+                id: {
+                  type: "object",
+                  required: ["type", "key"],
+                  properties: {
+                    type: { enum: ID_TYPES },
+                    key: { type: "string" }
+                  }
+                }
+              }
             },
-            additionalProperties: true
+            clientSession: { type: "string" },
+            redirectURL: { type: "string", format: "uri" },
+            issuerAccessToken: { type: "string", nullable: true }
           }
         }
-      },
-      async (req) => {
-        const subjectId = zcredjs.normalizeId({
-          key: req.query["subject.id.key"],
-          type: req.query["subject.id.type"]
-        });
-        const nonce = crypto.randomUUID();
-        const verifierURL = new URL(`./zcred/verify/${verifierId}`, config.exposeDomain);
-        verifierURL.searchParams.set("session", nonce);
-        for (const key of Object.keys(req.query)) {
-          verifierURL.searchParams.set(key, String(req.query[key]));
-        }
-        const message = ChallengeMessage.toMessage({
-          verifierURL: verifierURL.href,
-          nonce: nonce
-        });
-        await cache.set(nonce, {
-          message,
-          nonce,
-          verifierId,
-          subject: { id: subjectId }
-        }, 12 * 3600 * 1000 /* 12 hours */);
-        const proposer = mainProposer.getProposer(verifierId);
-        const subjectIdType = await proposer.getSubjectIdType();
-        if (subjectId.type !== subjectIdType) throw new VerifierException({
-          code: VEC.PROPOSAL_BAD_REQ,
-          msg: `Bad request. Subject id type MUST be "${subjectIdType}"`
-        });
-        const [accessToken, selector, jalProgram, comment] = await Promise.all([
-          proposer.getAccessToken(),
-          proposer.getSelector(subjectId),
-          proposer.getJalProgram(),
-          proposer.getComment()
-        ]);
-        if (!zkProofVerifierCache[verifierId]) {
-          zkProofVerifierCache[verifierId] = createZkProofVerifier(jalProgram);
-        }
-        const proposal: Proposal = {
-          verifierURL: verifierURL.href,
-          challenge: {
-            message: message
-          },
-          selector: selector,
-          program: jalProgram,
-          comment: comment,
-          accessToken: accessToken
-        };
-        return proposal;
+      }
+    }, async (req) => {
+      const subjectId = zcredjs.normalizeId(req.body.subject.id);
+      req.body.subject.id = subjectId;
+      const nonce = crypto.randomUUID();
+      const verifierURL = new URL(`./zcred/verify/${verifierId}`, config.exposeDomain);
+      verifierURL.searchParams.set("session", nonce);
+      const message = ChallengeMessage.toMessage({
+        verifierURL: verifierURL.href,
+        nonce: nonce
       });
+      await cache.set(nonce, {
+        body: req.body,
+        message: message
+      }, 12 * 3600 * 1000 /* 12 hours */);
+      const proposer = mainProposer.getProposer(verifierId);
+      const subjectIdType = await proposer.getSubjectIdType();
+      if (subjectId.type !== subjectIdType) throw new VerifierException({
+        code: VEC.PROPOSAL_BAD_REQ,
+        msg: `Bad request. Subject id type MUST be "${subjectIdType}"`
+      });
+      const [selector, jalProgram, comment] = await Promise.all([
+        proposer.getSelector(subjectId),
+        proposer.getJalProgram(),
+        proposer.getComment()
+      ]);
+      if (!zkProofVerifierCache[verifierId]) {
+        zkProofVerifierCache[verifierId] = createZkProofVerifier(jalProgram);
+      }
+      const proposal: Proposal = {
+        verifierURL: verifierURL.href,
+        challenge: {
+          message: message
+        },
+        selector: selector,
+        program: jalProgram,
+        comment: comment,
+        accessToken: req.body.issuerAccessToken
+      };
+      return proposal;
+    });
 
 
     fastify.post<{
@@ -107,24 +108,28 @@ export function VerifierController(injector: Injector<DI>) {
           msg: `Bad verify request, "session" MUST be in search parameters`
         });
       }
-      const session = req.query.session;
-      const cacheValue = await cache.get(session);
-      if (!cacheValue) throw new VerifierException({
+      const sessionId = req.query.session;
+      const session = await cache.get(sessionId);
+      if (!session) throw new VerifierException({
         code: VEC.VERIFY_NO_SESSION,
-        msg: `Can not find session with id: ${session}`
+        msg: `Can not find session with id: ${sessionId}`
       });
-      const subjectId = cacheValue.subject.id;
+      const subjectId = session.body.subject.id;
       const handler = mainHandler.getResultHandler(verifierId);
       if (isJsonZcredException(req.body)) {
         const exception = req.body;
-        const redirectURL = await handler.onException({ exception, subjectId, req });
-        await cache.delete(session);
+        const redirectURL = await handler.onException({
+          exception: exception,
+          subjectId: subjectId,
+          session: session
+        });
+        await cache.delete(sessionId);
         return { redirectURL: redirectURL ? redirectURL.href : null };
       } else if (isProvingResult(req.body)) {
         const isSignVerified = await verifySignature({
-          message: cacheValue.message,
+          message: session.message,
           signature: req.body.signature,
-          subject: cacheValue.subject
+          subject: session.body.subject
         });
         if (!isSignVerified) throw new VerifierException({
           code: VEC.VERIFY_INVALID_SIGNATURE,
@@ -141,11 +146,13 @@ export function VerifierController(injector: Injector<DI>) {
           msg: `Invalid zk-proof`
         });
         const provingResult = req.body;
-        const redirectURL = await handler.onSuccess({ provingResult, subjectId, req });
-        await cache.delete(session);
-        for (const key of Object.keys(req.query)) {
-          redirectURL.searchParams.set(key, String(req.query[key]));
-        }
+        const redirectURL = await handler.onSuccess({
+          provingResult,
+          subjectId,
+          session: session
+        });
+        redirectURL.searchParams.set("clientSession", session.body.clientSession);
+        await cache.delete(sessionId);
         return {
           redirectURL: redirectURL.href
         };
@@ -184,11 +191,14 @@ export function getHtmlURL(origin: URL, path: string[]) {
     : new URL(pathname, `${exposeDomain}/`);
 }
 
-type CacheValue = {
-  nonce: string;
+export type SessionData = {
+  body: {
+    subject: {
+      id: StrictId;
+    },
+    clientSession: string;
+    redirectURL: string;
+    issuerAccessToken?: string;
+  } & { [key: string]: unknown };
   message: string;
-  subject: {
-    id: { type: IdType; key: string }
-  },
-  verifierId: string;
 }
