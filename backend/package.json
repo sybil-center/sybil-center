@@ -50,7 +50,7 @@
     "key-did-resolver": "^3.0.0",
     "mina-signer": "^2.1.0",
     "mrz": "^4.1.0",
-    "o1js": "0.15.0",
+    "o1js": "0.16.2",
     "o1js-trgraph": "2.2.0",
     "pino": "^8.10.0",
     "pino-pretty": "^9.3.0",
@@ -58,7 +58,7 @@
     "trgraph": "1.1.2",
     "twitter-api-v2": "^1.14.0",
     "typed-inject": "^4.0.0",
-    "uint8arrays": "^4.0.3"
+    "uint8arrays": "4.0.3"
   },
   "files": [
     "./dist"
