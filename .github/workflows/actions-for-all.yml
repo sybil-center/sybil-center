@@ -18,6 +18,9 @@ jobs:
         with:
           node-version: 18.18.2
 
+      - name: Setup docker compose
+        uses: ndeloof/install-compose-action@v0.0.1
+
       - uses: pnpm/action-setup@v2
         name: Install pnpm
         id: pnpm-install

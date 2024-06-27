@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "npx tsm ./src/main.ts",
-    "test": "pnpm run dev:test:up && npx tsm ./node_modules/uvu/bin.js ./test && pnpm run dev:test:down",
+    "test": "DB_URL=postgres://dev:dev@localhost:5433/dev pnpm run dev:test:up && npx tsm ./node_modules/uvu/bin.js ./test && pnpm run dev:test:down",
     "create-verifier": "npx tsm ./scripts/create-verifier.ts",
     "migration:push": "drizzle-kit push --config=./drizzle.config.ts",
     "migration:pull": "drizzle-kit introspect --config=./drizzle.config.ts",
