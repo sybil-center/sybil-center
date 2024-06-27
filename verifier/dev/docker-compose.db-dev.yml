@@ -1,4 +1,11 @@
 services:
+
+  script:
+    image: alpine
+    depends_on:
+      database:
+        condition: service_healthy
+
   database:
     image: postgres:15-alpine
     environment:
@@ -9,3 +16,11 @@ services:
       - "5433:5432"
     volumes:
       - ./db-dev-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
+
