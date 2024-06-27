@@ -1,0 +1,15 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY . .
+
+RUN rm -r ./frontend
+RUN rm -r ./backend
+RUN npm install -g pnpm
+RUN pnpm install
+RUN pnpm run build
+RUN rm -r ./verifier/src
+RUN rm -r ./sybil/src
+
+CMD cd ./verifier && pnpm run migration:migrate && cd .. && node ./verifier/dist/main.js
