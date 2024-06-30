@@ -44,7 +44,7 @@ export class ZcredResultHandler implements IZcredResultHandler {
   static inject = tokens("config");
   constructor(private readonly config: Config) {}
 
-  async onException(_: OnExceptionResult): Promise<URL | void> {
+  async onException(_: OnExceptionResult): Promise<URL> {
     return getHtmlURL(this.config.exposeDomain, ["verification", "fail.html"]);
   }
 

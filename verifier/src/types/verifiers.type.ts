@@ -23,7 +23,7 @@ export type OnSuccessResult<T extends unknown = unknown> = {
 }
 
 export interface IZcredResultHandler {
-  onException(exception: OnExceptionResult): Promise<URL | void>;
+  onException(exception: OnExceptionResult): Promise<URL>;
   onSuccess(result: OnSuccessResult): Promise<URL>;
 }
 
