@@ -1,5 +1,5 @@
 import { IZcredResultHandler, OnExceptionResult, OnSuccessResult } from "../../types/verifiers.type.js";
-import { getHtmlURL, SessionData } from "../../controllers/verifier.controller.js";
+import { SessionData } from "../../controllers/verifier.controller.js";
 import { Config } from "../../backbone/config.js";
 import { tokens } from "typed-inject";
 import { Identifier, isStrictId, StrictId, VEC } from "@zcredjs/core";
@@ -57,8 +57,8 @@ export class ZcredResultHandler implements IZcredResultHandler {
     private readonly ethSybilStore: EthSybilStore,
   ) {}
 
-  async onException(_: OnExceptionResult): Promise<URL | void> {
-    return getHtmlURL(this.config.exposeDomain, ["verification", "fail.html"]);
+  async onException({ session }: OnExceptionResult<SessionData>): Promise<URL> {
+    return new URL(session.body.redirectURL);
   }
 
   async onSuccess({

@@ -136,6 +136,8 @@ test("Success flow", async () => {
   const receivedClientSession = receivedRedirectURL.searchParams.get("clientSession");
   a.is(receivedClientSession, clientSession, `Client session not defined in query`);
   a.is(receivedRedirectURL.origin, redirectURL.origin, "Redirect URL not match");
+  const status = receivedRedirectURL.searchParams.get("status");
+  a.is(status, "success", `Redirect URL query string status is not "success"`);
   console.log(receivedRedirectURL.href);
   const getEthSybilResp = await fastify.inject({
     path: `/api/eth-sybil/${address}`,

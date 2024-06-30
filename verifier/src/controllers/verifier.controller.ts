@@ -124,7 +124,10 @@ export function VerifierController(injector: Injector<DI>) {
           session: session
         });
         await cache.delete(sessionId);
-        return { redirectURL: redirectURL ? redirectURL.href : null };
+        redirectURL.searchParams.set("clientSession", session.body.clientSession)
+        redirectURL.searchParams.set("status", "exception");
+        redirectURL.searchParams.set("exceptionCode", String(exception.code));
+        return { redirectURL: redirectURL };
       } else if (isProvingResult(req.body)) {
         const isSignVerified = await verifySignature({
           message: session.message,
@@ -152,6 +155,7 @@ export function VerifierController(injector: Injector<DI>) {
           session: session
         });
         redirectURL.searchParams.set("clientSession", session.body.clientSession);
+        redirectURL.searchParams.set("status", "success");
         await cache.delete(sessionId);
         return {
           redirectURL: redirectURL.href

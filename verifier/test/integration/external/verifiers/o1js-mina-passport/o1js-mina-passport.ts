@@ -344,9 +344,10 @@ test("reject authentication", async () => {
     authResp.statusCode, 200,
     `Reject authentication response status code is not 200, body: ${authResp.body}`
   );
-  const { redirectURL } = JSON.parse(authResp.body) as { redirectURL: string };
+  const { redirectURL: redirectStr } = JSON.parse(authResp.body) as { redirectURL: string };
+  const redirectURL = new URL(redirectStr);
   a.is(
-    redirectURL, new URL("./public/html/verification/fail.html", config.exposeDomain).href,
+    redirectURL.origin + redirectURL.pathname, new URL("./public/html/verification/fail.html", config.exposeDomain).href,
     "Invalid redirect url after reject"
   );
 });
