@@ -11,5 +11,13 @@ RUN pnpm install
 RUN pnpm run build
 RUN rm -r ./verifier/src
 RUN rm -r ./sybil/src
+RUN apk --update add postgresql-client
+RUN apk add --no-cache --upgrade bash
+RUN cd ./verifier/bin && chmod +x cloud-sql-proxy && chmod +x wait-for-postgres.sh && cd ../..
 
-CMD cd ./verifier && pnpm run migration:migrate && cd .. && node ./verifier/dist/main.js
+CMD cd ./verifier && \
+    node ./scripts/create-gcp-key.js && \
+    ./bin/cloud-sql-proxy --credentials-file ./gcp-key.json --port 5435 $GCP_INSTANCE_CONNECTION_NAME & \
+    cd ./verifier && ./bin/wait-for-postgres.sh . && \
+    pnpm run migration:migrate \
+    && cd .. && node ./verifier/dist/main.js
