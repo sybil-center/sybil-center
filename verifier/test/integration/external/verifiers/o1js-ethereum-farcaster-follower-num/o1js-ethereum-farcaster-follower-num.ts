@@ -40,7 +40,7 @@ test("Success flow", async () => {
   const wallet = new ethers.Wallet("5e581a243f14358709139a988c71f073afb685d9b28b18b075c6aae662baa6f9");
   const address = wallet.address;
   const proposalResp = await fastify.inject({
-    url: `/api/zcred/proposal/${verifierId}`,
+    url: `/zcred/proposal/${verifierId}`,
     method: "GET",
     query: {
       "subject.id.type": "ethereum:address",

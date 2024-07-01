@@ -27,7 +27,7 @@ export function VerifierController(injector: Injector<DI>) {
 
     fastify.post<{
       Body: SessionData["body"]
-    }>(`/api/zcred/proposal/${verifierId}`, {
+    }>(`/zcred/proposal/${verifierId}`, {
       schema: {
         body: {
           type: "object",

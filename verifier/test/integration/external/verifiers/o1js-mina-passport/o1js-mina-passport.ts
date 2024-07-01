@@ -44,7 +44,7 @@ test("Success flow", async () => {
   // Get proposal
   const proposalResp = await fastify.inject({
     method: "POST",
-    url: `/api/zcred/proposal/${verifierId}`,
+    url: `/zcred/proposal/${verifierId}`,
     body: {
       subject: {
         id: {
@@ -314,7 +314,7 @@ test("reject authentication", async () => {
   const publicKey = privateKey.toPublicKey();
   const proposalResp = await fastify.inject({
     method: "POST",
-    url: `/api/zcred/proposal/${verifierId}`,
+    url: `/zcred/proposal/${verifierId}`,
     body: {
       subject: {
         id: {
