@@ -52,7 +52,7 @@ test("Success flow", async () => {
   // Get proposal
   const proposalResp = await fastify.inject({
     method: "POST",
-    url: `/api/zcred/proposal/${verifierId}`,
+    url: `/zcred/proposal/${verifierId}`,
     body: {
       subject: {
         id: {
