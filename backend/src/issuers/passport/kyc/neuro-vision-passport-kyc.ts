@@ -165,6 +165,10 @@ function extractPassportData(body: WebhookBody): PassportData {
     const fields = result.ocr.fields;
     const mrzStringField = getMRZStringField(fields);
     if (mrzStringField) {
+      const split = mrzStringField.value.split("^");
+      const mrzParseInput = split.length === 1
+        ? mrzStringField.value.split(" ")
+        : split;
       const {
         fields: {
           firstName,
@@ -175,7 +179,7 @@ function extractPassportData(body: WebhookBody): PassportData {
           issuingState,
           birthDate
         }
-      } = mrzParse(mrzStringField.value.split("^"));
+      } = mrzParse(mrzParseInput);
       if (firstName && lastName && sex && expirationDate && documentNumber && issuingState && birthDate) {
         return {
           isVerified: true,
