@@ -3,3 +3,4 @@ packages:
   - frontend
   - sybil
   - verifier
+  - sybil-passport
