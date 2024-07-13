@@ -17,6 +17,9 @@ import { ClientStore } from "./stores/client.store.js";
 import { ClientService } from "./services/client-service.js";
 import { ClientController } from "./controllers/client.controller.js";
 import { CacheClient } from "./backbone/cache-client.js";
+import { JalStore } from "./stores/jal.store.js";
+import { JalService } from "./services/jal.service.js";
+import { JalController } from "./controllers/jal.controller.js";
 
 type PreDI = {
   config: Config;
@@ -26,6 +29,8 @@ type PreDI = {
   clientStore: ClientStore;
   clientService: ClientService;
   cacheClient: CacheClient;
+  jalStore: JalStore;
+  jalService: JalService;
 }
 
 export type DI = PreDI & {
@@ -61,6 +66,8 @@ export class App {
       .provideClass("ethSybilStore", EthSybilStore)
       .provideClass("clientStore", ClientStore)
       .provideClass("clientService", ClientService)
+      .provideClass("jalStore", JalStore)
+      .provideClass("jalService", JalService)
       .provideClass("httpServer", HttpServer) satisfies Injector<PreDI>;
 
     for (const [id, constructor] of (await getProposerConstructors()).entries()) {
@@ -79,6 +86,7 @@ export class App {
     VerifierController(app.context);
     EthSybilController(app.context);
     ClientController(app.context);
+    JalController(app.context);
     return app;
   }
 
