@@ -20,6 +20,11 @@ import { CacheClient } from "./backbone/cache-client.js";
 import { JalStore } from "./stores/jal.store.js";
 import { JalService } from "./services/jal.service.js";
 import { JalController } from "./controllers/jal.controller.js";
+import { ProvingResultStore } from "./stores/proving-result.store.js";
+import { ProvingResultService } from "./services/proving-result.service.js";
+import { ProvingResultController } from "./controllers/proving-result.controller.js";
+import { VerifierManager } from "./services/verifier-manager.js";
+import { CustomVerifierController } from "./controllers/custom-verifier.controller.js";
 
 type PreDI = {
   config: Config;
@@ -31,6 +36,9 @@ type PreDI = {
   cacheClient: CacheClient;
   jalStore: JalStore;
   jalService: JalService;
+  provingResultStore: ProvingResultStore;
+  provingResultService: ProvingResultService;
+  verifierManager: VerifierManager;
 }
 
 export type DI = PreDI & {
@@ -68,6 +76,9 @@ export class App {
       .provideClass("clientService", ClientService)
       .provideClass("jalStore", JalStore)
       .provideClass("jalService", JalService)
+      .provideClass("provingResultStore", ProvingResultStore)
+      .provideClass("provingResultService", ProvingResultService)
+      .provideClass("verifierManager", VerifierManager)
       .provideClass("httpServer", HttpServer) satisfies Injector<PreDI>;
 
     for (const [id, constructor] of (await getProposerConstructors()).entries()) {
@@ -87,6 +98,8 @@ export class App {
     EthSybilController(app.context);
     ClientController(app.context);
     JalController(app.context);
+    ProvingResultController(app.context);
+    CustomVerifierController(app.context);
     return app;
   }
 

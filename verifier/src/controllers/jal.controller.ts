@@ -16,4 +16,17 @@ export function JalController(injector: Injector<DI>) {
       return { message: e.message };
     }
   });
+
+  fastify.get<{
+    Params: { id: string }
+  }>("/api/v1/jal/:id", async (req, resp) => {
+    const jalId = req.params.id;
+    const jalEntity = await jalService.getById(jalId);
+    if (jalEntity) return {
+      id: jalEntity.id,
+      program: jalEntity.program
+    };
+    resp.statusCode === 400;
+    return { message: `Can not find JAL by id: ${jalId}` };
+  });
 }
