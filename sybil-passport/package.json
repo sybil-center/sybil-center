@@ -22,7 +22,7 @@
   ],
   "dependencies": {
     "@jaljs/core": "1.0.5",
-    "@jaljs/js-zcred": "0.0.3"
+    "@jaljs/js-zcred": "0.0.4"
   },
   "devDependencies": {
     "@jaljs/friendly-zcred": "^0.0.5",
