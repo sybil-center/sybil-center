@@ -60,8 +60,6 @@ test("create verifier, auth process ", async () => {
     target: "o1js:zk-program.cjs",
     credential: credential,
     publicInput: [
-      attributes.subject.id.type,
-      attributes.subject.id.key,
       attributes.document.sybilId,
       context.now
     ],
