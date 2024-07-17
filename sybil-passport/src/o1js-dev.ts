@@ -1,37 +1,18 @@
-import { Input, Ref, Setup } from "@jaljs/js-zcred";
+import { Const, equal, greater, greaterOrEqual, less, mul, Ref, Setup, Static, sub } from "@jaljs/js-zcred";
 import type { O1GraphLink } from "o1js-trgraph";
+import { PassportInputSchema, Sandbox } from "./index.js";
 
-const attributePath = ["private", "credential", "attributes"]
-const subjectPath = [...attributePath, "subject"]
+const attributePath = ["private", "credential", "attributes"];
+const subjectPath = [...attributePath, "subject"];
 const proofPath = [
   "private",
   "credential",
   "proofs",
   "mina:poseidon-pasta",
   "mina:publickey:B62qmNen3kDN74CJ2NQteNABrEN4AurGTbsLrraPy6ipQgUV9Q73tv2"
-]
+];
 
-export const DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA: Input<O1GraphLink> & {
-  credential: {
-    attributes: {
-      subject: {
-        id: {
-          key: ReturnType<typeof Ref<O1GraphLink>>;
-          type: ReturnType<typeof Ref<O1GraphLink>>;
-        }
-        birthDate: ReturnType<typeof Ref<O1GraphLink>>;
-        firstName: ReturnType<typeof Ref<O1GraphLink>>;
-        gender: ReturnType<typeof Ref<O1GraphLink>>;
-        lastName: ReturnType<typeof Ref<O1GraphLink>>;
-      },
-      countryCode: ReturnType<typeof Ref<O1GraphLink>>;
-      document: {
-        id: ReturnType<typeof Ref<O1GraphLink>>;
-        sybilId: ReturnType<typeof Ref<O1GraphLink>>;
-      }
-    }
-  }
-} = {
+export const DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA: PassportInputSchema<O1GraphLink> = {
   credential: {
     attributes: {
       type: Ref(Setup(
@@ -117,5 +98,56 @@ export const DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA: Input<O1GraphLink> & {
       ["public", "context", "now"],
       ["isodate-bytesdate", "bytesdate-unixtime19", "unixtime19-uint64", "uint64-mina:field"]
     ))
+  }
+};
+
+export const O1JS_ETH_DEV: Sandbox = {
+  inputSchema: DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA,
+  fromCountry: (alpha3CountryCode: string) => {
+    const {
+      credential,
+    } = DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA;
+    return equal(
+      credential.attributes.countryCode,
+      Static(alpha3CountryCode, [
+        "iso3166alpha3-iso3166numeric", "iso3166numeric-uint16", "uint16-mina:field"
+      ])
+    );
+  },
+  olderThanYears: (years: number) => {
+    const {
+      credential,
+      context
+    } = DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA;
+    return greaterOrEqual(
+      sub(context.now, credential.attributes.subject.birthDate),
+      mul(Static(years, ["uint64-mina:field"]), Const("year"))
+    );
+  },
+  youngerThanYears: (years: number) => {
+    const {
+      credential,
+      context
+    } = DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA;
+    return less(
+      sub(context.now, credential.attributes.subject.birthDate),
+      mul(Static(years, ["uint64-mina:field"]), Const("year"))
+    );
+  },
+  passportNotExpired: () => {
+    const {
+      credential,
+      context
+    } = DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA;
+    return greater(credential.attributes.validUntil, context.now);
+  },
+  genderIs: (gender) => {
+    const {
+      credential
+    } = DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA;
+    return equal(
+      credential.attributes.subject.gender,
+      Static(gender, ["ascii-bytes", "bytes-uint64", "uint64-mina:field"])
+    );
   }
 };

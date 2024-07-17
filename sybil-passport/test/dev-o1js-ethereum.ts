@@ -1,15 +1,22 @@
-import { assert, Const, greaterOrEqual, mul, Static, sub, toJAL } from "@jaljs/js-zcred";
+import { assert, not, toJAL } from "@jaljs/js-zcred";
 import { suite } from "uvu";
-import { DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA } from "../src/index.js";
+import { O1JS_ETH_DEV } from "../src/index.js";
 import { FriendlyZCredTranslator } from "@jaljs/friendly-zcred";
 
 const test = suite("o1js ethereum passport test");
 
 test("create correct JAL", async () => {
   const {
-    credential,
-    context
-  } = DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA;
+    inputSchema: {
+      credential,
+      context
+    },
+    olderThanYears,
+    youngerThanYears,
+    genderIs,
+    fromCountry,
+    passportNotExpired,
+  } = O1JS_ETH_DEV;
   const attributes = credential.attributes;
   const jalProgram = toJAL({
     target: "o1js:zk-program.cjs",
@@ -21,12 +28,11 @@ test("create correct JAL", async () => {
       context.now
     ],
     commands: [
-      assert(
-        greaterOrEqual(
-          sub(context.now, attributes.subject.birthDate),
-          mul(Static(18, ["uint64-mina:field"]), Const("year"))
-        )
-      )
+      assert(olderThanYears(18)),
+      assert(youngerThanYears(45)),
+      assert(genderIs("male")),
+      assert(not(fromCountry("USA"))),
+      assert(passportNotExpired())
     ],
     options: {
       signAlgorithm: "mina:pasta",
