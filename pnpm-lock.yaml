@@ -282,8 +282,8 @@ importers:
         specifier: ^0.0.5
         version: 0.0.5
       '@jaljs/o1js':
-        specifier: 1.1.5
-        version: 1.1.5
+        specifier: 1.1.7
+        version: 1.1.7
       '@types/node':
         specifier: 20.8.0
         version: 20.8.0
@@ -327,8 +327,8 @@ importers:
         specifier: 0.0.4
         version: 0.0.4
       '@jaljs/o1js':
-        specifier: ^1.1.5
-        version: 1.1.5
+        specifier: ^1.1.7
+        version: 1.1.7
       '@keyvhq/core':
         specifier: ^2.1.1
         version: 2.1.1
@@ -3234,8 +3234,8 @@ packages:
       uint8arrays: 4.0.10
     dev: false
 
-  /@jaljs/o1js@1.1.5:
-    resolution: {integrity: sha512-nnRUwTb/gA4WNmCwSW3hPVBPIiMA3CbhiqwDNcX12JCQ+hWlu2MbnUg7wg00vmW+UmyML9LhmQVYzPc5o/BFGw==}
+  /@jaljs/o1js@1.1.7:
+    resolution: {integrity: sha512-1Jqu11pN27U7bzGmF4lcPH+Z8hLWj5EkhMbhsUmAkeCHIwMBBnyTywZdElnzRFZvg2n8YObuza+DvNOKZU3sTQ==}
     dependencies:
       '@jaljs/core': 1.0.5
       '@stablelib/sha256': 1.0.1

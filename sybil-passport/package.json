@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@jaljs/friendly-zcred": "^0.0.5",
-    "@jaljs/o1js": "1.1.5",
+    "@jaljs/o1js": "1.1.7",
     "@types/node": "20.8.0",
     "o1js-trgraph": "^2.2.0",
     "tsm": "^2.3.0",

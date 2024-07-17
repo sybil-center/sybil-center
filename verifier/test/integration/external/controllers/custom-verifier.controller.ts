@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 import { PATH_TO_CONFIG } from "../../../test-util/index.js";
 import { JalEntity } from "../../../../src/entities/jal.entity.js";
 import { ProvingResultEntity } from "../../../../src/entities/proving-result.entity.js";
-import { assert, Const, greaterOrEqual, mul, Static, sub, toJAL } from "@jaljs/js-zcred";
+import { assert, Const, equal, greaterOrEqual, mul, Static, sub, toJAL } from "@jaljs/js-zcred";
 import { DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA } from "@sybil-center/passport";
 import { O1GraphLink, O1TrGraph } from "o1js-trgraph";
 import crypto from "node:crypto";
@@ -69,6 +69,15 @@ test("create verifier, auth process ", async () => {
           sub(context.now, attributes.subject.birthDate),
           mul(Static<O1GraphLink>(18, ["uint64-mina:field"]), Const("year"))
         )
+      ),
+      assert(
+        equal(
+          attributes.countryCode,
+          Static("GBR", ["iso3166alpha3-iso3166numeric", "iso3166numeric-uint16", "uint16-mina:field"])
+        )
+      ),
+      assert(
+        greaterOrEqual(attributes.validUntil, context.now)
       )
     ],
     options: {

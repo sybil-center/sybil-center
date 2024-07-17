@@ -36,7 +36,6 @@
     "watchlist": "^0.3.1"
   },
   "dependencies": {
-    "@sybil-center/passport": "workspace:*",
     "@fastify/cookie": "^9.3.1",
     "@fastify/cors": "^8.2.0",
     "@fastify/jwt": "^8.0.1",
@@ -45,9 +44,10 @@
     "@fastify/swagger-ui": "^1.3.0",
     "@jaljs/core": "^1.0.4",
     "@jaljs/js-zcred": "0.0.4",
-    "@jaljs/o1js": "^1.1.5",
+    "@jaljs/o1js": "^1.1.7",
     "@keyvhq/core": "^2.1.1",
     "@keyvhq/postgres": "^2.1.1",
+    "@sybil-center/passport": "workspace:*",
     "@zcredjs/core": "1.1.1",
     "dotenv": "^16.0.3",
     "drizzle-kit": "^0.22.7",
