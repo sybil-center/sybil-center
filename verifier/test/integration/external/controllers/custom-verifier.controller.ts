@@ -91,8 +91,8 @@ test("create verifier, auth process ", async () => {
     payload: jal
   });
   a.is(
-    createJalResp.statusCode, 200,
-    `Create JAL resp status code is not 200. Resp body: ${createJalResp.body}`
+    createJalResp.statusCode, 201,
+    `Create JAL resp status code is not 201. Resp body: ${createJalResp.body}`
   );
   const { id: jalId } = JSON.parse(createJalResp.body);
   a.ok(jalId, "JAL id is undefined in create JAL response body");
@@ -247,7 +247,7 @@ test("invalid credential", async () => {
     payload: jal
   });
   a.is(
-    createJalResp.statusCode, 200,
+    createJalResp.statusCode, 201,
     `Create JAL resp status code is not 200. Resp body: ${createJalResp.body}`
   );
   const { id: jalId } = JSON.parse(createJalResp.body);

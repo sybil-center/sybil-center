@@ -25,6 +25,9 @@ import { ProvingResultService } from "./services/proving-result.service.js";
 import { ProvingResultController } from "./controllers/proving-result.controller.js";
 import { VerifierManager } from "./services/verifier-manager.js";
 import { CustomVerifierController } from "./controllers/custom-verifier.controller.js";
+import { JalCommentStore } from "./stores/jal-comment.store.js";
+import { JalCommentService } from "./services/jal-comment.service.js";
+import { SiwxService } from "./services/siwxService.js";
 
 type PreDI = {
   config: Config;
@@ -39,6 +42,9 @@ type PreDI = {
   provingResultStore: ProvingResultStore;
   provingResultService: ProvingResultService;
   verifierManager: VerifierManager;
+  jalCommentStore: JalCommentStore;
+  jalCommentService: JalCommentService;
+  siwxService: SiwxService;
 }
 
 export type DI = PreDI & {
@@ -75,6 +81,9 @@ export class App {
       .provideClass("clientStore", ClientStore)
       .provideClass("clientService", ClientService)
       .provideClass("jalStore", JalStore)
+      .provideClass("jalCommentStore", JalCommentStore)
+      .provideClass("jalCommentService", JalCommentService)
+      .provideClass("siwxService", SiwxService)
       .provideClass("jalService", JalService)
       .provideClass("provingResultStore", ProvingResultStore)
       .provideClass("provingResultService", ProvingResultService)
