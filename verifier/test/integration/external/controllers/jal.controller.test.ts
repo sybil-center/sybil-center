@@ -15,7 +15,7 @@ import sortKeys from "sort-keys";
 import { JalService } from "../../../../src/services/jal.service.js";
 import siwe from "siwe";
 import { Config } from "../../../../src/backbone/config.js";
-import { SIWX_STATEMENT } from "../../../../src/consts/index.js";
+import { SIWE_STATEMENT } from "../../../../src/consts/index.js";
 import { JalCommentEntity } from "../../../../src/entities/jal-comment.entity.js";
 
 let app: App;
@@ -122,27 +122,27 @@ test("Create JAL program with comment", async () => {
       hashAlgorithm: "mina:poseidon"
     }
   });
-  const siwxMessage = new siwe.SiweMessage({
+  const siweMessage = new siwe.SiweMessage({
     domain: domainName,
     expirationTime: new Date(new Date().getTime() + 100 * 1000).toISOString(),
     address: testUtil.ethereum.address,
-    statement: SIWX_STATEMENT.CREATE_JAL,
+    statement: SIWE_STATEMENT.CREATE_JAL,
     uri: new URL("./api/v2/jal", config.exposeDomain).href,
     nonce: siwe.generateNonce(),
     version: "1",
     chainId: 1,
     issuedAt: new Date().toISOString()
   }).toMessage();
-  const siwxSignature = await testUtil.ethereum.signMessage(siwxMessage);
+  const siweSignature = await testUtil.ethereum.signMessage(siweMessage);
   const createJalResp = await fastify.inject({
     method: "POST",
     path: "/api/v2/jal",
     body: {
       jalProgram: jalProgram,
       programComment: "You won't pass verification if you younger than 18 y.o",
-      siwx: {
-        message: siwxMessage,
-        signature: siwxSignature
+      siwe: {
+        message: siweMessage,
+        signature: siweSignature
       }
     }
   });

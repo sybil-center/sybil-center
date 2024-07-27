@@ -8,7 +8,7 @@ type Validate = {
   signature: string;
 }
 
-export class SiwxService {
+export class SiweService {
 
   static inject = tokens("config");
   constructor(
@@ -30,17 +30,17 @@ export class SiwxService {
       statement
     } = siweObject;
     if (options?.statement && options.statement !== statement) {
-      throw new Error(`SIWX statement must be "${options.statement}"`);
+      throw new Error(`SIWE statement must be "${options.statement}"`);
     }
     if (!expirationTime) {
-      throw new Error(`SIWX must has expiration-time property`);
+      throw new Error(`SIWE must has expiration-time property`);
     }
     if (new Date().getTime() > new Date(expirationTime).getTime()) {
-      throw new Error(`SIWX is expired`);
+      throw new Error(`SIWE is expired`);
     }
     const recoverAddress = ethers.verifyMessage(message, signature);
     if (address.toLowerCase() !== recoverAddress.toLowerCase()) {
-      throw new Error(`Invalid SIWX message or signature`);
+      throw new Error(`Invalid SIWE message or signature`);
     }
     const hostnameSplit = new URL(this.config.exposeDomain).hostname.split(".");
     const domainName = [
@@ -48,7 +48,7 @@ export class SiwxService {
       hostnameSplit[hostnameSplit.length - 2]
     ].join(".");
     if (!domain.endsWith(domainName)) {
-      throw new Error(`SIWX invalid domain, domain must end with ${domainName}`);
+      throw new Error(`SIWE invalid domain, domain must end with ${domainName}`);
     }
     return {
       subject: {
@@ -57,7 +57,7 @@ export class SiwxService {
           key: address
         }
       },
-      siwxObject: siweObject
+      siweObject: siweObject
     };
   }
 }

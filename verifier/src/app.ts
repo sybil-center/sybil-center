@@ -27,7 +27,7 @@ import { VerifierManager } from "./services/verifier-manager.js";
 import { CustomVerifierController } from "./controllers/custom-verifier.controller.js";
 import { JalCommentStore } from "./stores/jal-comment.store.js";
 import { JalCommentService } from "./services/jal-comment.service.js";
-import { SiwxService } from "./services/siwxService.js";
+import { SiweService } from "./services/siwe-service.js";
 
 type PreDI = {
   config: Config;
@@ -44,7 +44,7 @@ type PreDI = {
   verifierManager: VerifierManager;
   jalCommentStore: JalCommentStore;
   jalCommentService: JalCommentService;
-  siwxService: SiwxService;
+  siweService: SiweService;
 }
 
 export type DI = PreDI & {
@@ -83,7 +83,7 @@ export class App {
       .provideClass("jalStore", JalStore)
       .provideClass("jalCommentStore", JalCommentStore)
       .provideClass("jalCommentService", JalCommentService)
-      .provideClass("siwxService", SiwxService)
+      .provideClass("siweService", SiweService)
       .provideClass("jalService", JalService)
       .provideClass("provingResultStore", ProvingResultStore)
       .provideClass("provingResultService", ProvingResultService)

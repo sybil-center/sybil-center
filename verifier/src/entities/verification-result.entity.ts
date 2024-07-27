@@ -22,7 +22,6 @@ type VerificationResultData = {
       siwe: {
         signature: string;
         message: string;
-        address: string;
       }
     }
     webhookURL?: string;

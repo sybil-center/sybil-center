@@ -1,13 +1,13 @@
 import { DI } from "../app.js";
 import { Injector } from "typed-inject";
 import { JalProgram } from "@jaljs/core";
-import { SIWX_STATEMENT } from "../consts/index.js";
+import { SIWE_STATEMENT } from "../consts/index.js";
 
 
 export function JalController(injector: Injector<DI>) {
   const fastify = injector.resolve("httpServer").fastify;
   const jalService = injector.resolve("jalService");
-  const siwxService = injector.resolve("siwxService");
+  const siweService = injector.resolve("siweService");
 
   fastify.post<{ Body: JalProgram }>("/api/v1/jal", async (req, resp) => {
     try {
@@ -40,7 +40,7 @@ export function JalController(injector: Injector<DI>) {
     Body: {
       jalProgram: JalProgram;
       programComment: string;
-      siwx: {
+      siwe: {
         message: string;
         signature: string;
       },
@@ -48,17 +48,17 @@ export function JalController(injector: Injector<DI>) {
   }>("/api/v2/jal", async (req, resp) => {
     try {
       const {
-        siwx: {
+        siwe: {
           message,
           signature
         },
         programComment,
         jalProgram
       } = req.body;
-      const { subject } = await siwxService.verify({
+      const { subject } = await siweService.verify({
         message: message,
         signature: signature
-      }, { statement: SIWX_STATEMENT.CREATE_JAL });
+      }, { statement: SIWE_STATEMENT.CREATE_JAL });
 
       const { id } = await jalService.saveWithComment({
         subject: subject,

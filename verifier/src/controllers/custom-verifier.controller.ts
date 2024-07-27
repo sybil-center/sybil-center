@@ -25,6 +25,7 @@ export type SessionData = {
 }
 
 
+
 export function CustomVerifierController(injector: Injector<DI>) {
 
   const fastify = injector.resolve("httpServer").fastify;
