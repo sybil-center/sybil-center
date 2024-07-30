@@ -4,7 +4,7 @@ import { FastifyInstance } from "fastify";
 import { DbClient } from "../../../../src/backbone/db-client.js";
 import { Config } from "../../../../src/backbone/config.js";
 import dotenv from "dotenv";
-import { PATH_TO_CONFIG } from "../../../test-util/index.js";
+import { PATH_TO_CONFIG, testUtil } from "../../../test-util/index.js";
 import { JalEntity } from "../../../../src/entities/jal.entity.js";
 import { ProvingResultEntity } from "../../../../src/entities/proving-result.entity.js";
 import { assert, Const, equal, greaterOrEqual, mul, Static, sub, toJAL } from "@jaljs/js-zcred";
@@ -12,15 +12,20 @@ import { DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA } from "@sybil-center/passport";
 import { O1GraphLink, O1TrGraph } from "o1js-trgraph";
 import crypto from "node:crypto";
 import * as a from "uvu/assert";
-import * as u8a from "uint8arrays";
-import { ethers } from "ethers";
 import { KeyvEntity } from "../../../../src/entities/keyv.entity.js";
-import { Proposal, ProvingResult } from "../../../../src/types/index.js";
-import { ProgramInitResult } from "../../../../src/services/o1js-proof-verifier.js";
-import { ZkProgramInputTransformer, ZkProgramTranslator } from "@jaljs/o1js";
-import vm from "node:vm";
 import * as o1js from "o1js";
+import siwe from "siwe";
+import { SIWE_STATEMENT } from "../../../../src/consts/index.js";
+import { StrictId } from "@zcredjs/core";
+import { JalCommentEntity } from "../../../../src/entities/jal-comment.entity.js";
+import { Proposal, ProvingResult } from "../../../../src/types/index.js";
+import { ZkProgramInputTransformer, ZkProgramTranslator } from "@jaljs/o1js";
+import { ProgramInitResult } from "../../../../src/services/o1js-proof-verifier.js";
 import { InputTransformer } from "@jaljs/core";
+import vm from "node:vm";
+import * as u8a from "uint8arrays";
+import { VerificationResultEntity } from "../../../../src/entities/verification-result.entity.js";
+import { ethers } from "ethers";
 
 
 const test = suite("Custom verifier tests");
@@ -43,48 +48,51 @@ test.before(async () => {
 
 test.after(async () => {
   await db.delete(ProvingResultEntity).execute();
+  await db.delete(JalCommentEntity).execute();
+  await db.delete(VerificationResultEntity).execute();
   await db.delete(JalEntity).execute();
   await db.delete(KeyvEntity).execute();
   await app.close();
 });
 
+const {
+  credential,
+  context
+} = DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA;
+const attributes = credential.attributes;
+const jal = toJAL({
+  target: "o1js:zk-program.cjs",
+  credential: credential,
+  publicInput: [
+    attributes.document.sybilId,
+    context.now
+  ],
+  commands: [
+    assert(
+      greaterOrEqual(
+        sub(context.now, attributes.subject.birthDate),
+        mul(Static<O1GraphLink>(18, ["uint64-mina:field"]), Const("year"))
+      )
+    ),
+    assert(
+      equal(
+        attributes.countryCode,
+        Static("GBR", ["iso3166alpha3-iso3166numeric", "iso3166numeric-uint16", "uint16-mina:field"])
+      )
+    ),
+    assert(
+      greaterOrEqual(attributes.validUntil, context.now)
+    )
+  ],
+  options: {
+    signAlgorithm: "mina:pasta",
+    hashAlgorithm: "mina:poseidon"
+  }
+});
+
 
 test("create verifier, auth process ", async () => {
   // create JAL
-  const {
-    credential,
-    context
-  } = DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA;
-  const attributes = credential.attributes;
-  const jal = toJAL({
-    target: "o1js:zk-program.cjs",
-    credential: credential,
-    publicInput: [
-      attributes.document.sybilId,
-      context.now
-    ],
-    commands: [
-      assert(
-        greaterOrEqual(
-          sub(context.now, attributes.subject.birthDate),
-          mul(Static<O1GraphLink>(18, ["uint64-mina:field"]), Const("year"))
-        )
-      ),
-      assert(
-        equal(
-          attributes.countryCode,
-          Static("GBR", ["iso3166alpha3-iso3166numeric", "iso3166numeric-uint16", "uint16-mina:field"])
-        )
-      ),
-      assert(
-        greaterOrEqual(attributes.validUntil, context.now)
-      )
-    ],
-    options: {
-      signAlgorithm: "mina:pasta",
-      hashAlgorithm: "mina:poseidon"
-    }
-  });
   const createJalResp = await fastify.inject({
     path: "/api/v1/jal",
     method: "POST",
@@ -251,7 +259,7 @@ test("invalid credential", async () => {
     `Create JAL resp status code is not 200. Resp body: ${createJalResp.body}`
   );
   const { id: jalId } = JSON.parse(createJalResp.body);
-  a.ok(jalId, "JAL id is undefined in create JAL response body");
+  a.ok(jalId, "JAL id is undefined in  onse body");
 
   // get proposal
   const wallet = new ethers.Wallet("5e581a243f14358709139a988c71f073afb685d9b28b18b075c6aae662baa6f9");
@@ -313,8 +321,163 @@ test("invalid credential", async () => {
   a.ok(isJsonProofError, `ZK-proof creation must throw error`);
 });
 
+test("verification through v2", async () => {
+  // create jal program with comment;
+
+  const createJALSiweMessage = new siwe.SiweMessage({
+    domain: getServerDomainName(),
+    expirationTime: new Date(new Date().getTime() + 100 * 1000).toISOString(),
+    address: testUtil.ethereum.address,
+    statement: SIWE_STATEMENT.CREATE_JAL,
+    uri: new URL("./api/v2/jal", config.exposeDomain).href,
+    nonce: siwe.generateNonce(),
+    version: "1",
+    chainId: 1,
+    issuedAt: new Date().toISOString()
+  }).toMessage();
+  const createJALSiweSignature = await testUtil.ethereum.signMessage(createJALSiweMessage);
+  const createJalResp = await fastify.inject({
+    path: "/api/v2/jal",
+    method: "POST",
+    body: {
+      siwe: {
+        message: createJALSiweMessage,
+        signature: createJALSiweSignature
+      },
+      jalProgram: jal,
+      comment: "Comment"
+    }
+  });
+  a.is(createJalResp.statusCode, 201, `Create JAL status code resp is not 201. Resp body: ${createJalResp.body}`);
+  const { id: jalId } = JSON.parse(createJalResp.body) as { id: string };
+  // get proposal
+  const redirectURL = new URL("https://example.com").href;
+  const getProposalSiweMessage = new siwe.SiweMessage({
+    domain: getServerDomainName(),
+    expirationTime: new Date(new Date().getTime() + 100 * 1000).toISOString(),
+    address: testUtil.ethereum.address,
+    statement: SIWE_STATEMENT.GET_PROPOSAL,
+    uri: new URL(`./api/v2/verifier/${jalId}/proposal`, config.exposeDomain).href,
+    nonce: siwe.generateNonce(),
+    version: "1",
+    chainId: 1,
+    issuedAt: new Date().toISOString()
+  }).toMessage();
+  const getProposalSiweSignature = await testUtil.ethereum.signMessage(getProposalSiweMessage);
+  const clientSession = crypto.randomUUID();
+  const proposalResp = await fastify.inject({
+    path: `/api/v2/verifier/${jalId}/proposal`,
+    method: "POST",
+    body: {
+      subject: {
+        id: {
+          type: "ethereum:address",
+          key: testUtil.ethereum.address
+        } satisfies StrictId
+      },
+      client: {
+        session: clientSession,
+        siwe: {
+          message: getProposalSiweMessage,
+          signature: getProposalSiweSignature
+        }
+      },
+      redirectURL: redirectURL,
+      issuer: {
+        type: "http",
+        uri: "https://dev.issuer.sybil.center/issuers/passport/"
+      }
+    }
+  });
+  a.is(proposalResp.statusCode, 200, `Proposal response status code is not 200, Resp body: ${proposalResp.body}`);
+  const proposal = JSON.parse(proposalResp.body) as Proposal;
+  // calculate proof
+  const provingResult = await createProvingResult({
+    proposal: proposal,
+    signMessage: testUtil.ethereum.signMessage
+  });
+
+  const verifierURL = new URL(proposal.verifierURL);
+  const injectVerifierURL = verifierURL.pathname + verifierURL.search;
+  a.is(new URL(verifierURL.origin).href, new URL(config.exposeDomain).href);
+  const authResp = await fastify.inject({
+    method: "POST",
+    url: injectVerifierURL,
+    body: provingResult
+  });
+  a.is(authResp.statusCode, 200, `Auth response status code is not 200. Resp body: ${authResp.body}`);
+  const authResult: { redirectURL: string } = JSON.parse(authResp.body);
+  a.ok(authResult.redirectURL, `"redirect url is undefined"`);
+  const receivedRedirectURL = new URL(authResult.redirectURL);
+  a.is(receivedRedirectURL.searchParams.get("clientSession"), clientSession, `Client session from "redirectURL" is not match`);
+  a.is(receivedRedirectURL.searchParams.get("status"), "success", `status is not match from "redirectURL"`);
+  a.ok(receivedRedirectURL.searchParams.get("verificationResultId"), `"verificationResultId" from "redirectURL" is not defined`);
+  // verify verification result
+
+});
+
 test.run();
 
+function getServerDomainName() {
+  const hostnameSplit = new URL(config.exposeDomain).hostname.split(".");
+  return [
+    hostnameSplit[hostnameSplit.length - 1],
+    hostnameSplit[hostnameSplit.length - 2]
+  ].join(".");
+}
+
+async function createProvingResult(o: {
+  proposal: Proposal,
+  signMessage: (msg: string | Uint8Array) => Promise<string>
+}) {
+  const {
+    proposal,
+    signMessage
+  } = o;
+  // calculate proof
+  const translator = new ZkProgramTranslator(o1js, "commonjs");
+  const programCode = translator.translate(proposal.program);
+  const module = new vm.Script(programCode).runInThisContext();
+  const { zkProgram, PublicInput } = (await module.initialize(o1js) as ProgramInitResult);
+  const { verificationKey } = await zkProgram.compile();
+  const setup = {
+    private: {
+      credential: credentialEthAddress
+    },
+    public: {
+      context: {
+        now: new Date().toISOString()
+      }
+    }
+  };
+  const transformedInput = new ZkProgramInputTransformer(o1js).transform(
+    setup,
+    proposal.program.inputSchema
+  );
+  const jsonProof = await zkProgram.execute(
+    new PublicInput(transformedInput.public),
+    ...transformedInput.private
+  ).then((proof) => proof.toJSON());
+  a.is(
+    await o1js.verify(jsonProof, verificationKey.data), true,
+    `Proof is not verified`
+  );
+  const hexSignature = await signMessage(proposal.challenge.message);
+  const signature = u8a.toString(u8a.fromString(hexSignature.substring(2), "hex"), "base58btc");
+
+  // Build proving result
+  const originInput = new InputTransformer(
+    proposal.program.inputSchema,
+    trgraph
+  ).toInput(setup);
+
+  return {
+    signature: signature,
+    proof: jsonProof.proof,
+    publicInput: originInput["public"],
+    verificationKey: verificationKey.data
+  } satisfies ProvingResult;
+}
 
 const credentialEthAddress = {
   "meta": {

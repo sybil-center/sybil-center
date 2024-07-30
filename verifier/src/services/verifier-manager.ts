@@ -75,4 +75,5 @@ export class VerifierManager {
     return await verifier.verify(provingResult);
   }
 
+
 }

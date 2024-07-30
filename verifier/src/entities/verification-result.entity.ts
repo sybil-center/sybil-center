@@ -11,9 +11,11 @@ type ProvingResult = {
   verificationKey?: string;
 }
 
-type VerificationResultData = {
+export type VerificationResult = {
   provingResult?: ProvingResult;
+  exception?: JsonZcredException;
   session: {
+    id: string;
     subject: {
       id: Identifier;
     }
@@ -30,14 +32,17 @@ type VerificationResultData = {
       type: string;
       uri: string;
       accessToken?: string;
-    }
-  } & { [key: string]: unknown };
-  exception?: JsonZcredException;
+    };
+    challenge: {
+      message: string;
+    },
+    jalId: string;
+  };
 }
 
 export const VerificationResultEntity = pgTable("verification_result", {
   id: uuid("id").defaultRandom().primaryKey(),
-  data: jsonb("data").$type<VerificationResultData>().notNull(),
+  data: jsonb("data").$type<VerificationResult>().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true, precision: 3 })
     .defaultNow()
     .notNull(),
@@ -47,4 +52,4 @@ export const VerificationResultEntity = pgTable("verification_result", {
 });
 
 export type VerificationResultEntity = typeof VerificationResultEntity.$inferSelect;
-export type VerificationResultEntityNew = typeof VerificationResultEntity.$inferSelect;
+export type VerificationResultEntityNew = typeof VerificationResultEntity.$inferInsert;

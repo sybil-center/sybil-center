@@ -6,6 +6,7 @@ import { DbClient } from "../backbone/db-client.js";
 import * as o1js from "o1js";
 import { JalCommentService } from "./jal-comment.service.js";
 import { Identifier } from "@zcredjs/core";
+import { stringifyZCredtId } from "../util/index.js";
 
 type SaveWithComment = {
   jalProgram: JalProgram;
@@ -45,7 +46,7 @@ export class JalService {
 
   async saveWithComment(o: SaveWithComment) {
     const { id: jalId } = await this.save(o.jalProgram);
-    const subjectId = `${o.subject.id.type}:${o.subject.id.key}`;
+    const subjectId = stringifyZCredtId(o.subject.id);
     await this.jalCommentService.save({
       subjectId: subjectId,
       jalId: jalId,

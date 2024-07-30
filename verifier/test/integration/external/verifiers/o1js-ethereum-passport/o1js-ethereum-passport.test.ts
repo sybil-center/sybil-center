@@ -138,7 +138,6 @@ test("Success flow", async () => {
   a.is(receivedRedirectURL.origin, redirectURL.origin, "Redirect URL not match");
   const status = receivedRedirectURL.searchParams.get("status");
   a.is(status, "success", `Redirect URL query string status is not "success"`);
-  console.log(receivedRedirectURL.href);
   const getEthSybilResp = await fastify.inject({
     path: `/api/eth-sybil/${address}`,
     method: "GET"

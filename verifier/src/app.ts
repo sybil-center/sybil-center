@@ -28,6 +28,8 @@ import { CustomVerifierController } from "./controllers/custom-verifier.controll
 import { JalCommentStore } from "./stores/jal-comment.store.js";
 import { JalCommentService } from "./services/jal-comment.service.js";
 import { SiweService } from "./services/siwe-service.js";
+import { VerificationResultStore } from "./stores/verification-result.store.js";
+import { VerificationService } from "./services/verification.service.js";
 
 type PreDI = {
   config: Config;
@@ -45,6 +47,8 @@ type PreDI = {
   jalCommentStore: JalCommentStore;
   jalCommentService: JalCommentService;
   siweService: SiweService;
+  verificationResultStore: VerificationResultStore;
+  verificationService: VerificationService;
 }
 
 export type DI = PreDI & {
@@ -88,6 +92,8 @@ export class App {
       .provideClass("provingResultStore", ProvingResultStore)
       .provideClass("provingResultService", ProvingResultService)
       .provideClass("verifierManager", VerifierManager)
+      .provideClass("verificationResultStore", VerificationResultStore)
+      .provideClass("verificationService", VerificationService)
       .provideClass("httpServer", HttpServer) satisfies Injector<PreDI>;
 
     for (const [id, constructor] of (await getProposerConstructors()).entries()) {

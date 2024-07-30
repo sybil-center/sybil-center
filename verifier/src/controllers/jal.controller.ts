@@ -39,7 +39,7 @@ export function JalController(injector: Injector<DI>) {
   fastify.post<{
     Body: {
       jalProgram: JalProgram;
-      programComment: string;
+      comment: string;
       siwe: {
         message: string;
         signature: string;
@@ -52,7 +52,7 @@ export function JalController(injector: Injector<DI>) {
           message,
           signature
         },
-        programComment,
+        comment,
         jalProgram
       } = req.body;
       const { subject } = await siweService.verify({
@@ -63,7 +63,7 @@ export function JalController(injector: Injector<DI>) {
       const { id } = await jalService.saveWithComment({
         subject: subject,
         jalProgram: jalProgram,
-        comment: programComment
+        comment: comment
       });
       resp.statusCode = 201;
       return { id };

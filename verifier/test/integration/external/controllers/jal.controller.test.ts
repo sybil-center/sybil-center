@@ -139,7 +139,7 @@ test("Create JAL program with comment", async () => {
     path: "/api/v2/jal",
     body: {
       jalProgram: jalProgram,
-      programComment: "You won't pass verification if you younger than 18 y.o",
+      comment: "You won't pass verification if you younger than 18 y.o",
       siwe: {
         message: siweMessage,
         signature: siweSignature
