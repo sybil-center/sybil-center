@@ -25,9 +25,9 @@ export class SiweService {
     const siweObject = new siwe.SiweMessage(message);
     const {
       expirationTime,
-      domain,
       address,
-      statement
+      statement,
+      uri
     } = siweObject;
     if (options?.statement && options.statement !== statement) {
       throw new Error(`SIWE statement must be "${options.statement}"`);
@@ -42,13 +42,8 @@ export class SiweService {
     if (address.toLowerCase() !== recoverAddress.toLowerCase()) {
       throw new Error(`Invalid SIWE message or signature`);
     }
-    const hostnameSplit = new URL(this.config.exposeDomain).hostname.split(".");
-    const domainName = [
-      hostnameSplit[hostnameSplit.length - 1],
-      hostnameSplit[hostnameSplit.length - 2]
-    ].join(".");
-    if (!domain.endsWith(domainName)) {
-      throw new Error(`SIWE invalid domain, domain must end with ${domainName}`);
+    if (new URL(uri).hostname !== this.config.exposeDomain.hostname) {
+      throw new Error(`SIWE incorrect uri hostname, expected: ${this.config.exposeDomain.hostname}`)
     }
     return {
       subject: {
