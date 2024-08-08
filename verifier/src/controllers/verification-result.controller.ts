@@ -47,7 +47,7 @@ export function VerificationResultController(injector: Injector<DI>) {
       resp.statusCode = 400;
       return { message: `Verification result by id: ${verificationResultId}` };
     }
-    const expStrClientId = stringifyZCredtId(verificationResult.data.session.client.siwe.id);
+    const expStrClientId = stringifyZCredtId(verificationResult.data.session.client.id);
     if (strClientId !== expStrClientId) {
       resp.statusCode = 403;
       return { message: "Invalid SIWE message and signature" };

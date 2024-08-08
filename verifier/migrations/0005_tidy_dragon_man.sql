@@ -1,0 +1,1 @@
+ALTER TABLE "jal_comment" ADD CONSTRAINT "jal_comment_client_id_jal_id_pk" PRIMARY KEY("client_id","jal_id");

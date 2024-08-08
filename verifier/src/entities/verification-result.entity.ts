@@ -20,11 +20,11 @@ export type VerificationResult = {
       id: Identifier;
     }
     client: {
+      id: Identifier;
       session: string;
       siwe: {
         signature: string;
         message: string;
-        id: Identifier;
       }
     }
     webhookURL?: string;

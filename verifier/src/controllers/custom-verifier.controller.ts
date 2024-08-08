@@ -196,7 +196,7 @@ export function CustomVerifierController(injector: Injector<DI>) {
   fastify.post<{
     Params: { jalId: string };
     Body: Omit<SessionV2, "id" | "challenge" | "jalId" | "client"> & {
-      client: Omit<SessionV2["client"], "siwe"> & { siwe: Omit<SessionV2["client"]["siwe"], "id"> }
+      client: Omit<SessionV2["client"], "id">
     }
   }>("/api/v2/verifier/:jalId/proposal", {
     schema: {
@@ -274,10 +274,7 @@ export function CustomVerifierController(injector: Injector<DI>) {
         },
         client: {
           ...req.body.client,
-          siwe: {
-            ...req.body.client.siwe,
-            id: clientId
-          }
+          id: clientId
         },
         jalId: jalId,
       }, 12 * 3600 * 1000 /* 12 hours */);
@@ -345,7 +342,7 @@ export function CustomVerifierController(injector: Injector<DI>) {
         session: session
       },
       jalId: session.jalId,
-      clientId: stringifyZCredtId(session.client.siwe.id)
+      clientId: stringifyZCredtId(session.client.id)
     });
     const redirectURL = new URL(session.redirectURL);
     redirectURL.searchParams.set("clientSession", session.client.session);
@@ -372,7 +369,7 @@ export function CustomVerifierController(injector: Injector<DI>) {
         session: session
       },
       jalId: session.jalId,
-      clientId: stringifyZCredtId(session.client.siwe.id)
+      clientId: stringifyZCredtId(session.client.id)
     });
     redirectURL.searchParams.set("clientSession", session.client.session);
     redirectURL.searchParams.set("status", "exception");
