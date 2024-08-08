@@ -4,15 +4,27 @@ import { JalProgram } from "@jaljs/core";
 import { ZkProgramTranslator } from "@jaljs/o1js";
 import { DbClient } from "../backbone/db-client.js";
 import * as o1js from "o1js";
+import { JalCommentService } from "./jal-comment.service.js";
+import { Identifier } from "@zcredjs/core";
+import { stringifyZCredtId } from "../util/index.js";
+
+type SaveWithComment = {
+  jalProgram: JalProgram;
+  comment: string;
+  client: {
+    id: Identifier
+  }
+}
 
 export class JalService {
 
   private readonly db: DbClient["db"];
 
-  static inject = tokens("dbClient", "jalStore");
+  static inject = tokens("dbClient", "jalStore", "jalCommentService");
   constructor(
     dbClient: DbClient,
-    private readonly jalStore: JalStore
+    private readonly jalStore: JalStore,
+    private readonly jalCommentService: JalCommentService
   ) {
     this.db = dbClient.db;
   }
@@ -32,11 +44,22 @@ export class JalService {
     return { id };
   }
 
+  async saveWithComment(o: SaveWithComment): Promise<{ id: string }> {
+    const { id: jalId } = await this.save(o.jalProgram);
+    const subjectId = stringifyZCredtId(o.client.id);
+    await this.jalCommentService.save({
+      clientId: subjectId,
+      jalId: jalId,
+      comment: o.comment
+    });
+    return { id: jalId };
+  }
+
   async getById(id: string) {
     return await this.jalStore.getById(id);
   }
 
   async findById(id: string) {
-    return await this.jalStore.findById(id)
+    return await this.jalStore.findById(id);
   }
 }
