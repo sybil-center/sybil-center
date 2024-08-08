@@ -27,7 +27,6 @@ import * as u8a from "uint8arrays";
 import { VerificationResultEntity } from "../../../../src/entities/verification-result.entity.js";
 import { ethers } from "ethers";
 
-
 const test = suite("Custom verifier tests");
 
 const trgraph = new O1TrGraph(o1js);
@@ -352,17 +351,10 @@ test("verification through v2", async () => {
   const { id: jalId } = JSON.parse(createJalResp.body) as { id: string };
   // get proposal
   const redirectURL = new URL("https://example.com").href;
-  const getProposalSiweMessage = new siwe.SiweMessage({
-    domain: getServerDomainName(),
-    expirationTime: new Date(new Date().getTime() + 100 * 1000).toISOString(),
-    address: testUtil.ethereum.address,
+  const getProposalSiweMessage = createSiweMessage({
     statement: SIWE_STATEMENT.GET_PROPOSAL,
     uri: new URL(`./api/v2/verifier/${jalId}/proposal`, config.exposeDomain).href,
-    nonce: siwe.generateNonce(),
-    version: "1",
-    chainId: 1,
-    issuedAt: new Date().toISOString()
-  }).toMessage();
+  });
   const getProposalSiweSignature = await testUtil.ethereum.signMessage(getProposalSiweMessage);
   const clientSession = crypto.randomUUID();
   const proposalResp = await fastify.inject({
@@ -412,8 +404,34 @@ test("verification through v2", async () => {
   a.is(receivedRedirectURL.searchParams.get("clientSession"), clientSession, `Client session from "redirectURL" is not match`);
   a.is(receivedRedirectURL.searchParams.get("status"), "success", `status is not match from "redirectURL"`);
   a.ok(receivedRedirectURL.searchParams.get("verificationResultId"), `"verificationResultId" from "redirectURL" is not defined`);
-  // verify verification result
+  // get verification result
 
+  const verificationResultId = receivedRedirectURL.searchParams.get("verificationResultId")!;
+  const verificationResultSiweMsg = createSiweMessage({
+    statement: SIWE_STATEMENT.GET_VERIFICATION_RESULT,
+    uri: new URL(`/api/v2/verification-result/${verificationResultId}`, config.exposeDomain).href
+  });
+  const verificationResultSiweSignature = await testUtil.ethereum.signMessage(verificationResultSiweMsg);
+  const verificationResultResp = await fastify.inject({
+    method: "POST",
+    path: `/api/v2/verification-result/${verificationResultId}`,
+    payload: {
+      siwe: {
+        message: verificationResultSiweMsg,
+        signature: verificationResultSiweSignature
+      }
+    }
+  });
+  a.is(
+    verificationResultResp.statusCode, 200,
+    `Verification result resp status code is not 200. Resp body: ${verificationResultResp.body}`
+  );
+  const verificationResult = await JSON.parse(verificationResultResp.body) as VerificationResultEntity;
+  a.is(
+    verificationResult.clientId,
+    testUtil.ethereum.stringZcredId,
+    `Verification result client id is not match`
+  );
 });
 
 test.run();
@@ -424,6 +442,25 @@ function getServerDomainName() {
     hostnameSplit[hostnameSplit.length - 1],
     hostnameSplit[hostnameSplit.length - 2]
   ].join(".");
+}
+
+type CreateSiweMessage = {
+  statement: string;
+  uri?: string;
+}
+
+function createSiweMessage({ statement, uri }: CreateSiweMessage) {
+  return new siwe.SiweMessage({
+    domain: getServerDomainName(),
+    expirationTime: new Date(new Date().getTime() + 100 * 1000).toISOString(),
+    address: testUtil.ethereum.address,
+    statement: statement,
+    uri: uri ? uri : new URL(`./api/v2/verifier/123123/proposal`, config.exposeDomain).href,
+    nonce: siwe.generateNonce(),
+    version: "1",
+    chainId: 1,
+    issuedAt: new Date().toISOString()
+  }).toMessage();
 }
 
 async function createProvingResult(o: {

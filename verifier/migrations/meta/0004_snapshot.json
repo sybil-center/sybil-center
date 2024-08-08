@@ -1,5 +1,5 @@
 {
-  "id": "8f1df957-6234-4470-9832-dcd82fe06a2a",
+  "id": "de8b5ca4-8f33-4c8d-b091-6c95e0dac891",
   "prevId": "1c843079-b48e-4bca-841c-35f8c0934024",
   "version": "7",
   "dialect": "postgresql",
@@ -57,44 +57,6 @@
           "nullsNotDistinct": false,
           "columns": [
             "address"
-          ]
-        }
-      }
-    },
-    "public.client": {
-      "name": "client",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "subject_id": {
-          "name": "subject_id",
-          "type": "varchar(300)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "token_map": {
-          "name": "token_map",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "client_subject_id_unique": {
-          "name": "client_subject_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "subject_id"
           ]
         }
       }
@@ -210,8 +172,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "subject_id": {
-          "name": "subject_id",
+        "client_id": {
+          "name": "client_id",
           "type": "varchar(300)",
           "primaryKey": false,
           "notNull": true
@@ -239,15 +201,7 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {
-        "jal_comment_subject_id_jal_id_pk": {
-          "name": "jal_comment_subject_id_jal_id_pk",
-          "columns": [
-            "subject_id",
-            "jal_id"
-          ]
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
     "public.verification_result": {
@@ -264,6 +218,12 @@
         "data": {
           "name": "data",
           "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "varchar(256)",
           "primaryKey": false,
           "notNull": true
         },

@@ -43,14 +43,12 @@ export class SiweService {
       throw new Error(`Invalid SIWE message or signature`);
     }
     if (new URL(uri).hostname !== this.config.exposeDomain.hostname) {
-      throw new Error(`SIWE incorrect uri hostname, expected: ${this.config.exposeDomain.hostname}`)
+      throw new Error(`SIWE incorrect uri hostname, expected: ${this.config.exposeDomain.hostname}`);
     }
     return {
-      subject: {
-        id: {
-          type: "ethereum:address",
-          key: address
-        }
+      id: {
+        type: "ethereum:address",
+        key: address
       },
       siweObject: siweObject
     };

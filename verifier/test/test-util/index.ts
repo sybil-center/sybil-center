@@ -12,6 +12,11 @@ export const testUtil = {
     privateKey: ethPrivateKey,
     publicKey: ethWallet.getAddress(),
     signMessage: (message: Parameters<Wallet["signMessage"]>[0]) => ethWallet.signMessage(message),
-    wallet: ethWallet
+    wallet: ethWallet,
+    stringZcredId: `ethereum:address:${ethWallet.address.toLowerCase()}`,
+    zcredId: {
+      type: "ethereum:address",
+      key: ethWallet.address.toLowerCase()
+    }
   }
 };

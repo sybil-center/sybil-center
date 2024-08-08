@@ -50,7 +50,6 @@ export class ZcredResultHandler implements IZcredResultHandler {
   static inject = tokens(
     "config",
     "ethSybilStore",
-    "clientService"
   );
   constructor(
     private readonly config: Config,

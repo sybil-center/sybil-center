@@ -24,7 +24,7 @@ export class VerificationService {
 
   async verifyResult({
     result,
-    jalId
+    jalId,
   }: VerifyResult): Promise<{
     ok: boolean;
     msg?: string;
@@ -86,5 +86,13 @@ export class VerificationService {
       return { ok: true, id: id };
     }
     throw new Error(`Invalid verification result input`);
+  }
+
+  async getVerificationResultById(id: string): Promise<VerificationResultEntity | undefined> {
+    return await this.verificationResultStore.getById(id);
+  }
+
+  async findVerificationResultById(id: string): Promise<VerificationResultEntity> {
+    return await this.verificationResultStore.findById(id);
   }
 }

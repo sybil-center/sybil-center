@@ -16,14 +16,14 @@ export class JalCommentStore {
   }
 
   async save(o: JalCommentEntityNew, tx?: PgTxn) {
-    const { subjectId } = o;
-    const idSplit = subjectId.split(":");
+    const clientId = o.clientId;
+    const idSplit = clientId.split(":");
     const [namespace, reference, publickey] = idSplit;
     if (!namespace || !reference || !publickey) {
       throw new Error(`Can not save jal program comment, invalid subject id representation`);
     }
-    if (subjectId.startsWith("ethereum:address")) {
-      o.subjectId = [namespace, reference, publickey.toLowerCase()].join(":");
+    if (clientId.startsWith("ethereum:address")) {
+      o.clientId = [namespace, reference, publickey.toLowerCase()].join(":");
     }
     if (idSplit.length !== 3) throw new Error(`Invalid subject id string representation`);
     const executor = tx ? tx : this.db;
@@ -31,7 +31,7 @@ export class JalCommentStore {
       .insert(JalCommentEntity)
       .values(o)
       .returning({
-        subjectId: JalCommentEntity.subjectId,
+        clientId: JalCommentEntity.clientId,
         jalId: JalCommentEntity.jalId
       })
       .execute();
@@ -39,7 +39,7 @@ export class JalCommentStore {
   }
 
   async updateComment(
-    { jalId, subjectId, comment }: Pick<JalCommentEntity, "comment" | "jalId" | "subjectId">,
+    { jalId, clientId, comment }: Pick<JalCommentEntity, "comment" | "jalId" | "clientId">,
     tx?: PgTxn
   ) {
     const executor = tx ? tx : this.db;
@@ -47,10 +47,10 @@ export class JalCommentStore {
       .set({ comment: comment })
       .where(and(
         eq(JalCommentEntity.jalId, jalId),
-        eq(JalCommentEntity.subjectId, subjectId)
+        eq(JalCommentEntity.clientId, clientId)
       ))
       .execute();
-    return { jalId, subjectId };
+    return { jalId, clientId };
   }
 
   async getOne(o: Partial<JalCommentEntity>, tx?: PgTxn) {

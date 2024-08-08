@@ -37,7 +37,7 @@ export class VerificationResultStore {
     return result;
   }
 
-  async findByIs(id: string, tx?: PgTxn): Promise<VerificationResultEntity> {
+  async findById(id: string, tx?: PgTxn): Promise<VerificationResultEntity> {
     const entity = await this.getById(id, tx);
     if (entity) return entity;
     throw new Error(`Can not find Verification Result by id: ${id}`);

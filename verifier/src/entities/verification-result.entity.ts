@@ -24,6 +24,7 @@ export type VerificationResult = {
       siwe: {
         signature: string;
         message: string;
+        id: Identifier;
       }
     }
     webhookURL?: string;
@@ -43,6 +44,8 @@ export type VerificationResult = {
 export const VerificationResultEntity = pgTable("verification_result", {
   id: uuid("id").defaultRandom().primaryKey(),
   data: jsonb("data").$type<VerificationResult>().notNull(),
+  // owner stringify ZCIP-2 identifier
+  clientId: varchar("client_id", { length: 256 }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true, precision: 3 })
     .defaultNow()
     .notNull(),

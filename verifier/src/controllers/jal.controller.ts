@@ -31,7 +31,7 @@ export function JalController(injector: Injector<DI>) {
         program: jalEntity.program
       };
     }
-    resp.statusCode === 400;
+    resp.statusCode = 400;
     return { message: `Can not find JAL by id: ${jalId}` };
   });
 
@@ -55,13 +55,13 @@ export function JalController(injector: Injector<DI>) {
         comment,
         jalProgram
       } = req.body;
-      const { subject } = await siweService.verify({
+      const { id: clientId } = await siweService.verify({
         message: message,
         signature: signature
       }, { statement: SIWE_STATEMENT.CREATE_JAL });
 
       const { id } = await jalService.saveWithComment({
-        subject: subject,
+        client: { id: clientId },
         jalProgram: jalProgram,
         comment: comment
       });

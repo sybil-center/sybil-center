@@ -11,7 +11,7 @@ import { stringifyZCredtId } from "../util/index.js";
 type SaveWithComment = {
   jalProgram: JalProgram;
   comment: string;
-  subject: {
+  client: {
     id: Identifier
   }
 }
@@ -44,11 +44,11 @@ export class JalService {
     return { id };
   }
 
-  async saveWithComment(o: SaveWithComment) {
+  async saveWithComment(o: SaveWithComment): Promise<{ id: string }> {
     const { id: jalId } = await this.save(o.jalProgram);
-    const subjectId = stringifyZCredtId(o.subject.id);
+    const subjectId = stringifyZCredtId(o.client.id);
     await this.jalCommentService.save({
-      subjectId: subjectId,
+      clientId: subjectId,
       jalId: jalId,
       comment: o.comment
     });

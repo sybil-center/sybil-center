@@ -17,7 +17,7 @@ export class JalCommentService {
   async save(o: JalCommentEntityNew) {
     return await this.db.transaction(async (tx) => {
       const entity = await this.jalCommentStore.getOne({
-        subjectId: o.subjectId,
+        clientId: o.clientId,
         jalId: o.jalId
       }, tx);
       if (!entity) {
@@ -25,12 +25,12 @@ export class JalCommentService {
       }
       if (entity.comment !== o.comment) {
         return await this.jalCommentStore.updateComment({
-          subjectId: entity.subjectId,
+          clientId: entity.clientId,
           jalId: entity.jalId,
           comment: o.comment
         }, tx);
       }
-      return { jalId: entity.jalId, subjectId: entity.subjectId };
+      return { jalId: entity.jalId, clientId: entity.clientId };
     });
   }
 

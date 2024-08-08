@@ -195,7 +195,9 @@ export function CustomVerifierController(injector: Injector<DI>) {
 
   fastify.post<{
     Params: { jalId: string };
-    Body: Omit<SessionV2, "id" | "challenge" | "jalId">
+    Body: Omit<SessionV2, "id" | "challenge" | "jalId" | "client"> & {
+      client: Omit<SessionV2["client"], "siwe"> & { siwe: Omit<SessionV2["client"]["siwe"], "id"> }
+    }
   }>("/api/v2/verifier/:jalId/proposal", {
     schema: {
       body: {
@@ -258,24 +260,32 @@ export function CustomVerifierController(injector: Injector<DI>) {
       verifierURL: verifierURL.href,
       nonce: sessionId
     });
+    const { id: clientId } = await siweService.verify({
+      message: req.body.client.siwe.message,
+      signature: req.body.client.siwe.signature
+    }, { statement: SIWE_STATEMENT.GET_PROPOSAL });
     const foundSession = await cacheV2.get(sessionId);
     if (!foundSession) {
       await cacheV2.set(sessionId, {
+        ...req.body,
         id: sessionId,
         challenge: {
           message: challengeMessage
         },
+        client: {
+          ...req.body.client,
+          siwe: {
+            ...req.body.client.siwe,
+            id: clientId
+          }
+        },
         jalId: jalId,
-        ...req.body
       }, 12 * 3600 * 1000 /* 12 hours */);
     }
-    const { subject } = await siweService.verify({
-      message: req.body.client.siwe.message,
-      signature: req.body.client.siwe.signature
-    }, { statement: SIWE_STATEMENT.GET_PROPOSAL });
+
     const foundComment = await jalCommentService.getOne({
       jalId: jalId,
-      subjectId: stringifyZCredtId(subject.id)
+      clientId: stringifyZCredtId(clientId)
     });
     const { program, selector } = await verifierManager.getProposal({
       jalId: jalId,
@@ -334,7 +344,8 @@ export function CustomVerifierController(injector: Injector<DI>) {
         },
         session: session
       },
-      jalId: session.jalId
+      jalId: session.jalId,
+      clientId: stringifyZCredtId(session.client.siwe.id)
     });
     const redirectURL = new URL(session.redirectURL);
     redirectURL.searchParams.set("clientSession", session.client.session);
@@ -360,7 +371,8 @@ export function CustomVerifierController(injector: Injector<DI>) {
         exception: exception,
         session: session
       },
-      jalId: session.jalId
+      jalId: session.jalId,
+      clientId: stringifyZCredtId(session.client.siwe.id)
     });
     redirectURL.searchParams.set("clientSession", session.client.session);
     redirectURL.searchParams.set("status", "exception");
