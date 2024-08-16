@@ -28,12 +28,14 @@ import { SiweService } from "./services/siwe.service.js";
 import { VerificationResultStore } from "./stores/verification-result.store.js";
 import { VerificationService } from "./services/verification.service.js";
 import { VerificationResultController } from "./controllers/verification-result.controller.js";
+import { VerificationWebhookStore } from "./stores/verification-webhook.store.js";
 
 type PreDI = {
   config: Config;
   httpServer: HttpServer;
   dbClient: DbClient;
   ethSybilStore: EthSybilStore;
+  verificationWebhookStore: VerificationWebhookStore;
   cacheClient: CacheClient;
   jalStore: JalStore;
   jalService: JalService;
@@ -51,6 +53,9 @@ export type DI = PreDI & {
   mainProposer: MainProposer;
   mainZcredResultHandler: MainZcredResultHandler;
 }
+
+
+export type Tokens<T extends keyof DI> = keyof Pick<DI, T>
 
 export class App {
   private _context?: Injector<DI>;
@@ -79,6 +84,7 @@ export class App {
         .provideClass("cacheClient", CacheClient)
         .provideClass("dbClient", DbClient)
         .provideClass("ethSybilStore", EthSybilStore)
+        .provideClass("verificationWebhookStore", VerificationWebhookStore)
         .provideClass("jalStore", JalStore)
         .provideClass("jalCommentStore", JalCommentStore)
         .provideClass("jalCommentService", JalCommentService)
