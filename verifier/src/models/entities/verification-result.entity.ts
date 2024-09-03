@@ -18,14 +18,9 @@ export type VerificationResult = {
     id: string;
     subject: {
       id: Identifier;
-    }
+    };
     client: {
       id: Identifier;
-      session: string;
-      siwe: {
-        signature: string;
-        message: string;
-      }
     }
     webhookURL?: string;
     redirectURL: string;
@@ -34,9 +29,6 @@ export type VerificationResult = {
       uri: string;
       accessToken?: string;
     };
-    challenge: {
-      message: string;
-    },
     jalId: string;
   };
 }

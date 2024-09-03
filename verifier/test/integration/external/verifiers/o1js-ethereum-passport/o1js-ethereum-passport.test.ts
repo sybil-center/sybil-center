@@ -15,7 +15,7 @@ import { O1TrGraph } from "o1js-trgraph";
 import crypto from "node:crypto";
 import * as u8a from "uint8arrays";
 import { Config } from "../../../../../src/backbone/config.js";
-import { EthSybilEntity } from "../../../../../src/entities/eth-sybil.entity.js";
+import { EthSybilEntity } from "../../../../../src/models/entities/eth-sybil.entity.js";
 import secp256k1 from "secp256k1";
 import { DbClient } from "../../../../../src/backbone/db-client.js";
 
@@ -114,7 +114,8 @@ test("Success flow", async () => {
     signature: signature,
     proof: jsonProof.proof,
     publicInput: originInput["public"],
-    verificationKey: verificationKey.data
+    verificationKey: verificationKey.data,
+    message: proposal.challenge.message
   };
 
   // Send proving result

@@ -2,7 +2,7 @@ import { DbClient } from "../backbone/db-client.js";
 import { tokens } from "typed-inject";
 import { JalProgram } from "@jaljs/core";
 import { PgTxn } from "./eth-sybil.store.js";
-import { JalEntity, JalEntityNew } from "../entities/jal.entity.js";
+import { JalEntity, JalEntityNew } from "../models/entities/jal.entity.js";
 import sortKeys from "sort-keys";
 import crypto from "node:crypto";
 import { eq, sql } from "drizzle-orm";

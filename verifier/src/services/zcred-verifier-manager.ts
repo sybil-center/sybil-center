@@ -5,6 +5,7 @@ import { Identifier, VEC } from "@zcredjs/core";
 import { IZkProofVerifier } from "../types/zk-proof-verifier.js";
 import { O1JSProofVerifier } from "./o1js-proof-verifier.js";
 import { VerifierException } from "../backbone/exception.js";
+import { verifySignature } from "./signature-verifier.js";
 
 type GetProposal = {
   jalId: string;
@@ -17,7 +18,7 @@ type Verify = {
   provingResult: ProvingResult;
 }
 
-export class VerifierManager {
+export class ZcredVerifierManager {
 
   static inject = tokens("jalService");
   constructor(
@@ -60,6 +61,13 @@ export class VerifierManager {
 
   async verify({ jalId, provingResult }: Verify): Promise<boolean> {
     const verifierPromise = this.zkProofVerifiers[jalId];
+    const subjectId = provingResult.publicInput.credential.attributes.subject.id;
+    const isSignatureVerified = await verifySignature({
+      message: provingResult.message,
+      signature: provingResult.signature,
+      subject: { id: subjectId }
+    });
+    if (!isSignatureVerified) return false;
     if (!verifierPromise) {
       const jalEntity = await this.jalService.getById(jalId);
       if (!jalEntity) throw new VerifierException({

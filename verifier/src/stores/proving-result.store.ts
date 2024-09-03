@@ -1,7 +1,7 @@
 import { DbClient } from "../backbone/db-client.js";
 import { tokens } from "typed-inject";
 import { ProvingResult } from "../types/index.js";
-import { ProvingResultEntity } from "../entities/proving-result.entity.js";
+import { ProvingResultEntity } from "../models/entities/proving-result.entity.js";
 import { PgTxn } from "./eth-sybil.store.js";
 import { eq, sql } from "drizzle-orm";
 

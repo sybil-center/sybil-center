@@ -5,7 +5,7 @@ import { PATH_TO_CONFIG, testUtil } from "../../../test-util/index.js";
 import { FastifyInstance } from "fastify";
 import crypto from "node:crypto";
 import { DbClient } from "../../../../src/backbone/db-client.js";
-import { JalEntity } from "../../../../src/entities/jal.entity.js";
+import { JalEntity } from "../../../../src/models/entities/jal.entity.js";
 import { assert, Const, greaterOrEqual, mul, Static, sub, toJAL } from "@jaljs/js-zcred";
 import { DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA } from "@sybil-center/passport";
 import { O1GraphLink } from "o1js-trgraph";
@@ -13,10 +13,10 @@ import * as a from "uvu/assert";
 import { JalProgram } from "@jaljs/core";
 import sortKeys from "sort-keys";
 import { JalService } from "../../../../src/services/jal.service.js";
-import siwe from "siwe";
 import { Config } from "../../../../src/backbone/config.js";
-import { SIWE_STATEMENT } from "../../../../src/consts/index.js";
-import { JalCommentEntity } from "../../../../src/entities/jal-comment.entity.js";
+import { VERIFIER_STATEMENT } from "../../../../src/consts/index.js";
+import { JalCommentEntity } from "../../../../src/models/entities/jal-comment.entity.js";
+import { CreateClientJalProgram } from "../../../../src/controllers/jal.controller.js";
 
 let app: App;
 let db: DbClient["db"];
@@ -25,7 +25,6 @@ let jalService: JalService;
 let config: Config;
 
 const test = suite("JAL controller test");
-
 
 test.before(async () => {
   dotenv.config({ path: PATH_TO_CONFIG, override: true });
@@ -90,11 +89,6 @@ test("create jal program", async () => {
 });
 
 test("Create JAL program with comment", async () => {
-  const hostnameSplit = new URL(config.exposeDomain).hostname.split(".");
-  const domainName = [
-    hostnameSplit[hostnameSplit.length - 1],
-    hostnameSplit[hostnameSplit.length - 2]
-  ].join(".");
   const {
     credential,
     context
@@ -122,29 +116,20 @@ test("Create JAL program with comment", async () => {
       hashAlgorithm: "mina:poseidon"
     }
   });
-  const siweMessage = new siwe.SiweMessage({
-    domain: domainName,
-    expirationTime: new Date(new Date().getTime() + 100 * 1000).toISOString(),
-    address: testUtil.ethereum.address,
-    statement: SIWE_STATEMENT.CREATE_JAL,
-    uri: new URL("./api/v2/jal", config.exposeDomain).href,
-    nonce: siwe.generateNonce(),
-    version: "1",
-    chainId: 1,
-    issuedAt: new Date().toISOString()
-  }).toMessage();
-  const siweSignature = await testUtil.ethereum.signMessage(siweMessage);
+  const jws = await testUtil.createClientJWS({
+    statement: VERIFIER_STATEMENT.CREATE_JAL,
+    origin: config.exposeDomain.origin,
+  });
   const createJalResp = await fastify.inject({
     method: "POST",
     path: "/api/v2/jal",
+    headers: {
+      Authorization: `Bearer ${jws}`
+    },
     body: {
       jalProgram: jalProgram,
       comment: "You won't pass verification if you younger than 18 y.o",
-      siwe: {
-        message: siweMessage,
-        signature: siweSignature
-      }
-    }
+    } satisfies CreateClientJalProgram
   });
   a.is(createJalResp.statusCode, 201, `Create jal status code is not 201. Resp body: ${createJalResp.body}`);
   const { id: jalId } = JSON.parse(createJalResp.body) as { id: string };
@@ -153,12 +138,11 @@ test("Create JAL program with comment", async () => {
   a.equal(jalEntity.program, jalProgram, "Invalid saved jal program");
 });
 
-test.run();
-
-
 function toJalEntityId(jalProgram: JalProgram): string {
   const sorted = sortKeys(jalProgram, { deep: true });
   return crypto.createHash("sha256")
     .update(JSON.stringify(sorted))
     .digest("hex");
 }
+
+test.run();

@@ -1,7 +1,7 @@
 import { tokens } from "typed-inject";
 import { JalCommentStore } from "../stores/jal-comment.store.js";
 import { DbClient } from "../backbone/db-client.js";
-import { JalCommentEntity, JalCommentEntityNew } from "../entities/jal-comment.entity.js";
+import { JalCommentEntity, JalCommentEntityNew } from "../models/entities/jal-comment.entity.js";
 
 export class JalCommentService {
 

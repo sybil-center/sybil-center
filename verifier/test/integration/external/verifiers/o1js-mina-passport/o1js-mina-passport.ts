@@ -113,6 +113,7 @@ test("Success flow", async () => {
 
   const provingResult: ProvingResult = {
     signature: signature,
+    message: proposal.challenge.message,
     proof: jsonProof.proof,
     publicInput: originInput["public"],
     verificationKey: verificationKey.data

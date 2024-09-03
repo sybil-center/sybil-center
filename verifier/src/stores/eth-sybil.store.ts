@@ -1,7 +1,7 @@
 import { DbClient } from "../backbone/db-client.js";
 import { tokens } from "typed-inject";
 import { eq } from "drizzle-orm";
-import { EthSybilEntity, EthSybilEntityNew } from "../entities/eth-sybil.entity.js";
+import { EthSybilEntity, EthSybilEntityNew } from "../models/entities/eth-sybil.entity.js";
 
 
 export type PgTxn = Parameters<Parameters<DbClient["db"]["transaction"]>[0]>[0] | DbClient["db"]

@@ -1,6 +1,6 @@
 import { tokens } from "typed-inject";
 import { DbClient } from "../backbone/db-client.js";
-import { VerificationResultEntity, VerificationResultEntityNew } from "../entities/verification-result.entity.js";
+import { VerificationResultEntity, VerificationResultEntityNew } from "../models/entities/verification-result.entity.js";
 import { eq, sql } from "drizzle-orm";
 import { PgTxn } from "./eth-sybil.store.js";
 

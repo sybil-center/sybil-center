@@ -4,27 +4,24 @@ import { FastifyInstance } from "fastify";
 import { DbClient } from "../../../../src/backbone/db-client.js";
 import { Config } from "../../../../src/backbone/config.js";
 import dotenv from "dotenv";
-import { PATH_TO_CONFIG, testUtil } from "../../../test-util/index.js";
-import { JalEntity } from "../../../../src/entities/jal.entity.js";
-import { ProvingResultEntity } from "../../../../src/entities/proving-result.entity.js";
+import { PATH_TO_CONFIG } from "../../../test-util/index.js";
+import { JalEntity } from "../../../../src/models/entities/jal.entity.js";
+import { ProvingResultEntity } from "../../../../src/models/entities/proving-result.entity.js";
 import { assert, Const, equal, greaterOrEqual, mul, Static, sub, toJAL } from "@jaljs/js-zcred";
 import { DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA } from "@sybil-center/passport";
 import { O1GraphLink, O1TrGraph } from "o1js-trgraph";
 import crypto from "node:crypto";
 import * as a from "uvu/assert";
-import { KeyvEntity } from "../../../../src/entities/keyv.entity.js";
+import { KeyvEntity } from "../../../../src/models/entities/keyv.entity.js";
 import * as o1js from "o1js";
-import siwe from "siwe";
-import { SIWE_STATEMENT } from "../../../../src/consts/index.js";
-import { StrictId } from "@zcredjs/core";
-import { JalCommentEntity } from "../../../../src/entities/jal-comment.entity.js";
+import { JalCommentEntity } from "../../../../src/models/entities/jal-comment.entity.js";
 import { Proposal, ProvingResult } from "../../../../src/types/index.js";
 import { ZkProgramInputTransformer, ZkProgramTranslator } from "@jaljs/o1js";
 import { ProgramInitResult } from "../../../../src/services/o1js-proof-verifier.js";
 import { InputTransformer } from "@jaljs/core";
 import vm from "node:vm";
 import * as u8a from "uint8arrays";
-import { VerificationResultEntity } from "../../../../src/entities/verification-result.entity.js";
+import { VerificationResultEntity } from "../../../../src/models/entities/verification-result.entity.js";
 import { ethers } from "ethers";
 
 const test = suite("Custom verifier tests");
@@ -172,6 +169,7 @@ test("create verifier, auth process ", async () => {
 
   const provingResult: ProvingResult = {
     signature: signature,
+    message: proposal.challenge.message,
     proof: jsonProof.proof,
     publicInput: originInput["public"],
     verificationKey: verificationKey.data
@@ -319,202 +317,6 @@ test("invalid credential", async () => {
   }
   a.ok(isJsonProofError, `ZK-proof creation must throw error`);
 });
-
-test("verification through v2", async () => {
-  // create jal program with comment;
-
-  const createJALSiweMessage = new siwe.SiweMessage({
-    domain: getServerDomainName(),
-    expirationTime: new Date(new Date().getTime() + 100 * 1000).toISOString(),
-    address: testUtil.ethereum.address,
-    statement: SIWE_STATEMENT.CREATE_JAL,
-    uri: new URL("./api/v2/jal", config.exposeDomain).href,
-    nonce: siwe.generateNonce(),
-    version: "1",
-    chainId: 1,
-    issuedAt: new Date().toISOString()
-  }).toMessage();
-  const createJALSiweSignature = await testUtil.ethereum.signMessage(createJALSiweMessage);
-  const createJalResp = await fastify.inject({
-    path: "/api/v2/jal",
-    method: "POST",
-    body: {
-      siwe: {
-        message: createJALSiweMessage,
-        signature: createJALSiweSignature
-      },
-      jalProgram: jal,
-      comment: "Comment"
-    }
-  });
-  a.is(createJalResp.statusCode, 201, `Create JAL status code resp is not 201. Resp body: ${createJalResp.body}`);
-  const { id: jalId } = JSON.parse(createJalResp.body) as { id: string };
-  // get proposal
-  const redirectURL = new URL("https://example.com").href;
-  const getProposalSiweMessage = createSiweMessage({
-    statement: SIWE_STATEMENT.GET_PROPOSAL,
-    uri: new URL(`./api/v2/verifier/${jalId}/proposal`, config.exposeDomain).href,
-  });
-  const getProposalSiweSignature = await testUtil.ethereum.signMessage(getProposalSiweMessage);
-  const clientSession = crypto.randomUUID();
-  const proposalResp = await fastify.inject({
-    path: `/api/v2/verifier/${jalId}/proposal`,
-    method: "POST",
-    body: {
-      subject: {
-        id: {
-          type: "ethereum:address",
-          key: testUtil.ethereum.address
-        } satisfies StrictId
-      },
-      client: {
-        session: clientSession,
-        siwe: {
-          message: getProposalSiweMessage,
-          signature: getProposalSiweSignature
-        }
-      },
-      redirectURL: redirectURL,
-      issuer: {
-        type: "http",
-        uri: "https://dev.issuer.sybil.center/issuers/passport/"
-      }
-    }
-  });
-  a.is(proposalResp.statusCode, 200, `Proposal response status code is not 200, Resp body: ${proposalResp.body}`);
-  const proposal = JSON.parse(proposalResp.body) as Proposal;
-  // calculate proof
-  const provingResult = await createProvingResult({
-    proposal: proposal,
-    signMessage: testUtil.ethereum.signMessage
-  });
-
-  const verifierURL = new URL(proposal.verifierURL);
-  const injectVerifierURL = verifierURL.pathname + verifierURL.search;
-  a.is(new URL(verifierURL.origin).href, new URL(config.exposeDomain).href);
-  const authResp = await fastify.inject({
-    method: "POST",
-    url: injectVerifierURL,
-    body: provingResult
-  });
-  a.is(authResp.statusCode, 200, `Auth response status code is not 200. Resp body: ${authResp.body}`);
-  const authResult: { redirectURL: string } = JSON.parse(authResp.body);
-  a.ok(authResult.redirectURL, `"redirect url is undefined"`);
-  const receivedRedirectURL = new URL(authResult.redirectURL);
-  a.is(receivedRedirectURL.searchParams.get("clientSession"), clientSession, `Client session from "redirectURL" is not match`);
-  a.is(receivedRedirectURL.searchParams.get("status"), "success", `status is not match from "redirectURL"`);
-  a.ok(receivedRedirectURL.searchParams.get("verificationResultId"), `"verificationResultId" from "redirectURL" is not defined`);
-  // get verification result
-
-  const verificationResultId = receivedRedirectURL.searchParams.get("verificationResultId")!;
-  const verificationResultSiweMsg = createSiweMessage({
-    statement: SIWE_STATEMENT.GET_VERIFICATION_RESULT,
-    uri: new URL(`/api/v2/verification-result/${verificationResultId}`, config.exposeDomain).href
-  });
-  const verificationResultSiweSignature = await testUtil.ethereum.signMessage(verificationResultSiweMsg);
-  const verificationResultResp = await fastify.inject({
-    method: "POST",
-    path: `/api/v2/verification-result/${verificationResultId}`,
-    payload: {
-      siwe: {
-        message: verificationResultSiweMsg,
-        signature: verificationResultSiweSignature
-      }
-    }
-  });
-  a.is(
-    verificationResultResp.statusCode, 200,
-    `Verification result resp status code is not 200. Resp body: ${verificationResultResp.body}`
-  );
-  const verificationResult = await JSON.parse(verificationResultResp.body) as VerificationResultEntity;
-  a.is(
-    verificationResult.clientId,
-    testUtil.ethereum.stringZcredId,
-    `Verification result client id is not match`
-  );
-});
-
-test.run();
-
-function getServerDomainName() {
-  const hostnameSplit = new URL(config.exposeDomain).hostname.split(".");
-  return [
-    hostnameSplit[hostnameSplit.length - 1],
-    hostnameSplit[hostnameSplit.length - 2]
-  ].join(".");
-}
-
-type CreateSiweMessage = {
-  statement: string;
-  uri?: string;
-}
-
-function createSiweMessage({ statement, uri }: CreateSiweMessage) {
-  return new siwe.SiweMessage({
-    domain: getServerDomainName(),
-    expirationTime: new Date(new Date().getTime() + 100 * 1000).toISOString(),
-    address: testUtil.ethereum.address,
-    statement: statement,
-    uri: uri ? uri : new URL(`./api/v2/verifier/123123/proposal`, config.exposeDomain).href,
-    nonce: siwe.generateNonce(),
-    version: "1",
-    chainId: 1,
-    issuedAt: new Date().toISOString()
-  }).toMessage();
-}
-
-async function createProvingResult(o: {
-  proposal: Proposal,
-  signMessage: (msg: string | Uint8Array) => Promise<string>
-}) {
-  const {
-    proposal,
-    signMessage
-  } = o;
-  // calculate proof
-  const translator = new ZkProgramTranslator(o1js, "commonjs");
-  const programCode = translator.translate(proposal.program);
-  const module = new vm.Script(programCode).runInThisContext();
-  const { zkProgram, PublicInput } = (await module.initialize(o1js) as ProgramInitResult);
-  const { verificationKey } = await zkProgram.compile();
-  const setup = {
-    private: {
-      credential: credentialEthAddress
-    },
-    public: {
-      context: {
-        now: new Date().toISOString()
-      }
-    }
-  };
-  const transformedInput = new ZkProgramInputTransformer(o1js).transform(
-    setup,
-    proposal.program.inputSchema
-  );
-  const jsonProof = await zkProgram.execute(
-    new PublicInput(transformedInput.public),
-    ...transformedInput.private
-  ).then((proof) => proof.toJSON());
-  a.is(
-    await o1js.verify(jsonProof, verificationKey.data), true,
-    `Proof is not verified`
-  );
-  const hexSignature = await signMessage(proposal.challenge.message);
-  const signature = u8a.toString(u8a.fromString(hexSignature.substring(2), "hex"), "base58btc");
-
-  // Build proving result
-  const originInput = new InputTransformer(
-    proposal.program.inputSchema,
-    trgraph
-  ).toInput(setup);
-
-  return {
-    signature: signature,
-    proof: jsonProof.proof,
-    publicInput: originInput["public"],
-    verificationKey: verificationKey.data
-  } satisfies ProvingResult;
-}
 
 const credentialEthAddress = {
   "meta": {
@@ -696,3 +498,5 @@ function getInvalidEthCred() {
   invalidCred.attributes.subject.birthDate = new Date(1970, 1, 1).toISOString();
   return invalidCred;
 }
+
+test.run();

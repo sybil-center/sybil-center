@@ -98,7 +98,8 @@ test("Success flow", async () => {
     signature: signature,
     proof: jsonProof.proof,
     publicInput: originInput["public"],
-    verificationKey: verificationKey.data
+    verificationKey: verificationKey.data,
+    message: proposal.challenge.message
   };
 
   // Send proving result

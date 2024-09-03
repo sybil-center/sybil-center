@@ -1,4 +1,5 @@
 import { JalProgram } from "@jaljs/core";
+import { ProvingResultDto } from "../models/dtos/proving-result.dto.js";
 
 export type Selector = {
   meta: {
@@ -31,16 +32,16 @@ export type Proposal = {
   comment?: string;
 }
 
-type Json = string | boolean | number | { [key: string]: Json }
-
-export type ProvingResult = {
-  signature: string;
-  proof: string;
-  publicInput?: Record<string, Json>
-  publicOutput?: Record<string, Json>
-  verificationKey?: string;
-  provingKey?: string;
-}
+export type ProvingResult = Pick<
+  ProvingResultDto,
+  "signature" |
+  "message" |
+  "proof" |
+  "verificationKey" |
+  "provingKey" |
+  "publicInput" |
+  "publicOutput"
+>
 
 export function isProvingResult(o: unknown): o is ProvingResult {
   return (

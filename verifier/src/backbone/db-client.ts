@@ -1,6 +1,6 @@
 import { tokens, type Disposable } from "typed-inject";
 import { Config } from "./config.js";
-import * as schema from "../entities/schema.js";
+import * as schema from "../models/entities/schema.js";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
