@@ -1,13 +1,29 @@
 import { DI } from "../app.js";
 import { Injector } from "typed-inject";
 import { JalProgram } from "@jaljs/core";
-import { SIWE_STATEMENT } from "../consts/index.js";
+import { VERIFIER_STATEMENT } from "../consts/index.js";
+import { Static, Type } from "@sinclair/typebox";
+import { extractBearerToken, jwkToZcredId } from "../util/index.js";
 
+const JalIdParam = Type.Object({
+  id: Type.String()
+});
+
+export type JalIdParam = Static<typeof JalIdParam>;
+
+const CreateClientJalProgram = Type.Object({
+  jalProgram: Type.Record(Type.String(), Type.Any()),
+  comment: Type.String(),
+});
+
+export type CreateClientJalProgram = Omit<Static<typeof CreateClientJalProgram>, "jalProgram"> & {
+  jalProgram: JalProgram
+}
 
 export function JalController(injector: Injector<DI>) {
   const fastify = injector.resolve("httpServer").fastify;
   const jalService = injector.resolve("jalService");
-  const siweService = injector.resolve("siweService");
+  const jwsVerifierService = injector.resolve("jwsVerifierService");
 
   fastify.post<{ Body: JalProgram }>("/api/v1/jal", async (req, resp) => {
     try {
@@ -20,9 +36,9 @@ export function JalController(injector: Injector<DI>) {
     }
   });
 
-  fastify.get<{
-    Params: { id: string }
-  }>("/api/v1/jal/:id", async (req, resp) => {
+  fastify.get<{ Params: JalIdParam }>("/api/v1/jal/:id", {
+    schema: { params: JalIdParam }
+  }, async (req, resp) => {
     const jalId = req.params.id;
     const jalEntity = await jalService.getById(jalId);
     if (jalEntity) {
@@ -36,30 +52,24 @@ export function JalController(injector: Injector<DI>) {
   });
 
   /** Create JAL program with comment defined by client*/
-  fastify.post<{
-    Body: {
-      jalProgram: JalProgram;
-      comment: string;
-      siwe: {
-        message: string;
-        signature: string;
-      },
+  fastify.post<{ Body: CreateClientJalProgram }>("/api/v2/jal", {
+    schema: { body: CreateClientJalProgram }
+  }, async (req, resp) => {
+    if (!req.headers.authorization) {
+      resp.statusCode = 401;
+      return { message: `Authorization header is not specified as 'Bearer <jws>'` };
     }
-  }>("/api/v2/jal", async (req, resp) => {
+    const jws = extractBearerToken(req.headers.authorization);
+    const { jwk } = await jwsVerifierService.verifyJWS(jws, {
+      statement: VERIFIER_STATEMENT.CREATE_JAL
+    });
     try {
       const {
-        siwe: {
-          message,
-          signature
-        },
         comment,
         jalProgram
       } = req.body;
-      const { id: clientId } = await siweService.verify({
-        message: message,
-        signature: signature
-      }, { statement: SIWE_STATEMENT.CREATE_JAL });
 
+      const clientId = jwkToZcredId(jwk);
       const { id } = await jalService.saveWithComment({
         client: { id: clientId },
         jalProgram: jalProgram,

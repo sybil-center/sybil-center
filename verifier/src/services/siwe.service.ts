@@ -2,6 +2,7 @@ import siwe from "siwe";
 import { ethers } from "ethers";
 import { Config } from "../backbone/config.js";
 import { tokens } from "typed-inject";
+import { zcredjs } from "@zcredjs/core";
 
 type Validate = {
   message: string;
@@ -46,10 +47,10 @@ export class SiweService {
       throw new Error(`SIWE incorrect uri hostname, expected: ${this.config.exposeDomain.hostname}`);
     }
     return {
-      id: {
+      id: zcredjs.normalizeId({
         type: "ethereum:address",
         key: address
-      },
+      }),
       siweObject: siweObject
     };
   }

@@ -335,6 +335,12 @@ importers:
       '@keyvhq/postgres':
         specifier: ^2.1.1
         version: 2.1.1
+      '@noble/curves':
+        specifier: ^1.2.0
+        version: 1.4.0
+      '@sinclair/typebox':
+        specifier: ^0.33.7
+        version: 0.33.7
       '@sybil-center/passport':
         specifier: workspace:*
         version: link:../sybil-passport
@@ -362,6 +368,9 @@ importers:
       fastify-raw-body:
         specifier: ^4.2.2
         version: 4.3.0
+      jose:
+        specifier: ^5.7.0
+        version: 5.7.0
       o1js:
         specifier: 0.16.2
         version: 0.16.2
@@ -4121,6 +4130,10 @@ packages:
 
   /@sinclair/typebox@0.24.51:
     resolution: {integrity: sha512-1P1OROm/rdubP5aFDSZQILU0vrLCJ4fvHt6EoqHEM+2D/G5MK3bIaymUKLit8Js9gbns5UyJnkP/TZROLw4tUA==}
+    dev: false
+
+  /@sinclair/typebox@0.33.7:
+    resolution: {integrity: sha512-et38XPs6GMoB6XugH+Spp/HRv5gHYffw7rXC3caen/dIKC7Q6sqs6eEH9Yd9UKziUkOQdrLr9OXUULAc+pRMng==}
     dev: false
 
   /@sinonjs/commons@1.8.6:
@@ -11780,6 +11793,10 @@ packages:
   /jiti@1.21.6:
     resolution: {integrity: sha512-2yTgeWTWzMWkHu6Jp9NKgePDaYHbntiwvYuuJLbbN9vl7DC9DvXKOB2BC3ZZ92D3cvV/aflH0osDfwpHepQ53w==}
     hasBin: true
+    dev: false
+
+  /jose@5.7.0:
+    resolution: {integrity: sha512-3P9qfTYDVnNn642LCAqIKbTGb9a1TBxZ9ti5zEVEr48aDdflgRjhspWFb6WM4PzAfFbGMJYC4+803v8riCRAKw==}
     dev: false
 
   /joycon@3.1.1:

@@ -4,7 +4,7 @@ import "dotenv/config";
 
 
 export default {
-  schema: "./dist/entities/schema.js",
+  schema: "./dist/models/entities/schema.js",
   out: "migrations",
   dialect: "postgresql",
   dbCredentials: {

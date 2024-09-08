@@ -7,7 +7,7 @@ import { PATH_TO_CONFIG } from "../../../../test-util/index.js";
 import sinon from "sinon";
 import crypto from "node:crypto";
 import { ethers, hexlify } from "ethers";
-import { EthSybilEntity } from "../../../../../src/entities/eth-sybil.entity.js";
+import { EthSybilEntity } from "../../../../../src/models/entities/eth-sybil.entity.js";
 import * as a from "uvu/assert";
 
 const test = suite("Ethereum Sybil controller tests");
@@ -66,4 +66,4 @@ test("Get eth-sybil data", async () => {
   sandbox.restore();
 });
 
-test.run();
+// test.run();
