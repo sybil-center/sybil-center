@@ -302,7 +302,9 @@ export async function SecureCustomVerifierController(injector: Injector<DI>) {
       data: {
         exception: zcredException,
         session: clientSession
-      }
+      },
+      subjectId: stringifyZCredtId(clientSession.subject.id),
+      status: "exception"
     });
     const jalURL = getJalURL(jalId);
     const verificationResultURL = getVerificationResultURL(verificationResultId);
@@ -382,7 +384,9 @@ export async function SecureCustomVerifierController(injector: Injector<DI>) {
       data: {
         provingResult: provingResult,
         session: clientSession
-      }
+      },
+      subjectId: stringifyZCredtId(clientSession.subject.id),
+      status: "success"
     });
     const jalURL = getJalURL(clientSession.jalId);
     const verificationResultURL = getVerificationResultURL(verificationResultId!);

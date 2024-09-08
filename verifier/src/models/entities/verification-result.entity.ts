@@ -1,4 +1,4 @@
-import { jsonb, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { jsonb, pgTable, timestamp, uuid, varchar, pgEnum } from "drizzle-orm/pg-core";
 import { JalEntity } from "./jal.entity.js";
 import { Identifier, JsonZcredException } from "@zcredjs/core";
 
@@ -33,11 +33,16 @@ export type VerificationResult = {
   };
 }
 
+export const VerificationStatus = pgEnum('verification_result_status_enum', ["success", "exception"])
+
 export const VerificationResultEntity = pgTable("verification_result", {
   id: uuid("id").defaultRandom().primaryKey(),
+  status: VerificationStatus("status").notNull(),
   data: jsonb("data").$type<VerificationResult>().notNull(),
   // owner stringify ZCIP-2 identifier
   clientId: varchar("client_id", { length: 256 }).notNull(),
+  // stringify ZCIP-2 identifier
+  subjectId: varchar("subject_id", { length: 256 }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true, precision: 3 })
     .defaultNow()
     .notNull(),

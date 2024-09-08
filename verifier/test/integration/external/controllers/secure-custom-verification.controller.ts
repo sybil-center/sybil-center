@@ -28,6 +28,7 @@ import sortKeys from "sort-keys";
 import { VERIFIER_STATEMENT } from "../../../../src/consts/index.js";
 import { Es256kJwk } from "../../../../src/services/jws.verifier.service.js";
 import { JsonZcredException, SEC } from "@zcredjs/core";
+import { Page } from "../../../../src/stores/abstract.store.js";
 
 const test = suite("Test secure custom verifier controller");
 
@@ -109,6 +110,27 @@ test("success flow", async () => {
     verificationResult.data.provingResult, verificationBody.sendBody.result,
     `Verification result "data.provingResult" not match to verificationBody "sendBody.result"`
   );
+  const pageResp = await httpClient.getVerificationResultPage({
+    jws: await testUtil.createClientJWS({
+      statement: VERIFIER_STATEMENT.GET_VERIFICATION_RESULT,
+      origin: config.exposeDomain.href
+    }),
+    filter: {
+      id: verificationBody.sendBody.verificationResultId
+    },
+  });
+  a.is(
+    pageResp.statusCode, 200,
+    `Verification result page status resp is not 200. Resp body ${pageResp.body}`
+  );
+  const page = JSON.parse(pageResp.body) as Page<VerificationResultEntity>;
+  a.is(
+    page.result[0]?.id, verificationBody.sendBody.verificationResultId,
+    `Verification result page first result id is not match`
+  );
+  a.is(
+    page.result[0]?.status, "success", `Result status from page is not "success"`
+  );
 });
 
 test("verification exception", async () => {
@@ -153,6 +175,27 @@ test("verification exception", async () => {
     } satisfies VerificationResultRespDto["sendBody"]
   );
   a.is(result.webhookURL, WEBHOOK_URL.href);
+  const pageResp = await httpClient.getVerificationResultPage({
+    jws: await testUtil.createClientJWS({
+      statement: VERIFIER_STATEMENT.GET_VERIFICATION_RESULT,
+      origin: config.exposeDomain.href
+    }),
+    filter: {
+      id: result.sendBody.verificationResultId
+    },
+  });
+  a.is(
+    pageResp.statusCode, 200,
+    `Verification result page status resp is not 200. Resp body ${pageResp.body}`
+  );
+  const page = JSON.parse(pageResp.body) as Page<VerificationResultEntity>;
+  a.is(
+    page.result[0]?.id, result.sendBody.verificationResultId,
+    `Verification result page first result id is not match`
+  );
+  a.is(
+    page.result[0]?.status, "exception", `Result status from page is not "success"`
+  );
 });
 
 const REDIRECT_URL = new URL("https://example.com");

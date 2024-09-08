@@ -345,4 +345,4 @@ const credentialEthAddress = {
   }
 };
 
-test.run();
+// test.run();

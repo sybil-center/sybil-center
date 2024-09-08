@@ -28,7 +28,7 @@ import { SiweService } from "./services/siwe.service.js";
 import { VerificationResultStore } from "./stores/verification-result.store.js";
 import { VerificationResultController } from "./controllers/verification-result.controller.js";
 import { SecureCustomVerifierController } from "./controllers/secure-custom-verifier.controller.js";
-import { VerificationResultService } from "./services/verification-result-service.js";
+import { VerificationResultService } from "./services/verification-result.service.js";
 import { SecretService } from "./services/secret.service.js";
 import { JwsVerifierService } from "./services/jws.verifier.service.js";
 

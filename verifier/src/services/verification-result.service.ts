@@ -6,6 +6,7 @@ import {
   VerificationResultEntity,
   VerificationResultEntityNew
 } from "../models/entities/verification-result.entity.js";
+import { PageFilter } from "../stores/abstract.store.js";
 
 export class VerificationResultService {
 
@@ -37,5 +38,9 @@ export class VerificationResultService {
 
   async getVerificationResultById(id: string): Promise<VerificationResultEntity | undefined> {
     return await this.verificationResultStore.getById(id);
+  }
+
+  async getPage(pageFilter: PageFilter<VerificationResultEntity>) {
+    return await this.verificationResultStore.getPage(pageFilter);
   }
 }

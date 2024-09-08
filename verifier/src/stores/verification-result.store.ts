@@ -1,30 +1,17 @@
 import { tokens } from "typed-inject";
 import { DbClient } from "../backbone/db-client.js";
-import { VerificationResultEntity, VerificationResultEntityNew } from "../models/entities/verification-result.entity.js";
-import { eq, sql } from "drizzle-orm";
+import { VerificationResultEntity } from "../models/entities/verification-result.entity.js";
+import { eq, } from "drizzle-orm";
 import { PgTxn } from "./eth-sybil.store.js";
+import { AbstractStore } from "./abstract.store.js";
 
-export class VerificationResultStore {
-
-  private readonly db: DbClient["db"];
+export class VerificationResultStore extends AbstractStore {
 
   static inject = tokens("dbClient");
   constructor(
-    dbClient: DbClient
+    dbClient: DbClient,
   ) {
-    this.db = dbClient.db;
-  }
-
-  async save(entity: VerificationResultEntityNew, tx?: PgTxn): Promise<Pick<VerificationResultEntity, "id">> {
-    const executor = tx ? tx : this.db;
-    const [result] = await executor
-      .insert(VerificationResultEntity)
-      .values({
-        ...entity,
-        data: sql`${entity.data}::jsonb`
-      }).returning({ id: VerificationResultEntity.id })
-      .execute();
-    return result!;
+    super(dbClient.db, VerificationResultEntity)
   }
 
   async getById(id: string, tx?: PgTxn): Promise<VerificationResultEntity | undefined> {

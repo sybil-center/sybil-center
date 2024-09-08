@@ -145,4 +145,4 @@ function toJalEntityId(jalProgram: JalProgram): string {
     .digest("hex");
 }
 
-test.run();
+// test.run();

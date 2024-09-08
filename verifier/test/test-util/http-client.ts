@@ -7,6 +7,7 @@ import crypto from "node:crypto";
 import * as u8a from "uint8arrays";
 import sortKeys from "sort-keys";
 import * as jose from "jose";
+import { VerificationResultFilterDto } from "../../src/controllers/verification-result.controller.js";
 
 export class TestHttpClient {
 
@@ -124,6 +125,28 @@ export class TestHttpClient {
       path: path,
       headers: {
         Authorization: `Bearer ${jws}`
+      }
+    });
+  }
+
+  async getVerificationResultPage(input: {
+    jws: string;
+    filter: VerificationResultFilterDto,
+    page?: {
+      size: number;
+      index: number;
+    }
+  }) {
+    const page = {
+      size: input.page?.size ? input.page.size : 10,
+      index: input.page?.index ? input.page.index : 0
+    };
+    return await this.fastify.inject({
+      method: "POST",
+      body: input.filter,
+      path: `/api/v2/verification-result/page?size=${page.size}&index=${page.index}`,
+      headers: {
+        Authorization: `Bearer ${input.jws}`
       }
     });
   }
