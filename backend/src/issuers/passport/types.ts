@@ -1,5 +1,6 @@
 import { FastifyRequest } from "fastify";
 import { Gender, isGender } from "../../services/sybiljs/passport/types.js";
+import { Disposable } from "typed-inject";
 
 export type ProcedureArgs = {
   reference: string;
@@ -55,8 +56,9 @@ function isPassport(o: unknown): o is WebhookResultOK["passport"] {
   );
 }
 
-export interface IPassportKYCService {
+export interface IPassportKYCService extends Disposable {
   createReference(str: string): string;
   initializeProcedure(args: ProcedureArgs): Promise<ProcedureResp>;
   handleWebhook(req: FastifyRequest): Promise<WebhookResult>;
+  dispose(): Promise<void>
 }

@@ -50,4 +50,6 @@ export class StubPassportKYC implements IPassportKYCService {
     };
   }
 
+  async dispose(): Promise<void> {}
+
 }
