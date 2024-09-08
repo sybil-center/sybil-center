@@ -5,18 +5,40 @@
   <title>Sybil-Center KYC</title>
 </head>
 <body>
-<!-- Подключение скрипта -->
 <script src="https://kyc.enface.ai/lib/widget-lib.js"></script>
 
-<!-- Пример запуска виджета-->
 <script>
+
+  function repeatUntil(shouldStop, betweenMS, fn) {
+    return new Promise(async (resolve) => {
+      let shouldProceed = true;
+      while (shouldProceed) {
+        const result = await execute(fn);
+        if (shouldStop(result)) {
+          shouldProceed = false;
+          return resolve(result);
+        }
+        await new Promise((resolve1) => setTimeout(resolve1, betweenMS));
+      }
+    });
+  }
+
+  async function execute(fn) {
+    try {
+      return await fn();
+    } catch (e) {
+      return e;
+    }
+  }
 
 
   const urlParams = new URLSearchParams(window.location.search);
   const schemaId = urlParams.get("schemaId");
   const clientKey = urlParams.get("clientKey");
+  const statusURL = new URL(urlParams.get("statusURL"));
   console.log(`schemaId`, schemaId);
   console.log(`clientKey`, clientKey);
+  console.log(`statusURL`, statusURL.href);
 
   const openWidget = () => {
     window.KYCWidget.setupKYC({
@@ -25,7 +47,31 @@
     });
   };
 
+  async function sendStatusRequest() {
+    const resp = await fetch(statusURL);
+    if (resp.ok) {
+      return await resp.json();
+    }
+    throw new Error(`Get status error`);
+  }
+
+  repeatUntil(
+    (result) => (result instanceof Error) ? true : result,
+    2000,
+    () => sendStatusRequest()
+      .then((body) => {
+        if (body.status === "wait") return false;
+        if (body.status === "failed") throw new Error("Verification failed");
+        return true; // body.status === "success"
+      })
+  ).then(() => setTimeout(window.close(), 2000))
+    .catch(() => {
+      alert("Unexpected ERROR");
+      setTimeout(window.close(), 2000);
+    });
+
   openWidget();
+
 
 </script>
 </body>

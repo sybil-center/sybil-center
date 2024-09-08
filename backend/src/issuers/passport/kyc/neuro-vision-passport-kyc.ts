@@ -4,6 +4,9 @@ import crypto from "node:crypto";
 import { ClientErr } from "../../../backbone/errors.js";
 import { Gender } from "../../../services/sybiljs/passport/types.js";
 import { parse as mrzParse } from "mrz";
+import { TimedCache } from "../../../services/timed-cache.js";
+import { sha256Hmac } from "../../../util/crypto.js";
+import { Config } from "../../../backbone/config.js";
 
 
 type WebhookBody = {
@@ -74,16 +77,22 @@ function isNVField(o: unknown): o is WebhookBody["results"][number]["ocr"]["fiel
   );
 }
 
+type Session = {
+  id: string;
+  status: "success" | "failed" | "wait"
+}
+
 /** Only for Foreign Passports */
 export class NeuroVisionPassportKYC implements IPassportKYCService {
 
+  private readonly sessionIdMap: TimedCache<string, Session>;
+
   constructor(
-    private readonly config: {
-      neuroVisionSecretKey: string,
-      neuroVisionSchemaId: string,
-      pathToExposeDomain: URL
-    }
-  ) {}
+    private readonly config: Config,
+    private readonly toSessionId: (clientKey: string) => string
+  ) {
+    this.sessionIdMap = new TimedCache(this.config.kycSessionTtl);
+  }
 
   createReference(clientKey: string): string {
     return clientKey;
@@ -97,6 +106,9 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
       .substr(0, 32);
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
+    const sessionId = this.toSessionId(clientKey);
+    const publicId = this.createPublicId(sessionId);
+    this.sessionIdMap.set(publicId, { id: sessionId, status: "wait" });
     const encrypted = Buffer.concat([
       iv,
       cipher.update(clientKey),
@@ -105,10 +117,19 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
     const verifyURL = new URL(`/issuers/passport/kyc/neuro-vision/start`, `${this.config.pathToExposeDomain}`);
     verifyURL.searchParams.set("schemaId", this.config.neuroVisionSchemaId);
     verifyURL.searchParams.set("clientKey", encrypted);
+    const statusURL = new URL(`/issuer/passport/kyc/neuro-vision/is-verified/${publicId}`, this.config.pathToExposeDomain);
+    verifyURL.searchParams.set("statusURL", statusURL.href);
 
     return {
       verifyURL: verifyURL
     };
+  }
+
+  private createPublicId(sessionId: string) {
+    return sha256Hmac({
+      secret: "neuro-vision-kyc-secret:" + this.config.secret,
+      data: sessionId
+    }).digest("base64url");
   }
 
 
@@ -120,7 +141,10 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
       place: `${this.constructor.name}.handleWebhook`
     });
     const passportData = extractPassportData(body);
+    const sessionId = this.toSessionId(body.clientKey);
+    const publicId = this.createPublicId(sessionId);
     if (!isPassportDataOK(passportData)) {
+      this.sessionIdMap.set(publicId, { id: sessionId, status: "failed" });
       return { verified: false, reference: body.clientKey };
     }
     const { result, fields } = passportData;
@@ -128,14 +152,21 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
       && result.status === "success"
       && result.ocr.status === "success";
     const { passport } = toPassportFormat(fields);
+    this.sessionIdMap.set(publicId, { id: sessionId, status: "success" });
     return {
       verified,
       reference: body.clientKey,
       passport: passport
     } satisfies WebhookResultOK;
-
   };
 
+  async getStatus(publicId: string) {
+    return this.sessionIdMap.find(publicId);
+  }
+
+  async dispose() {
+    this.sessionIdMap.dispose()
+  }
 }
 
 type RawFields = {

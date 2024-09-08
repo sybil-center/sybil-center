@@ -35,6 +35,7 @@ import { PassportAttributes, PassportCredential } from "../../services/sybiljs/p
 import { IIssuer } from "../../types/issuer.js";
 import { ILogger } from "../../backbone/logger.js";
 import { NeuroVisionPassportKYC } from "./kyc/neuro-vision-passport-kyc.js";
+import { sha256Hmac } from "../../util/crypto.js";
 
 type Session = {
   reference: string;
@@ -114,7 +115,7 @@ export class Issuer
 
   private readonly secret: string;
   private readonly sessionCache: TimedCache<string, Session>;
-  private readonly passportKYC: IPassportKYCService;
+  public readonly passportKYC: IPassportKYCService;
 
   static inject = tokens(
     "logger",
@@ -132,7 +133,10 @@ export class Issuer
   ) {
     this.secret = config.secret;
     this.sessionCache = new TimedCache<string, Session>(config.kycSessionTtl);
-    this.passportKYC = new NeuroVisionPassportKYC(config);
+    this.passportKYC = new NeuroVisionPassportKYC(
+      config,
+      (clientKey) => {return toSessionId(clientKey, this.secret);}
+    );
     logger.info(`Issuer "passport" initialized`);
   }
 
@@ -187,7 +191,9 @@ export class Issuer
     });
     const reference = this.passportKYC.createReference(crypto.randomUUID());
     const sessionId = this.toSessionId(reference);
-    const { verifyURL } = await this.passportKYC.initializeProcedure({ reference });
+    const { verifyURL } = await this.passportKYC.initializeProcedure({
+      reference,
+    });
     const challenge: Challenge = {
       sessionId: sessionId,
       verifyURL: verifyURL.href,
@@ -271,7 +277,12 @@ export class Issuer
 
   dispose(): void | PromiseLike<void> {
     this.sessionCache.dispose();
+    this.passportKYC.dispose();
   };
+
+  private toSessionId(reference: string) {
+    return toSessionId(reference, this.config.secret);
+  }
 
   private async createProofs(
     attributes: PassportAttributes
@@ -363,11 +374,13 @@ export class Issuer
     });
   }
 
-  private toSessionId(reference: string) {
-    return crypto.createHmac("sha256", this.secret)
-      .update(reference)
-      .digest("base64url");
-  }
+}
+
+function toSessionId(reference: string, secret: string) {
+  return sha256Hmac({
+    secret: secret,
+    data: reference
+  }).digest("base64url");
 }
 
 function chooseValidUntil(chosenValidUntil: string, docValidUntil: string) {
