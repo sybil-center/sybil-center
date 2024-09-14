@@ -154,6 +154,7 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
     const { passport } = toPassportFormat(fields);
     await this.sessionIdMap.set(publicId, { id: sessionId, status: "success" });
     console.log(`WEBHOOK CLIENT KEY: ${body.clientKey}`);
+    console.log(`IS VERIFIED: ${verified}`);
     return {
       verified,
       reference: body.clientKey,
