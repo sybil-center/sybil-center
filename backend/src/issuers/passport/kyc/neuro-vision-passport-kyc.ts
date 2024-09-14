@@ -78,8 +78,11 @@ function isNVField(o: unknown): o is WebhookBody["results"][number]["ocr"]["fiel
 
 type Session = {
   id: string;
-  status: "success" | "failed" | "wait"
+  status: "success" | "failed" | "wait",
+  attempt: number;
 }
+
+const MAX_ATTEMPTS_COUNT = 3;
 
 /** Only for Foreign Passports */
 export class NeuroVisionPassportKYC implements IPassportKYCService {
@@ -108,7 +111,7 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
     const sessionId = this.toSessionId(clientKey);
     const publicId = this.createPublicId(sessionId);
     console.log(`INIT CLIENT KEY: ${clientKey}`);
-    await this.sessionIdMap.set(publicId, { id: sessionId, status: "wait" });
+    await this.sessionIdMap.set(publicId, { id: sessionId, status: "wait", attempt: 0 });
     const encrypted = Buffer.concat([
       iv,
       cipher.update(clientKey),
@@ -143,16 +146,25 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
     const passportData = extractPassportData(body);
     const sessionId = this.toSessionId(body.clientKey);
     const publicId = this.createPublicId(sessionId);
+    const cache = await this.sessionIdMap.get(publicId);
+    if (!cache) throw new ClientErr({
+      statusCode: 400,
+      message: "Neuro-vision session publicId not found"
+    });
+    const attempt = cache.attempt + 1;
     if (!isPassportDataOK(passportData)) {
-      await this.sessionIdMap.set(publicId, { id: sessionId, status: "failed" });
-      return { verified: false, reference: body.clientKey };
+      if (attempt === MAX_ATTEMPTS_COUNT) {
+        await this.sessionIdMap.set(publicId, { id: sessionId, status: "failed", attempt });
+        return { verified: false, reference: body.clientKey };
+      }
+      throw new ClientErr({ statusCode: 400, message: "Neuro-vision wait until success" });
     }
     const { result, fields } = passportData;
     const verified = body.status === "success"
       && result.status === "success"
       && result.ocr.status === "success";
     const { passport } = toPassportFormat(fields);
-    await this.sessionIdMap.set(publicId, { id: sessionId, status: "success" });
+    await this.sessionIdMap.set(publicId, { id: sessionId, status: "success", attempt });
     console.log(`WEBHOOK CLIENT KEY: ${body.clientKey}`);
     console.log(`IS VERIFIED: ${verified}`);
     return {
