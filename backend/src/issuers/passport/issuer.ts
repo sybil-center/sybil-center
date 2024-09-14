@@ -190,6 +190,7 @@ export class Issuer
       msg: `Bad challenge request`
     });
     const reference = this.passportKYC.createReference(crypto.randomUUID());
+    console.log(`GET CHALLENGE CLIENT KEY: ${reference}`);
     const sessionId = this.toSessionId(reference);
     const { verifyURL } = await this.passportKYC.initializeProcedure({
       reference,
@@ -199,6 +200,7 @@ export class Issuer
       verifyURL: verifyURL.href,
       message: getMessage(challengeReq)
     };
+    console.log(`GET CHALLENGE SESSION ID: ${sessionId}`);
     this.sessionCache.set(sessionId, { reference, challenge, challengeReq });
     return challenge;
   }
@@ -223,6 +225,7 @@ export class Issuer
   async handleWebhook(req: FastifyRequest): Promise<any> {
     const webhookResp = await this.passportKYC.handleWebhook(req);
     const sessionId = this.toSessionId(webhookResp.reference);
+    console.log(`HANDLE WEBHOOK SESSION ID: ${sessionId}`);
     const session = this.sessionCache.get(sessionId);
     session.webhookResp = webhookResp;
     this.sessionCache.set(sessionId, session);
