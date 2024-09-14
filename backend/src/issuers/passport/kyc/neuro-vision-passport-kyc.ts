@@ -110,7 +110,6 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
     const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
     const sessionId = this.toSessionId(clientKey);
     const publicId = this.createPublicId(sessionId);
-    console.log(`INIT CLIENT KEY: ${clientKey}`);
     await this.sessionIdMap.set(publicId, { id: sessionId, status: "wait", attempt: 0 });
     const encrypted = Buffer.concat([
       iv,
@@ -165,8 +164,6 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
       && result.ocr.status === "success";
     const { passport } = toPassportFormat(fields);
     await this.sessionIdMap.set(publicId, { id: sessionId, status: "success", attempt });
-    console.log(`WEBHOOK CLIENT KEY: ${body.clientKey}`);
-    console.log(`IS VERIFIED: ${verified}`);
     return {
       verified,
       reference: body.clientKey,
