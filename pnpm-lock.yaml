@@ -22,6 +22,9 @@ importers:
       '@fastify/swagger-ui':
         specifier: ^1.3.0
         version: 1.10.2
+      '@keyvhq/core':
+        specifier: ^2.1.1
+        version: 2.1.1
       '@noble/curves':
         specifier: ^1.2.0
         version: 1.4.0
@@ -12892,6 +12895,7 @@ packages:
   /node-gyp-build@4.8.1:
     resolution: {integrity: sha512-OSs33Z9yWr148JZcbZd5WiAXhh/n9z8TxQcdMhIOlpN9AhWpLfvVFO73+m77bBABQMaY9XSvIa+qk0jlI7Gcaw==}
     hasBin: true
+    requiresBuild: true
     dev: false
 
   /node-int64@0.4.0:

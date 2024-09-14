@@ -100,7 +100,7 @@ async function beforeIssue({
     `challenge response status code is not 200. Resp body: ${JSON.stringify(challengeResp.body)}`
   );
   const challenge = JSON.parse(challengeResp.body) as Challenge;
-  const reference = sessionCache.get(challenge.sessionId).reference;
+  const reference = (await sessionCache.get(challenge.sessionId))!.reference;
 
   // Can issue request before webhook
   const canIssueBeforeResp = await fastify.inject({
@@ -116,7 +116,7 @@ async function beforeIssue({
     JSON.parse(canIssueBeforeResp.body).canIssue, false,
     `Can issue before webhook is true. MUST be false`
   );
-  a.is(sessionCache.find(challenge.sessionId) !== undefined, true);
+  a.is(await sessionCache.get(challenge.sessionId) !== undefined, true);
   const kyc_handleWebhook_STUB = sinon.stub(passportKYC, "handleWebhook").resolves({
     reference: reference,
     verified: true,
@@ -140,7 +140,7 @@ async function beforeIssue({
 
   kyc_handleWebhook_STUB.restore();
 
-  const session = sessionCache.find(challenge.sessionId);
+  const session = await sessionCache.get(challenge.sessionId);
   a.is(
     session?.webhookResp !== undefined, true,
     `session webhook MUST be defined after handling webhook`

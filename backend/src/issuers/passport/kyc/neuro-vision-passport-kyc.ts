@@ -4,10 +4,9 @@ import crypto from "node:crypto";
 import { ClientErr } from "../../../backbone/errors.js";
 import { Gender } from "../../../services/sybiljs/passport/types.js";
 import { parse as mrzParse } from "mrz";
-import { TimedCache } from "../../../services/timed-cache.js";
 import { sha256Hmac } from "../../../util/crypto.js";
 import { Config } from "../../../backbone/config.js";
-
+import Keyv from "@keyvhq/core";
 
 type WebhookBody = {
   clientId: string;
@@ -85,13 +84,13 @@ type Session = {
 /** Only for Foreign Passports */
 export class NeuroVisionPassportKYC implements IPassportKYCService {
 
-  private readonly sessionIdMap: TimedCache<string, Session>;
+  private readonly sessionIdMap: Keyv<Session>;
 
   constructor(
     private readonly config: Config,
     private readonly toSessionId: (clientKey: string) => string
   ) {
-    this.sessionIdMap = new TimedCache(this.config.kycSessionTtl);
+    this.sessionIdMap = new Keyv({ ttl: config.kycSessionTtl });
   }
 
   createReference(clientKey: string): string {
@@ -109,7 +108,7 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
     const sessionId = this.toSessionId(clientKey);
     const publicId = this.createPublicId(sessionId);
     console.log(`INIT CLIENT KEY: ${clientKey}`);
-    this.sessionIdMap.set(publicId, { id: sessionId, status: "wait" });
+    await this.sessionIdMap.set(publicId, { id: sessionId, status: "wait" });
     const encrypted = Buffer.concat([
       iv,
       cipher.update(clientKey),
@@ -145,7 +144,7 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
     const sessionId = this.toSessionId(body.clientKey);
     const publicId = this.createPublicId(sessionId);
     if (!isPassportDataOK(passportData)) {
-      this.sessionIdMap.set(publicId, { id: sessionId, status: "failed" });
+      await this.sessionIdMap.set(publicId, { id: sessionId, status: "failed" });
       return { verified: false, reference: body.clientKey };
     }
     const { result, fields } = passportData;
@@ -153,7 +152,7 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
       && result.status === "success"
       && result.ocr.status === "success";
     const { passport } = toPassportFormat(fields);
-    this.sessionIdMap.set(publicId, { id: sessionId, status: "success" });
+    await this.sessionIdMap.set(publicId, { id: sessionId, status: "success" });
     console.log(`WEBHOOK CLIENT KEY: ${body.clientKey}`);
     return {
       verified,
@@ -163,11 +162,13 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
   };
 
   async getStatus(publicId: string) {
-    return this.sessionIdMap.find(publicId);
+    const session = await this.sessionIdMap.get(publicId);
+    if (session) return session;
+    throw new Error(`Public session not found ${publicId}`);
   }
 
   async dispose() {
-    this.sessionIdMap.dispose()
+    this.sessionIdMap.clear();
   }
 }
 

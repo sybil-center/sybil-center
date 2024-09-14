@@ -15,12 +15,12 @@ import {
   StrictChallengeReq as StrictChallengeReqOrigin,
   ZkCredential
 } from "@zcredjs/core";
+import Keyv from "@keyvhq/core";
 import { hash as sha256 } from "@stablelib/sha256";
 import * as u8a from "uint8arrays";
 import { Config } from "../../backbone/config.js";
 import crypto from "node:crypto";
 import { tokens } from "typed-inject";
-import { TimedCache } from "../../services/timed-cache.js";
 import { ClientErr, IssuerException, ServerErr } from "../../backbone/errors.js";
 import { FastifyRequest } from "fastify";
 import { SignatureVerifier } from "../../services/signature-verifier/index.js";
@@ -114,7 +114,7 @@ export class Issuer
   implements IIssuer<PassportCredential> {
 
   private readonly secret: string;
-  private readonly sessionCache: TimedCache<string, Session>;
+  private readonly sessionCache: Keyv<Session>;
   public readonly passportKYC: IPassportKYCService;
 
   static inject = tokens(
@@ -132,7 +132,7 @@ export class Issuer
     private readonly didService: DIDService
   ) {
     this.secret = config.secret;
-    this.sessionCache = new TimedCache<string, Session>(config.kycSessionTtl);
+    this.sessionCache = new Keyv<Session>({ ttl: config.kycSessionTtl });
     this.passportKYC = new NeuroVisionPassportKYC(
       config,
       (clientKey) => {return toSessionId(clientKey, this.secret);}
@@ -201,12 +201,12 @@ export class Issuer
       message: getMessage(challengeReq)
     };
     console.log(`GET CHALLENGE SESSION ID: ${sessionId}`);
-    this.sessionCache.set(sessionId, { reference, challenge, challengeReq });
+    await this.sessionCache.set(sessionId, { reference, challenge, challengeReq });
     return challenge;
   }
 
   async canIssue({ sessionId }: CanIssueReq): Promise<CanIssue> {
-    const fountSession = this.sessionCache.find(sessionId);
+    const fountSession = await this.sessionCache.get(sessionId);
     if (!fountSession) {
       throw new ClientErr(`No session with id ${sessionId}`);
     }
@@ -226,13 +226,25 @@ export class Issuer
     const webhookResp = await this.passportKYC.handleWebhook(req);
     const sessionId = this.toSessionId(webhookResp.reference);
     console.log(`HANDLE WEBHOOK SESSION ID: ${sessionId}`);
-    const session = this.sessionCache.get(sessionId);
+    const session = await this.sessionCache.get(sessionId);
+    if (!session) {
+      throw new IssuerException({
+        code: IEC.CAN_ISSUE_NO_SESSION,
+        msg: `Session with id: ${sessionId} not found`
+      });
+    }
     session.webhookResp = webhookResp;
     this.sessionCache.set(sessionId, session);
   }
 
   async issue({ sessionId, signature }: IssueReq): Promise<PassportCredential> {
-    const session = this.sessionCache.get(sessionId);
+    const session = await this.sessionCache.get(sessionId);
+    if (!session) {
+      throw new IssuerException({
+        code: IEC.ISSUE_NO_SESSION,
+        msg: `Session with id: ${sessionId} not found`
+      });
+    }
     const { subject } = session.challengeReq;
     const webhookResp = session.webhookResp;
     if (!webhookResp) {
@@ -279,7 +291,7 @@ export class Issuer
   };
 
   dispose(): void | PromiseLike<void> {
-    this.sessionCache.dispose();
+    this.sessionCache.clear();
     this.passportKYC.dispose();
   };
 
