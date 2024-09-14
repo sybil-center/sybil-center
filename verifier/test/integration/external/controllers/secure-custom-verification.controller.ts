@@ -359,7 +359,10 @@ async function initClientSession(jalId: string) {
     initSessionResp.statusCode, 201,
     `Init session resp status code is not 201, Body: ${initSessionResp.body}`
   );
-  const { verifyURL: verifyURLStr } = JSON.parse(initSessionResp.body) as InitClientSessionRespDto;
+  const {
+    verifyURL: verifyURLStr,
+    sessionId
+  } = JSON.parse(initSessionResp.body) as InitClientSessionRespDto;
   const verifyURL = new URL(verifyURLStr);
   a.ok(
     verifyURL.searchParams.get("proposalURL"),
@@ -375,7 +378,8 @@ async function initClientSession(jalId: string) {
     proposalURL.searchParams.get("sessionId"),
     `proposalURL MUST has "sessionId" as query param`
   );
-  const sessionId = proposalURL.searchParams.get("sessionId")!;
+  const sessionIdURL = proposalURL.searchParams.get("sessionId")!;
+  a.is(sessionId, sessionIdURL, `Session id is not match`);
   return { verifyURL, proposalURL, sessionId };
 }
 

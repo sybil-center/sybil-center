@@ -121,7 +121,7 @@ export async function SecureCustomVerifierController(injector: Injector<DI>) {
       credHolderURL: clientSessionDto.credentialHolderURL
     });
     resp.statusCode = 201;
-    return { verifyURL: verifyURL.href };
+    return { verifyURL: verifyURL.href, sessionId: sessionId };
   });
 
   function generateClientSessionId(clientSession: InitClientSessionDto): string {
