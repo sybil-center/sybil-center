@@ -37,6 +37,7 @@ export class HttpServer implements Disposable {
         host: this.config.exposeDomain.host,
         schemes: [this.config.protocol],
       },
+      hideUntagged: true
     });
     // register swagger ui
     await this.fastify.register(swaggerUi, {

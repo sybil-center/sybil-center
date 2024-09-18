@@ -1,4 +1,4 @@
-import { jsonb, pgTable, timestamp, uuid, varchar, pgEnum } from "drizzle-orm/pg-core";
+import { jsonb, pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { JalEntity } from "./jal.entity.js";
 import { Identifier, JsonZcredException } from "@zcredjs/core";
 
@@ -6,7 +6,15 @@ type ProvingResult = {
   message: string;
   signature: string;
   proof: string;
-  publicInput?: Record<string, any>
+  publicInput: {
+    credential: {
+      attributes: {
+        subject: {
+          id: Identifier;
+        }
+      }
+    }
+  } & Omit<{ [key: string]: any }, "credential">;
   publicOutput?: Record<string, any>
   verificationKey?: string;
 }
@@ -33,7 +41,7 @@ export type VerificationResult = {
   };
 }
 
-export const VerificationStatus = pgEnum('verification_result_status_enum', ["success", "exception"])
+export const VerificationStatus = pgEnum("verification_result_status_enum", ["success", "exception"]);
 
 export const VerificationResultEntity = pgTable("verification_result", {
   id: uuid("id").defaultRandom().primaryKey(),

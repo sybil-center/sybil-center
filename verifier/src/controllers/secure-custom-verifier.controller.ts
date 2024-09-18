@@ -4,7 +4,7 @@ import { InitClientSessionDto } from "../models/dtos/init-client-session.dto.js"
 import { type Static, Type } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import crypto from "node:crypto";
-import { Identifier, isJsonZcredException, JsonZcredException, VEC, VECode } from "@zcredjs/core";
+import { Identifier, isJsonZcredException, JsonZcredException, VEC } from "@zcredjs/core";
 import { VERIFIER_STATEMENT } from "../consts/index.js";
 import { ChallengeMessage } from "../services/challenge-message.js";
 import sortKeys from "sort-keys";
@@ -21,6 +21,8 @@ import {
 } from "../models/dtos/verification-result-resp.dto.js";
 import { isProvingResultDto, ProvingResultDto } from "../models/dtos/proving-result.dto.js";
 import { InitClientSessionRespDto } from "../models/dtos/init-client-session-resp.dto.js";
+import { AuthorizationJwsHeader } from "../models/dtos/authorization-jws-header.dto.js";
+import { ZcredExceptionDto } from "../models/dtos/zcred-exception.dto.js";
 
 const JalIdParams = Type.Object({
   jalId: Type.String()
@@ -52,6 +54,7 @@ const ProofOfWorkJwsPayload = Type.Object({
 
 type ProofOfWorkJwsPayload = Static<typeof ProofOfWorkJwsPayload>;
 
+const TAGS = ["Verification"];
 
 export async function SecureCustomVerifierController(injector: Injector<DI>) {
   const config = injector.resolve("config");
@@ -81,6 +84,12 @@ export async function SecureCustomVerifierController(injector: Injector<DI>) {
     secretPrefix: "zcred-verifier-secret"
   });
 
+  const ErrorMessageDto = Type.Object({
+    message: Type.String({ description: "Error message" })
+  });
+
+  type ErrorMessageDto = Static<typeof ErrorMessageDto>;
+
   /**
    * Create client session and return JSON in HTTP body with
    * "verifyURL" where user will be redirected to start verification
@@ -88,12 +97,20 @@ export async function SecureCustomVerifierController(injector: Injector<DI>) {
   fastify.post<{
     Body: InitClientSessionDto,
     Params: JalIdParams,
+    Headers: AuthorizationJwsHeader
   }>("/api/v2/verifier/:jalId/session", {
     schema: {
+      tags: TAGS,
       body: InitClientSessionDto,
       params: JalIdParams,
+      headers: AuthorizationJwsHeader,
+      response: {
+        [201]: InitClientSessionRespDto,
+        [401]: ErrorMessageDto
+      },
+      description: "Initialize verification session"
     }
-  }, async (req, resp): Promise<InitClientSessionRespDto | { message: string }> => {
+  }, async (req, resp): Promise<InitClientSessionRespDto | ErrorMessageDto> => {
     if (!req.headers.authorization) {
       resp.statusCode = 401;
       return { message: `Authorization header is not specified as 'Bearer <jws>'` };
@@ -121,7 +138,7 @@ export async function SecureCustomVerifierController(injector: Injector<DI>) {
       credHolderURL: clientSessionDto.credentialHolderURL
     });
     resp.statusCode = 201;
-    return { verifyURL: verifyURL.href };
+    return { verifyURL: verifyURL.href, sessionId: sessionId };
   });
 
   function generateClientSessionId(clientSession: InitClientSessionDto): string {
@@ -250,8 +267,10 @@ export async function SecureCustomVerifierController(injector: Injector<DI>) {
     Body: VerificationResultDto
     Querystring: { [key: string]: unknown }
   }>(`/api/v2/verifier/:jalId/verify`, {
-    schema: { body: VerificationResultDto }
-  }, async (req): Promise<VerificationResultRespDto | { code: VECode, message: string }> => {
+    schema: {
+      body: VerificationResultDto
+    }
+  }, async (req): Promise<VerificationResultRespDto | ZcredExceptionDto> => {
     const body = req.body;
     const sessionId = getSessionIdFromQuery(req);
     const clientSession = await findSessionById(sessionId);

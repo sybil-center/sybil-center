@@ -24,6 +24,17 @@ export function normalizeZcredId(id: Identifier): Identifier {
   return id;
 }
 
+export function fromStringZcredId(strId: string): { type: string, key: string } {
+  const [namespace, reference, key] = strId.split(":");
+  if (!namespace || !reference || !key) {
+    throw new Error(`Invalid zcred identifier string representation`);
+  }
+  return {
+    type: `${namespace}:${reference}`,
+    key: key
+  };
+}
+
 /**
  * Returns URL domain
  * @param url
@@ -58,6 +69,6 @@ export function jwkToZcredId(jwk: Es256kJwk): Identifier {
   };
 }
 
-export function extractBearerToken(str: string): string  {
-  return str.slice(7)
+export function extractBearerToken(str: string): string {
+  return str.slice(7);
 }

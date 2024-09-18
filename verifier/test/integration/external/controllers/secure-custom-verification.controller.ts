@@ -29,6 +29,7 @@ import { VERIFIER_STATEMENT } from "../../../../src/consts/index.js";
 import { Es256kJwk } from "../../../../src/services/jws.verifier.service.js";
 import { JsonZcredException, SEC } from "@zcredjs/core";
 import { Page } from "../../../../src/stores/abstract.store.js";
+import { VerificationResultPageResponseDto } from "../../../../src/controllers/verification-result.controller.js";
 
 const test = suite("Test secure custom verifier controller");
 
@@ -131,6 +132,24 @@ test("success flow", async () => {
   a.is(
     page.result[0]?.status, "success", `Result status from page is not "success"`
   );
+  const bySubjectIdResp = await httpClient.getVerificationResultPage({
+    jws: await testUtil.createClientJWS({
+      statement: VERIFIER_STATEMENT.GET_VERIFICATION_RESULT,
+      origin: config.exposeDomain.href
+    }),
+    filter: {
+      subjectId: {
+        type: "ethereum:address",
+        key: testUtil.ethereum.address.toLowerCase()
+      }
+    }
+  });
+  const pageBySubjectId = await bySubjectIdResp.json() as VerificationResultPageResponseDto;
+  a.ok(pageBySubjectId, "Page by subjectId not found");
+  a.equal(pageBySubjectId.result[0]!.subjectId, {
+    type: "ethereum:address",
+    key: testUtil.ethereum.address.toLowerCase()
+  });
 });
 
 test("verification exception", async () => {
