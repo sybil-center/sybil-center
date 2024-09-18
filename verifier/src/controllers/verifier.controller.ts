@@ -99,9 +99,7 @@ export function VerifierController(injector: Injector<DI>) {
 
     fastify.post<{
       Querystring: { [key: string]: unknown }
-    }>(`/zcred/verify/${verifierId}`, {
-      schema: { tags: [verifierId] }
-    }, async (req) => {
+    }>(`/zcred/verify/${verifierId}`, {}, async (req) => {
       if (!("session" in req.query && typeof req.query.session === "string")) {
         throw new VerifierException({
           code: VEC.VERIFY_BAD_REQ,
@@ -124,7 +122,7 @@ export function VerifierController(injector: Injector<DI>) {
           session: session
         });
         await cache.delete(sessionId);
-        redirectURL.searchParams.set("clientSession", session.body.clientSession)
+        redirectURL.searchParams.set("clientSession", session.body.clientSession);
         redirectURL.searchParams.set("status", "exception");
         redirectURL.searchParams.set("exceptionCode", String(exception.code));
         return { redirectURL: redirectURL };

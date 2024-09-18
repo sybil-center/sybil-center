@@ -527,3 +527,9 @@ https://dev.app.zcred.me/
 ### Issuers URLs
 
 - https://issuer.sybil.center/issuers/passport: Dev passport `Issuer` server application
+
+
+### Swagger documentation
+
+- Production: https://verifier.sybil.center/documentation/static/index.html
+- Development: https://dev.verifier.sybil.center/documentation/static/index.html
