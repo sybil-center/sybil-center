@@ -54,6 +54,8 @@ const ProofOfWorkJwsPayload = Type.Object({
 
 type ProofOfWorkJwsPayload = Static<typeof ProofOfWorkJwsPayload>;
 
+export const EXCEPTION_DIFFICULTY = 5;
+
 const TAGS = ["Verification"];
 
 export async function SecureCustomVerifierController(injector: Injector<DI>) {
@@ -230,7 +232,10 @@ export async function SecureCustomVerifierController(injector: Injector<DI>) {
     return {
       program: program,
       selector: selector,
-      challenge: { message: challengeMessage },
+      challenge: {
+        message: challengeMessage,
+        exceptionDifficulty: EXCEPTION_DIFFICULTY
+      },
       accessToken: issuer.accessToken,
       verifierURL: verifierURL.href,
       comment: commentEntity?.comment
@@ -360,7 +365,7 @@ export async function SecureCustomVerifierController(injector: Injector<DI>) {
     if (!Value.Check(ProofOfWorkJwsPayload, payload)) {
       return { ok: false, message: `Invalid JWT payload` };
     }
-    if (!payload.proof.startsWith("0".repeat(5))) {
+    if (!payload.proof.startsWith("0".repeat(EXCEPTION_DIFFICULTY))) {
       return { ok: false, message: `JWT payload proof of work MUST start from "00000"` };
     }
     if (payload.challenge.messageHash !== u8a.toString(secret, "hex")) {
