@@ -24,7 +24,7 @@ export type Proposal = {
   program: JalProgram;
   challenge: {
     message: string;
-    exceptionDifficulty: number;
+    exceptionDifficulty?: number;
   }
   selector: Selector;
   verificationKey?: string;
