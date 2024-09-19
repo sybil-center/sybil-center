@@ -526,8 +526,8 @@ https://dev.app.zcred.me/
 
 ### Issuers URLs
 
-- https://issuer.sybil.center/issuers/passport: Dev passport `Issuer` server application
-
+- https://issuer.sybil.center/issuers/passport: Prod passport `Issuer` server application
+- https://dev.issuer.sybil.center/issuers/passport: Dev passport `Issuer` server application
 
 ### Swagger documentation
 
