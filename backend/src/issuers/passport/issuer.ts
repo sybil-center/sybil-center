@@ -36,6 +36,7 @@ import { IIssuer } from "../../types/issuer.js";
 import { ILogger } from "../../backbone/logger.js";
 import { NeuroVisionPassportKYC } from "./kyc/neuro-vision-passport-kyc.js";
 import { sha256Hmac } from "../../util/crypto.js";
+import { CacheClient } from "../../backbone/cache-client.js";
 
 type Session = {
   reference: string;
@@ -122,22 +123,28 @@ export class Issuer
     "config",
     "signatureVerifier",
     "credentialProver",
-    "didService"
+    "didService",
+    "cacheClient"
   );
   constructor(
     logger: ILogger,
     private readonly config: Config,
     private readonly signatureVerifier: SignatureVerifier,
     private readonly credentialProver: CredentialProver,
-    private readonly didService: DIDService
+    private readonly didService: DIDService,
+    cacheClient: CacheClient
   ) {
     this.secret = config.secret;
-    this.sessionCache = new Keyv<Session>({ ttl: config.kycSessionTtl });
     this.passportKYC = new NeuroVisionPassportKYC(
       config,
+      cacheClient,
       (clientKey) => {return toSessionId(clientKey, this.secret);}
     );
     logger.info(`Issuer "passport" initialized`);
+    this.sessionCache = cacheClient.createTtlCache<Session>({
+      ttl: config.kycSessionTtl,
+      namespace: "zcred-passport"
+    });
   }
 
   get uri(): URL {
@@ -211,7 +218,7 @@ export class Issuer
     const webhookResp = fountSession.webhookResp;
     if (!webhookResp) return { canIssue: false };
     if (!isWebhookResultOK(webhookResp) || !webhookResp.verified) {
-      this.sessionCache.delete(this.toSessionId(webhookResp.reference));
+      await this.sessionCache.delete(this.toSessionId(webhookResp.reference));
       throw new IssuerException({
         code: IEC.ISSUE_DENIED,
         msg: "Your passport is not verified",
@@ -231,7 +238,7 @@ export class Issuer
       });
     }
     session.webhookResp = webhookResp;
-    this.sessionCache.set(sessionId, session);
+    await this.sessionCache.set(sessionId, session);
   }
 
   async issue({ sessionId, signature }: IssueReq): Promise<PassportCredential> {
@@ -251,7 +258,7 @@ export class Issuer
       });
     }
     if (!isWebhookResultOK(webhookResp) || !webhookResp.verified) {
-      this.sessionCache.delete(this.toSessionId(webhookResp.reference));
+      await this.sessionCache.delete(this.toSessionId(webhookResp.reference));
       throw new IssuerException({
         code: IEC.ISSUE_DENIED,
         msg: "Your passport is not verified",
@@ -283,7 +290,7 @@ export class Issuer
         jws: await this.createJWS(credential)
       }
     };
-    this.sessionCache.delete(sessionId);
+    await this.sessionCache.delete(sessionId);
     return protectedCred;
   };
 

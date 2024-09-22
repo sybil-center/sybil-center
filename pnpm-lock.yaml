@@ -25,6 +25,9 @@ importers:
       '@keyvhq/core':
         specifier: ^2.1.1
         version: 2.1.1
+      '@keyvhq/postgres':
+        specifier: ^2.1.1
+        version: 2.1.1
       '@noble/curves':
         specifier: ^1.2.0
         version: 1.4.0
@@ -61,6 +64,12 @@ importers:
       dotenv:
         specifier: ^16.0.3
         version: 16.4.5
+      drizzle-kit:
+        specifier: ^0.22.7
+        version: 0.22.7
+      drizzle-orm:
+        specifier: ^0.31.2
+        version: 0.31.2(pg@8.11.6)(postgres@3.4.4)
       ethers:
         specifier: ^5.7.2
         version: 5.7.2
@@ -100,6 +109,9 @@ importers:
       pino-pretty:
         specifier: ^9.3.0
         version: 9.4.1
+      postgres:
+        specifier: ^3.4.4
+        version: 3.4.4
       sort-keys:
         specifier: ^5.0.0
         version: 5.0.0
