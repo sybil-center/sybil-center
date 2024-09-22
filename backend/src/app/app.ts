@@ -13,6 +13,8 @@ import { IssuerSupervisor } from "../issuers/issuer-supervisor.js";
 import { HttpZcredController } from "../controllers/http-zcred-controller.js";
 import { FarquestService } from "../services/farquest.service.js";
 import { NeuroVisionKYCPassportController } from "../issuers/passport/controllers/neuro-vision-kyc.controller.js";
+import { CacheClient } from "../backbone/cache-client.js";
+import { DbClient } from "../backbone/db-client.js";
 
 type PreDI = {
   logger: ILogger;
@@ -23,6 +25,8 @@ type PreDI = {
   credentialProver: CredentialProver;
   signatureVerifier: SignatureVerifier;
   farquestService: FarquestService;
+  cacheClient: CacheClient;
+  dbClient: DbClient;
 }
 
 export type DI = PreDI & {
@@ -61,6 +65,8 @@ export class App {
       let context: Injector<PreDI> = app.rootContext
         .provideClass("logger", Logger)
         .provideClass("config", Config)
+        .provideClass("dbClient", DbClient)
+        .provideClass("cacheClient", CacheClient)
         .provideClass("httpServer", HttpServer)
         .provideClass("didService", DIDService)
         .provideClass("gateBuilder", GateBuilder)

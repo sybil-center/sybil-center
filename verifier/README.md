@@ -50,7 +50,7 @@ error. How to handle webhook see in [Handle webhook](#handle-webhook)
 
 The diagram below depicts the described process.
 
-![image](/documentation/verifier_architecture.png)
+![image](./documentation/verifier_architecture.png)
 
 ### Identification and Authorization
 

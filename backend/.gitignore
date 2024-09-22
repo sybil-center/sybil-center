@@ -4,3 +4,4 @@ dist
 ./vc-provider.code-workspace
 *.iml
 .env
+/dev/db-dev-data

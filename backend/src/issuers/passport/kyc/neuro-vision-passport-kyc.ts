@@ -7,6 +7,7 @@ import { parse as mrzParse } from "mrz";
 import { sha256Hmac } from "../../../util/crypto.js";
 import { Config } from "../../../backbone/config.js";
 import Keyv from "@keyvhq/core";
+import { CacheClient } from "../../../backbone/cache-client.js";
 
 type WebhookBody = {
   clientId: string;
@@ -91,9 +92,13 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
 
   constructor(
     private readonly config: Config,
+    cacheClient: CacheClient,
     private readonly toSessionId: (clientKey: string) => string
   ) {
-    this.sessionIdMap = new Keyv({ ttl: config.kycSessionTtl });
+    this.sessionIdMap = cacheClient.createTtlCache({
+      namespace: "neuro-vision-session",
+      ttl: config.kycSessionTtl
+    });
   }
 
   createReference(clientKey: string): string {

@@ -75,6 +75,10 @@ export class Config {
   readonly neuroVisionSchemaId: string;
   readonly neuroVisionSecretKey: string;
 
+  readonly db: {
+    url: string
+  };
+
   constructor(envFilepath?: URL) {
     if (envFilepath) {
       configDotEnv({ path: envFilepath, override: true });
@@ -126,7 +130,9 @@ export class Config {
 
     this.neuroVisionSchemaId = getStrOrThrow("NEURO_VISION_SCHEMA_ID");
     this.neuroVisionSecretKey = getStrOrThrow("NEURO_VISION_SECRET_KEY");
-
+    this.db = {
+      url: getStrOrThrow("DB_URL")
+    };
   }
 }
 
