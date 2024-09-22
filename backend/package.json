@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "npx tsm ./src/main.ts",
-    "test": "DB_URL=postgres://dev:dev@localhost:5433/dev pnpm run dev:test:up && NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test && pnpm run dev:test:down",
+    "test": "DB_URL=postgres://dev:dev@localhost:5434/dev pnpm run dev:test:up && NODE_ENV=test npx tsm ./node_modules/uvu/bin.js ./test && pnpm run dev:test:down",
     "test:watch": "./node_modules/.bin/watchlist src test --eager -- npm run test",
     "test-on-win": "set NODE_ENV=test && npx tsm ./node_modules/uvu/bin.js ./test",
     "dev:db:up": "docker compose -f dev/docker-compose.db-dev.yml up -d",
