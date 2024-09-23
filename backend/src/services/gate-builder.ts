@@ -66,22 +66,6 @@ class Gate {
     return this;
   }
 
-  /** Check captcha */
-  captchaRequired(captcha?: string): Gate {
-    this.setLock(async () => {
-      if (this.context.resolve("config").captchaRequired && !captcha) return {
-        opened: false,
-        reason: `Captcha token required`,
-        errStatus: 400
-      };
-      return {
-        opened: true,
-        reason: ""
-      };
-    });
-    return this;
-  }
-
   /** To open gate all locks MUST be opened */
   async openAll(thrower?: Thrower): Promise<OpenResult | never> {
     for (const openFn of this.opens) {
