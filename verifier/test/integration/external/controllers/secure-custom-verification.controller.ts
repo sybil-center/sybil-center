@@ -193,6 +193,10 @@ test("verification exception", async () => {
       status: "exception"
     } satisfies VerificationResultRespDto["sendBody"]
   );
+  a.is(
+    new URL(result.redirectURL).searchParams.get("verified"), "false",
+    `Redirect url search param "verified" MUST be "false"`
+  );
   a.is(result.webhookURL, WEBHOOK_URL.href);
   const pageResp = await httpClient.getVerificationResultPage({
     jws: await testUtil.createClientJWS({

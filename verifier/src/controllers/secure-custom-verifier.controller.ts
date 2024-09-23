@@ -335,7 +335,8 @@ export async function SecureCustomVerifierController(injector: Injector<DI>) {
     const redirectURL = getRedirectURL({
       redirectURLStr: clientSession.redirectURL,
       sessionId: clientSession.id,
-      verificationResultId: verificationResultId
+      verificationResultId: verificationResultId,
+      verified: false
     });
     return {
       webhookURL: clientSession.webhookURL,
@@ -418,6 +419,7 @@ export async function SecureCustomVerifierController(injector: Injector<DI>) {
       sessionId: clientSession.id,
       redirectURLStr: clientSession.redirectURL,
       verificationResultId: verificationResultId!,
+      verified: true
     });
     await clientSessionCache.delete(clientSession.id);
     await challengeMessageCache.delete(clientSession.id);
@@ -481,11 +483,13 @@ export async function SecureCustomVerifierController(injector: Injector<DI>) {
     redirectURLStr: string;
     sessionId: string;
     verificationResultId: string;
-    exceptionCode?: JsonZcredException["code"]
+    exceptionCode?: JsonZcredException["code"];
+    verified: boolean;
   }): URL {
     const redirectURL = new URL(input.redirectURLStr);
     redirectURL.searchParams.set("sessionId", input.sessionId);
     redirectURL.searchParams.set("verificationResultId", input.verificationResultId);
+    redirectURL.searchParams.set("verified", input.verified ? "true" : "false");
     return redirectURL;
   }
 
