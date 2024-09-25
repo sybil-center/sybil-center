@@ -11,20 +11,12 @@ export class Config {
 
   /**  Url of ethereum node */
   readonly ethNodeUrl: string;
-  /** TTL for signature message cache in ms */
-  readonly signatureMessageTTL: number;
-  readonly oAuthSessionTtl: number;
-
-  readonly frontendOrigin: URL;
 
   /** Mina private key as base58 encoding*/
   readonly minaPrivateKey: string;
 
   /** KYC session ttl in MS */
   readonly kycSessionTtl: number;
-
-  /** secp256k1 private key as hex string */
-  readonly secp256k1PrivateKey: string;
 
   /** Farquest (API provider for Farcaster) API KEY */
   readonly farquestApiKey: string;
@@ -48,15 +40,10 @@ export class Config {
 
     const origin = new URL(getStrOrThrow("PATH_TO_EXPOSE_DOMAIN")).origin;
     this.pathToExposeDomain = new URL(origin);
-
     this.secret = getStrOrThrow("SECRET");
     this.ethNodeUrl = getStrOrThrow("ETH_NODE_URL");
-    this.signatureMessageTTL = getNumOrThrow("SIGNATURE_MESSAGE_TTL");
-    this.oAuthSessionTtl = getNumOrThrow("OAUTH_SESSION_TTL");
-    this.frontendOrigin = new URL(getStrOrThrow("FRONTEND_ORIGIN"));
     this.minaPrivateKey = getStrOrThrow("MINA_PRIVATE_KEY");
     this.kycSessionTtl = getNumOrThrow("KYC_SESSION_TTL");
-    this.secp256k1PrivateKey = getStrOrThrow("SECP256K1_PRIVATE_KEY");
     this.farquestApiKey = getStrOrThrow("FAR_QUEST_API_KEY");
     this.neuroVisionSchemaId = getStrOrThrow("NEURO_VISION_SCHEMA_ID");
     this.neuroVisionSecretKey = getStrOrThrow("NEURO_VISION_SECRET_KEY");

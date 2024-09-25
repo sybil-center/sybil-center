@@ -1,5 +1,4 @@
 import { Config } from "../backbone/config.js";
-import { FastifyRequest } from "fastify";
 import { Injector, INJECTOR_TOKEN, tokens } from "typed-inject";
 
 type GateDependency = {
@@ -35,34 +34,12 @@ class Gate {
   private readonly opens: OpenFn[] = [];
 
   constructor(
+    // @ts-expect-error
     private readonly context: Injector<GateDependency>
   ) {}
 
   setLock(openFn: OpenFn): Gate {
     this.opens.push(openFn);
-    return this;
-  }
-
-  checkFrontend(req: FastifyRequest): Gate {
-    this.setLock(async () => {
-      const frontendDomain = this.context.resolve("config").frontendOrigin.origin;
-      const referer = req.headers.referer;
-      if (!referer) return {
-        opened: false,
-        reason: "Referer header is undefined",
-        errStatus: 403
-      };
-      const origin = new URL(referer).origin;
-      if (origin !== frontendDomain) return {
-        opened: false,
-        reason: "Forbidden",
-        errStatus: 403
-      };
-      return {
-        opened: true,
-        reason: ""
-      };
-    });
     return this;
   }
 
