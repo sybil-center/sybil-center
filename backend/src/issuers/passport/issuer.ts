@@ -87,24 +87,24 @@ function isStrictChallengeReq(req: ChallengeReq): req is StrictChallengeReq {
 }
 
 const ATTRIBUTES_DEF = {
-  type: "document type (passport)",
-  validFrom: "passport valid from date",
-  issuanceDate: "passport issuance date",
-  validUntil: "passport valid until",
+  type: "document",
+  validFrom: "valid from date",
+  issuanceDate: "issuance date",
+  validUntil: "valid until",
   subject: {
     id: {
-      type: "passport owner public key type",
-      key: "passport owner public key"
+      type: "owner public key type",
+      key: "owner public key"
     },
-    firstName: "passport owner first name",
-    lastName: "passport owner last name",
-    birthDate: "passport owner birth date",
-    gender: "passport owner gender"
+    firstName: "first name",
+    lastName: "last name",
+    birthDate: "birth date",
+    gender: "gender"
   },
-  countryCode: "passport country code",
+  countryCode: "country code",
   document: {
     id: "passport id (should be private)",
-    sybilId: "document unique public id"
+    sybilId: "sybil id"
   },
 };
 
