@@ -1060,7 +1060,10 @@
   const openWidget = () => {
     window.KYCWidget.setupKYC({
       schemaId: schemaId,
-      clientKey: clientKey
+      clientKey: clientKey,
+      debug: true,
+      closeCb: () => {
+      }
     });
   };
 
@@ -1087,13 +1090,15 @@
       setTimeout(window.close(), 2000);
     });
 
-  if (md.mobile()) {
-    const enfaceURL = new URL(`https://kyc.enface.ai/${schemaId}/${clientKey}`);
-    window.open(enfaceURL, "_self")
-  } else {
-    openWidget();
-  }
+  openWidget();
 
+  const enfaceURL = new URL(`https://kyc.enface.ai/${schemaId}/${clientKey}`);
+
+  if (md.mobile()) {
+    new Promise((resolve) => {
+      setTimeout(resolve, 1000);
+    }).then(() => window.open(enfaceURL, "_self"));
+  }
 
 </script>
 </body>
