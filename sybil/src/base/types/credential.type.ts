@@ -1,6 +1,5 @@
 import { ProofType } from "./proof-type.type.js";
 import { CredentialType } from "./credential-type.type.js";
-import { AnyObj } from "../../util/types.util.js";
 import { SignFn } from "./sign-fn.type.js";
 
 /** Base type of VC and its components */
@@ -79,7 +78,7 @@ export type Challenge = {
 /** Request entity for getting challenge */
 export type ChallengeReq = {
   /** Custom property that will be represented in Verifiable Credential */
-  custom?: AnyObj;
+  custom?: Record<string, any>;
   /** Credential expiration date */
   expirationDate?: Date;
   /** Verifiable credential id */
@@ -89,7 +88,7 @@ export type ChallengeReq = {
 }
 
 export type Options = {
-  custom?: AnyObj;
+  custom?: Record<string, any>;
   expirationDate?: Date;
   credentialId?: string;
 }

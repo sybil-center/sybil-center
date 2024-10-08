@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["./test", "./hardhat", "./scripts", "./drizzle.config.ts", "./migrations"]
+}

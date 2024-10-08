@@ -12,6 +12,7 @@ WORKDIR /app
 COPY . .
 
 RUN rm -r ./backend
+RUN rm -r ./verifier
 RUN npm install -g pnpm
 RUN pnpm install
 RUN pnpm run build

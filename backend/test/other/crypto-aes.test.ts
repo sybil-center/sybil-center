@@ -2,13 +2,13 @@ import { suite } from "uvu";
 import { hash } from "@stablelib/sha256";
 import crypto from "node:crypto";
 import * as a from "uvu/assert";
-import { ethereumSupport } from "../support/chain/ethereum.js";
+import { testUtil } from "../test-util/index.js";
 
 const test = suite("OTHER: AES node crypto test");
 
 test("AES encript and decript", async () => {
   const alg = "aes-256-cbc";
-  const { address } = ethereumSupport.info.ethereum;
+  const { address } = testUtil.ethereum;
   const message = `eth:${address}:secret`;
   const secret = "secret";
   const secretBytes = Array.from(secret, (i) => i.charCodeAt(0));

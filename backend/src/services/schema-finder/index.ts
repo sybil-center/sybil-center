@@ -1,6 +1,5 @@
 import { O1GraphLink } from "o1js-trgraph";
 import { findSignatureSchema } from "./signature-proof.js";
-import { findACISchema } from "./aci-proof.js";
 
 export type IdentifierSchema = {
   type: O1GraphLink[],
@@ -8,7 +7,6 @@ export type IdentifierSchema = {
 }
 
 
-export const SCHEMAS = {
-  getSignature: findSignatureSchema,
-  getACI: findACISchema
+export const Schemas = {
+  getSignature: findSignatureSchema
 };

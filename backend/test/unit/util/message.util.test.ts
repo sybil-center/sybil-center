@@ -1,12 +1,12 @@
 import { suite } from "uvu";
 import * as a from "uvu/assert";
-import { ethereumSupport } from "../../support/chain/ethereum.js";
 import { fromIssueMessage, toIssueMessage } from "../../../src/util/message.util.js";
 import { CredentialType } from "@sybil-center/sdk";
+import { testUtil } from "../../test-util/index.js";
 
 const test = suite("UNIT: challenge service test");
 
-const subjectId = ethereumSupport.info.ethereum.didPkh;
+const subjectId = testUtil.ethereum.dids.pkh.did;
 
 test("issue challenge message create and parse without props", () => {
   const type: CredentialType = "DiscordAccount";

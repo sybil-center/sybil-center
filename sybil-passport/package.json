@@ -1,0 +1,50 @@
+{
+  "name": "@sybil-center/passport",
+  "version": "0.0.2",
+  "description": "Sybil Center passport",
+  "license": "(Apache-2.0 AND MIT)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sybil-center/sybil-center.git"
+  },
+  "keywords": [
+    "Sybil passport",
+    "Sybil passport for js JAL"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "test": "npx tsm ./node_modules/uvu/bin.js ./test",
+    "build": "rm -r dist & tsc -p tsconfig.build.json"
+  },
+  "files": [
+    "./dist"
+  ],
+  "dependencies": {
+    "@jaljs/core": "1.0.5",
+    "@jaljs/js-zcred": "0.0.4"
+  },
+  "devDependencies": {
+    "@jaljs/friendly-zcred": "^0.0.5",
+    "@jaljs/o1js": "1.1.7",
+    "@types/node": "20.8.0",
+    "o1js-trgraph": "^2.2.0",
+    "tsm": "^2.3.0",
+    "typescript": "^4.9.5",
+    "uvu": "^0.5.6"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/index.d.ts"
+      ]
+    }
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  }
+}

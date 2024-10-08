@@ -5,9 +5,13 @@
   "description": "Monorepo for SybilCenter",
   "scripts": {
     "build": "pnpm run -r build",
-    "test": "pnpm run -r test",
+    "test": "pnpm run test:backend && pnpm run test:verifier && pnpm run test:sybil-passport",
+    "test:backend": "cd ./backend && pnpm run test && cd ..",
+    "test:verifier": "cd ./verifier && pnpm run test && cd ..",
+    "test:sybil-passport": "cd ./sybil-passport && pnpm run test && cd ..",
     "docker:build": "npm run docker:backend && npm run docker:fronend",
     "docker:backend": "docker build -t backend -f Dockerfile.backend .",
-    "docker:frontend": "docker build -t frontend -f Dockerfile.frontend ."
+    "docker:frontend": "docker build -t frontend -f Dockerfile.frontend .",
+    "docker:verifier": "docker build -t verifier -f Dockerfile.verifier ."
   }
 }

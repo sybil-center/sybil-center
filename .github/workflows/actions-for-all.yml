@@ -16,7 +16,10 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 18.16.0
+          node-version: 18.18.2
+
+      - name: Setup docker compose
+        uses: ndeloof/install-compose-action@v0.0.1
 
       - uses: pnpm/action-setup@v2
         name: Install pnpm
@@ -31,16 +34,8 @@ jobs:
         run: |
           echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v3
-        name: Setup pnpm cache
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --force
 
       - name: Build
         run: pnpm run build

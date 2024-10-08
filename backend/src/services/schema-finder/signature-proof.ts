@@ -1,10 +1,11 @@
-import { CredType, IdType, SignProofType, TrSchema } from "@zcredjs/core";
+import { IdType, SignProofType, TrSchema } from "@zcredjs/core";
 import { O1GraphLink } from "o1js-trgraph";
 import { IdentifierSchema } from "./index.js";
 import { ServerErr } from "../../backbone/errors.js";
+import { CredentialType } from "../sybiljs/types/index.js";
 
 
-export const SIGNATURE_PROOF_SCHEMA_MAP: Record<CredType, Record<SignProofType, {
+export const SIGNATURE_PROOF_SCHEMA_MAP: Record<CredentialType, Record<SignProofType, {
   subjectIdSchema: Record<IdType, IdentifierSchema>
   attributesSchema: TrSchema<O1GraphLink>
 }>> = {
@@ -22,32 +23,33 @@ export const SIGNATURE_PROOF_SCHEMA_MAP: Record<CredType, Record<SignProofType, 
       },
       attributesSchema: {
         type: ["ascii-bytes", "bytes-uint128", "uint128-mina:field"],
-        issuanceDate: ["isodate-unixtime", "unixtime-uint64", "uint64-mina:field"],
-        validFrom: ["isodate-unixtime", "unixtime-uint64", "uint64-mina:field"],
-        validUntil: ["isodate-unixtime", "unixtime-uint64", "uint64-mina:field"],
+        issuanceDate: ["isodate-bytesdate", "bytesdate-unixtime19", "unixtime19-uint64", "uint64-mina:field"],
+        validFrom: ["isodate-bytesdate", "bytesdate-unixtime19", "unixtime19-uint64", "uint64-mina:field"],
+        validUntil: ["isodate-bytesdate", "bytesdate-unixtime19", "unixtime19-uint64", "uint64-mina:field"],
         subject: {
           firstName: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
           lastName: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
-          birthDate: ["isodate-unixtime19", "unixtime19-uint64", "uint64-mina:field"],
+          birthDate: ["isodate-bytesdate", "bytesdate-unixtime19", "unixtime19-uint64", "uint64-mina:field"],
           gender: ["ascii-bytes", "bytes-uint64", "uint64-mina:field"],
-          countryCode: [
-            "iso3166alpha3-iso3166numeric",
-            "iso3166numeric-uint16",
-            "uint16-mina:field"
-          ],
-          document: {
-            id: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"]
-          }
+        },
+        countryCode: [
+          "iso3166alpha3-iso3166numeric",
+          "iso3166numeric-uint16",
+          "uint16-mina:field"
+        ],
+        document: {
+          id: ["utf8-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"],
+          sybilId: ["base58-bytes", "bytes-uint", "mina:mod.order", "uint-mina:field"]
         }
       }
     }
-  }
+  },
 };
 
 export type FindSignSchemaEntry = {
   proofType: SignProofType;
   idType: IdType;
-  credentialType: CredType,
+  credentialType: CredentialType,
 }
 
 export function findSignatureSchema(findEntry: FindSignSchemaEntry) {
