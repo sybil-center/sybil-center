@@ -54,7 +54,7 @@ const ProofOfWorkJwsPayload = Type.Object({
 
 type ProofOfWorkJwsPayload = Static<typeof ProofOfWorkJwsPayload>;
 
-export const EXCEPTION_DIFFICULTY = 5;
+export const EXCEPTION_DIFFICULTY = 4;
 
 const TAGS = ["Verification"];
 
