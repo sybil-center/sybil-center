@@ -4,6 +4,7 @@ import { Disposable } from "typed-inject";
 
 export type ProcedureArgs = {
   reference: string;
+  redirectURL: string;
 }
 
 export type ProcedureResp = {

@@ -81,6 +81,7 @@ type Session = {
   id: string;
   status: "success" | "failed" | "wait",
   attempt: number;
+  redirectURL: string;
 }
 
 const MAX_ATTEMPTS_COUNT = 3;
@@ -105,7 +106,10 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
     return clientKey;
   }
 
-  async initializeProcedure({ reference: clientKey }: ProcedureArgs): Promise<ProcedureResp> {
+  async initializeProcedure({
+    reference: clientKey,
+    redirectURL
+  }: ProcedureArgs): Promise<ProcedureResp> {
     const password = this.config.neuroVisionSecretKey; // <- Это "Secret key" из конфиги сценария
     const key = crypto.createHash("sha256")
       .update(password)
@@ -115,7 +119,12 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
     const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
     const sessionId = this.toSessionId(clientKey);
     const publicId = this.createPublicId(sessionId);
-    await this.sessionIdMap.set(publicId, { id: sessionId, status: "wait", attempt: 0 });
+    await this.sessionIdMap.set(publicId, {
+      id: sessionId,
+      status: "wait",
+      attempt: 0,
+      redirectURL: redirectURL
+    });
     const encrypted = Buffer.concat([
       iv,
       cipher.update(clientKey),
@@ -158,7 +167,7 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
     const attempt = cache.attempt + 1;
     if (!isPassportDataOK(passportData)) {
       if (attempt === MAX_ATTEMPTS_COUNT) {
-        await this.sessionIdMap.set(publicId, { id: sessionId, status: "failed", attempt });
+        await this.sessionIdMap.set(publicId, { ...cache, status: "failed", attempt });
         return { verified: false, reference: body.clientKey };
       }
       throw new ClientErr({ statusCode: 400, message: "Neuro-vision wait until success" });
@@ -168,7 +177,7 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
       && result.status === "success"
       && result.ocr.status === "success";
     const { passport } = toPassportFormat(fields);
-    await this.sessionIdMap.set(publicId, { id: sessionId, status: "success", attempt });
+    await this.sessionIdMap.set(publicId, { ...cache, status: "success", attempt });
     return {
       verified,
       reference: body.clientKey,
