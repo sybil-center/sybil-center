@@ -47,6 +47,7 @@ type Session = {
 
 interface StrictChallengeOptions extends ChallengeOptions {
   chainId: string;
+  redirectURL: string;
 }
 
 interface StrictChallengeReq extends StrictChallengeReqOrigin {
@@ -81,6 +82,13 @@ function isStrictChallengeReq(req: ChallengeReq): req is StrictChallengeReq {
       code: IEC.CHALLENGE_BAD_REQ,
       msg: `Bad challenge request. "chainId" MUST be defined in "options"`,
       desc: `"passport" issuer. On get challenge, no "chainId" in "options"`
+    });
+  }
+  if (!("redirectURL" in req.options) || typeof req.options.redirectURL !== "string") {
+    throw new IssuerException({
+      code: IEC.CHALLENGE_BAD_REQ,
+      msg: `Bad challenge request. "redirectURL" MUST be defined in "options"`,
+      desc: `"passport" issuer. On get challenge, no "redirectURL" in "options"`
     });
   }
   return true;
@@ -196,10 +204,12 @@ export class Issuer
       code: IEC.CHALLENGE_BAD_REQ,
       msg: `Bad challenge request`
     });
+
     const reference = this.passportKYC.createReference(crypto.randomUUID());
     const sessionId = this.toSessionId(reference);
     const { verifyURL } = await this.passportKYC.initializeProcedure({
       reference,
+      redirectURL: challengeReq.options.redirectURL
     });
     const challenge: Challenge = {
       sessionId: sessionId,
@@ -211,11 +221,11 @@ export class Issuer
   }
 
   async canIssue({ sessionId }: CanIssueReq): Promise<CanIssue> {
-    const fountSession = await this.sessionCache.get(sessionId);
-    if (!fountSession) {
+    const foundSession = await this.sessionCache.get(sessionId);
+    if (!foundSession) {
       throw new ClientErr(`No session with id ${sessionId}`);
     }
-    const webhookResp = fountSession.webhookResp;
+    const webhookResp = foundSession.webhookResp;
     if (!webhookResp) return { canIssue: false };
     if (!isWebhookResultOK(webhookResp) || !webhookResp.verified) {
       await this.sessionCache.delete(this.toSessionId(webhookResp.reference));

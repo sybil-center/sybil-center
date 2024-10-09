@@ -63,6 +63,9 @@ export function NeuroVisionKYCPassportController(injector: Injector<Dependencies
       resp.statusCode = 400;
       return { message: `Session not found by publicId: ${publicId}` };
     }
-    return { status: result.status };
+    return {
+      status: result.status,
+      redirectURL: result.redirectURL
+    };
   });
 }
