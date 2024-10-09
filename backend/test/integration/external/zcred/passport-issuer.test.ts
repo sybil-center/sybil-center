@@ -62,6 +62,7 @@ type BeforeIssueParams = {
   validUntil?: string;
   options: {
     chainId: string;
+    redirectURL: string;
   }
 }
 
@@ -171,7 +172,8 @@ test("issue passport credential with mina public key", async () => {
     },
     validUntil: new Date(2030, 1, 1).toISOString(),
     options: {
-      chainId: "mina:mainnet"
+      chainId: "mina:mainnet",
+      redirectURL: "https://app.zcred.me"
     }
   });
   const signature = await testUtil.mina.signMessage(message, "mina:mainnet");
@@ -220,7 +222,8 @@ test("issue passport credential with ethereum public key", async () => {
     },
     validUntil: new Date(2030, 1, 1).toISOString(),
     options: {
-      chainId: "eip155:1"
+      chainId: "eip155:1",
+      redirectURL: "https://app.zcred.me"
     }
   });
   const signature = await testUtil.ethereum.signMessage(message);
@@ -269,7 +272,8 @@ test("invalid mina signature", async () => {
     },
     validUntil: new Date(2030, 1, 1).toISOString(),
     options: {
-      chainId: "mina:mainnet"
+      chainId: "mina:mainnet",
+      redirectURL: "https://app.zcred.me"
     }
   });
   const issueReq: IssueReq = {
@@ -300,7 +304,8 @@ test("invalid ethereum signature", async () => {
     },
     validUntil: new Date(2030, 1, 1).toISOString(),
     options: {
-      chainId: "mina:mainnet"
+      chainId: "mina:mainnet",
+      redirectURL: "https://app.zcred.me"
     }
   });
   const issueReq: IssueReq = {
@@ -366,7 +371,8 @@ test("sybil id equals for same passport but different subject id", async () => {
     },
     validUntil: new Date(2030, 1, 1).toISOString(),
     options: {
-      chainId: "mina:mainnet"
+      chainId: "mina:mainnet",
+      redirectURL: "https://app.zcred.me"
     }
   });
   const minaSignature = await testUtil.mina.signMessage(minaMessage, "mina:mainnet");
@@ -394,7 +400,8 @@ test("sybil id equals for same passport but different subject id", async () => {
     },
     validUntil: new Date(2030, 1, 1).toISOString(),
     options: {
-      chainId: "eip155:1"
+      chainId: "eip155:1",
+      redirectURL: "https://app.zcred.me"
     }
   });
 
