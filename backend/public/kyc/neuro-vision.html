@@ -1067,38 +1067,43 @@
     });
   };
 
+  let redirectURL = null;
+  let isError = false;
+  let isSuccess = false;
+
   async function sendStatusRequest() {
     const resp = await fetch(statusURL);
     if (resp.ok) {
-      return await resp.json();
+      const body = await resp.json();
+      redirectURL = new URL(body.redirectURL);
+      if (body.status === "success") {
+        isSuccess = true;
+      }
+      if (body.status === "failed") {
+        isError = true;
+      }
+    } else {
+      isError = true;
     }
-    throw new Error(`Get status error`);
   }
 
   repeatUntil(
-    (result) => (result instanceof Error) ? true : result,
+    () => isSuccess || isError,
     2000,
     () => sendStatusRequest()
-      .then((body) => {
-        if (body.status === "wait") return false;
-        if (body.status === "failed") throw new Error("Verification failed");
-        return true; // body.status === "success"
-      })
-  ).then(() => setTimeout(window.close(), 2000))
-    .catch(() => {
-      alert("Unexpected ERROR");
-      setTimeout(window.close(), 2000);
-    });
+  ).then(() => {
+    if (isSuccess) {
+      redirectURL.searchParams.set("isOk", "true");
+      window.location.href = redirectURL.href;
+    } else if (isError && redirectURL) {
+      redirectURL.searchParams.set("isOk", "false");
+      window.location.href = redirectURL.href;
+    } else {
+      alert("Verification FAILED");
+    }
+  });
 
   openWidget();
-
-  const enfaceURL = new URL(`https://kyc.enface.ai/${schemaId}/${clientKey}`);
-
-  if (md.mobile()) {
-    new Promise((resolve) => {
-      setTimeout(resolve, 1000);
-    }).then(() => window.open(enfaceURL, "_self"));
-  }
 
 </script>
 </body>
