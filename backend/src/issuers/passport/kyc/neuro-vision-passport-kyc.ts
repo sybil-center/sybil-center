@@ -8,6 +8,7 @@ import { sha256Hmac } from "../../../util/crypto.js";
 import { Config } from "../../../backbone/config.js";
 import Keyv from "@keyvhq/core";
 import { CacheClient } from "../../../backbone/cache-client.js";
+import { ILogger } from "../../../backbone/logger.js";
 
 type WebhookBody = {
   clientId: string;
@@ -94,7 +95,8 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
   constructor(
     private readonly config: Config,
     cacheClient: CacheClient,
-    private readonly toSessionId: (clientKey: string) => string
+    private readonly toSessionId: (clientKey: string) => string,
+    private readonly logger: ILogger
   ) {
     this.sessionIdMap = cacheClient.createTtlCache({
       namespace: "neuro-vision-session",
@@ -156,6 +158,7 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
       message: `Neuro-vision webhook body is not correct. Body: ${JSON.stringify(body, null, 2)}`,
       place: `${this.constructor.name}.handleWebhook`
     });
+    this.logger.info("Webhook request body", body);
     const passportData = extractPassportData(body);
     const sessionId = this.toSessionId(body.clientKey);
     const publicId = this.createPublicId(sessionId);
@@ -168,14 +171,17 @@ export class NeuroVisionPassportKYC implements IPassportKYCService {
     if (!isPassportDataOK(passportData)) {
       if (attempt === MAX_ATTEMPTS_COUNT) {
         await this.sessionIdMap.set(publicId, { ...cache, status: "failed", attempt });
+        this.logger.info("Attempt ends", attempt)
         return { verified: false, reference: body.clientKey };
       }
+      this.logger.info("Attempt wait", attempt);
       throw new ClientErr({ statusCode: 400, message: "Neuro-vision wait until success" });
     }
     const { result, fields } = passportData;
     const verified = body.status === "success"
       && result.status === "success"
       && result.ocr.status === "success";
+    this.logger.info("Is verified", verified)
     const { passport } = toPassportFormat(fields);
     await this.sessionIdMap.set(publicId, { ...cache, status: "success", attempt });
     return {

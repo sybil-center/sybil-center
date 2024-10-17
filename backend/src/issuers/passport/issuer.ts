@@ -146,7 +146,8 @@ export class Issuer
     this.passportKYC = new NeuroVisionPassportKYC(
       config,
       cacheClient,
-      (clientKey) => {return toSessionId(clientKey, this.secret);}
+      (clientKey) => {return toSessionId(clientKey, this.secret);},
+      logger
     );
     logger.info(`Issuer "passport" initialized`);
     this.sessionCache = cacheClient.createTtlCache<Session>({
