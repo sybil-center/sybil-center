@@ -2,6 +2,8 @@ import { HttpServer } from "../../../backbone/http-server.js";
 import { contextUtil } from "../../../util/context.util.js";
 import { Injector } from "typed-inject";
 import { IssuerSupervisor } from "../../issuer-supervisor.js";
+import { PassportIssuer } from "../issuer.js";
+import { StubPassportKYC } from "../kyc/stub-passport-kyc.js";
 
 type Dependencies = {
   httpServer: HttpServer
@@ -34,5 +36,20 @@ export function StubKYCPassportController(injector: Injector<Dependencies>) {
       await issuerSupervisor.getIssuer("passport").handleWebhook?.(req);
       return { message: "ok" };
     }
+  });
+
+  fastify.get<{
+    Querystring: {
+      reference: string;
+    }
+  }>("/api/v1/stub-kyc/status", async (req, resp) => {
+    const reference = req.query.reference;
+    if (!reference) {
+      resp.statusCode = 400;
+      return { message: `Reference is undefined` };
+    }
+    const issuer = issuerSupervisor.getIssuer("passport") as PassportIssuer;
+    const kyc = issuer.passportKYC as StubPassportKYC;
+    return await kyc.getStatus(reference);
   });
 }
