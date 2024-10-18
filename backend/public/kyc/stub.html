@@ -32,12 +32,25 @@
   </style>
   <script>
     const reference = new URLSearchParams(window.location.search).get("reference");
-    const url = new URL("https://api.dev.sybil.center/api/v1/stub-kyc/webhook");
-    url.searchParams.set("reference", reference);
-    fetch(url)
+    const webhookURL = new URL("https://api.dev.sybil.center/api/v1/stub-kyc/webhook");
+    webhookURL.searchParams.set("reference", reference);
+    const statusURL = new URL("./api/v1/stub-kyc/status", webhookURL.origin);
+    statusURL.searchParams.set("reference", reference);
+    fetch(webhookURL)
       .then((it) => {
         console.log(it);
-        window.close();
+      })
+      .then(() => {
+        return fetch(statusURL);
+      })
+      .then((resp) => {
+        if (!resp.ok) {
+          throw new Error("Something went wrong");
+        }
+        return resp.json();
+      })
+      .then((body) => {
+        window.location = body.redirectURL;
       })
       .catch(() => console.log("something went wrong"));
   </script>
