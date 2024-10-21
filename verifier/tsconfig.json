@@ -3,8 +3,8 @@
     /* Language and Environment */
     "target": "esnext",
     /* Modules */
-    "module": "esnext",
-    "moduleResolution": "node16",
+    "module": "NodeNext",
+    "moduleResolution": "Node16",
     "rootDirs": [
       "./src"
     ],
