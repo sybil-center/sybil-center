@@ -358,9 +358,9 @@ export async function SecureCustomVerifierController(injector: Injector<DI>) {
     challengeMessage: string;
   }): Promise<{ ok: boolean; message: string }> {
     const { challengeMessage, jwt } = input;
-    const secret = crypto.createHash("sha256")
+    const secret = new Uint8Array(crypto.createHash("sha256")
       .update(u8a.fromString(challengeMessage))
-      .digest();
+      .digest());
     const { payload: payloadBytes } = await jose.compactVerify(jwt, secret);
     const payload = JSON.parse(u8a.toString(payloadBytes));
     if (!Value.Check(ProofOfWorkJwsPayload, payload)) {
