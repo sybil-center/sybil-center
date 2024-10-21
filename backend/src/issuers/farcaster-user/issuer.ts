@@ -21,12 +21,13 @@ import { Config } from "../../backbone/config.js";
 import { CredentialProver } from "../../services/credential-provers/index.js";
 import { tokens } from "typed-inject";
 import { DIDService } from "../../services/did.service.js";
-import { TimedCache } from "../../services/timed-cache.js";
 import { IssuerException } from "../../backbone/errors.js";
 import { getSignMessage } from "../../services/sign-message.js";
 import { ATTRIBUTE_DEFINITION, FarcasterUserAttributes, FarcasterUserCred, o1jsEthTransSchema } from "./types.js";
 import { FarquestService, FarquestType } from "../../services/farquest.service.js";
 import { SignatureVerifier } from "../../services/signature-verifier/index.js";
+import { CacheClient } from "../../backbone/cache-client.js";
+import Keyv from "@keyvhq/core";
 
 const DIFINITIONS = {
   attributes: {
@@ -68,7 +69,7 @@ type Session = {
 
 export class Issuer implements IIssuer<FarcasterUserCred> {
 
-  private readonly sessionCache: TimedCache<string, Session>;
+  private readonly sessionCache: Keyv<Session>;
 
 
   static inject = tokens(
@@ -77,7 +78,8 @@ export class Issuer implements IIssuer<FarcasterUserCred> {
     "credentialProver",
     "didService",
     "farquestService",
-    "signatureVerifier"
+    "signatureVerifier",
+    "cacheClient"
   );
   constructor(
     logger: ILogger,
@@ -85,9 +87,13 @@ export class Issuer implements IIssuer<FarcasterUserCred> {
     private readonly credProver: CredentialProver,
     private readonly didService: DIDService,
     private readonly farquestService: FarquestService,
-    private readonly signatureVerifier: SignatureVerifier
+    private readonly signatureVerifier: SignatureVerifier,
+    cacheClient: CacheClient
   ) {
-    this.sessionCache = new TimedCache<string, Session>(30 * 1000);
+    this.sessionCache = cacheClient.createTtlCache<Session>({
+      namespace: "farcaster-user",
+      ttl: 30 * 1000
+    });
     logger.info(`Issuer "${this.id}" initialized`);
   }
 
@@ -145,7 +151,7 @@ export class Issuer implements IIssuer<FarcasterUserCred> {
       sessionId: sessionId,
       message: message,
     };
-    this.sessionCache.set(sessionId, {
+    await this.sessionCache.set(sessionId, {
       challenge: challenge,
       challengeReq: challengeReq
     });
@@ -160,7 +166,7 @@ export class Issuer implements IIssuer<FarcasterUserCred> {
     sessionId,
     signature
   }: IssueReq): Promise<FarcasterUserCred> {
-    const session = this.sessionCache.find(sessionId);
+    const session = await this.sessionCache.get(sessionId);
     if (!session) throw new IssuerException({
       code: IEC.ISSUE_NO_SESSION,
       msg: "Session not found",
@@ -172,7 +178,7 @@ export class Issuer implements IIssuer<FarcasterUserCred> {
     });
     const farcasterUser = await this.getFarcasterUser(session.challengeReq.subject.id.key);
     const attributes = this.toAttributes(farcasterUser, session);
-    const proofs = await this. createProofs(attributes);
+    const proofs = await this.createProofs(attributes);
     const credential: Omit<FarcasterUserCred, "protection"> = {
       meta: {
         issuer: {
@@ -192,7 +198,7 @@ export class Issuer implements IIssuer<FarcasterUserCred> {
         jws: await this.createJWS(credential)
       }
     };
-    this.sessionCache.delete(sessionId);
+    await this.sessionCache.delete(sessionId);
     return protectedCred;
   }
 
@@ -273,6 +279,6 @@ export class Issuer implements IIssuer<FarcasterUserCred> {
   }
 
   dispose(): void | PromiseLike<void> {
-    this.sessionCache.dispose();
+    this.sessionCache.clear();
   };
 }

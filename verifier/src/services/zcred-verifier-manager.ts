@@ -83,5 +83,18 @@ export class ZcredVerifierManager {
     return await verifier.verify(provingResult);
   }
 
+  async getO1JSZkProgramMeta(jalId: string) {
+    const verifierPromise = this.zkProofVerifiers[jalId];
+    if (!verifierPromise) return null;
+    const verifier = await verifierPromise;
+    if (verifier instanceof O1JSProofVerifier) {
+      return {
+        zkProgram: verifier.zkProgram,
+        PublicInput: verifier.PublicInput,
+        verificationKey: verifier.verificationKey
+      };
+    }
+    return null;
+  }
 
 }
