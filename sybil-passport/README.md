@@ -7,12 +7,24 @@ Sybil Passport input schema, description and so on
 ### Create JAL program
 
 ```typescript
-import { DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA } from "@sybil-center/passport";
+import { getPassportSandbox } from "@sybil-center/passport";
+import { assert, not, toJAL } from "@jaljs/js-zcred";
+
 
 const {
-  credential,
-  context
-} = DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA;
+  inputSchema: {
+    credential,
+    context
+  },
+  olderThanYears,
+  youngerThanYears,
+  genderIs,
+  fromCountry,
+  passportNotExpired,
+} = getPassportSandbox({
+  subjectKeyType: "ethereum:address",
+  zkProofSystem: "o1js",
+});
 const attributes = credential.attributes;
 const jalProgram = toJAL({
   target: "o1js:zk-program.cjs",
@@ -24,12 +36,11 @@ const jalProgram = toJAL({
     context.now
   ],
   commands: [
-    assert(
-      greaterOrEqual(
-        sub(context.now, attributes.subject.birthDate),
-        mul(Static(18, ["uint64-mina:field"]), Const("year"))
-      )
-    )
+    assert(olderThanYears(18)),
+    assert(youngerThanYears(45)),
+    assert(genderIs("male")),
+    assert(not(fromCountry("USA"))),
+    assert(passportNotExpired())
   ],
   options: {
     signAlgorithm: "mina:pasta",
