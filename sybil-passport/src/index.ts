@@ -25,6 +25,7 @@ export type PassportInputSchema<TLink extends string = string> = Input<TLink> & 
 }
 
 export type Sandbox = {
+  issuerURI: string;
   inputSchema: PassportInputSchema;
   fromCountry: (alpha3CountryCode: string) => ReturnType<typeof equal>;
   olderThanYears: (years: number) => ReturnType<typeof greaterOrEqual>;

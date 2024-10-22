@@ -1,6 +1,6 @@
 import { assert, not, toJAL } from "@jaljs/js-zcred";
 import { suite } from "uvu";
-import { O1JS_ETH_DEV } from "../src/index.js";
+import { getPassportSandbox } from "../src/index.js";
 import { FriendlyZCredTranslator } from "@jaljs/friendly-zcred";
 
 const test = suite("o1js ethereum passport test");
@@ -16,7 +16,11 @@ test("create correct JAL", async () => {
     genderIs,
     fromCountry,
     passportNotExpired,
-  } = O1JS_ETH_DEV;
+  } = getPassportSandbox({
+    subjectKeyType: "ethereum:address",
+    zkProofSystem: "o1js",
+    isDev: true
+  });
   const attributes = credential.attributes;
   const jalProgram = toJAL({
     target: "o1js:zk-program.cjs",
