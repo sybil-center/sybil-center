@@ -101,8 +101,8 @@ const ATTRIBUTES_DEF = {
   validUntil: "valid until",
   subject: {
     id: {
-      type: "owner public key type",
-      key: "owner public key"
+      type: "public key type",
+      key: "public key"
     },
     firstName: "first name",
     lastName: "last name",
