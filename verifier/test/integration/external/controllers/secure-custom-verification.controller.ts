@@ -30,6 +30,7 @@ import { Es256kJwk } from "../../../../src/services/jws.verifier.service.js";
 import { JsonZcredException, SEC } from "@zcredjs/core";
 import { Page } from "../../../../src/stores/abstract.store.js";
 import { VerificationResultPageResponseDto } from "../../../../src/controllers/verification-result.controller.js";
+import { ZcredVerifierManager } from "../../../../src/services/zcred-verifier-manager.js";
 
 const test = suite("Test secure custom verifier controller");
 
@@ -38,6 +39,7 @@ let fastify: FastifyInstance;
 let config: Config;
 let db: DbClient["db"];
 let httpClient: TestHttpClient;
+let zcredVerifierManager: ZcredVerifierManager;
 
 test.before(async () => {
   dotenv.config({ path: PATH_TO_CONFIG, override: true });
@@ -46,6 +48,7 @@ test.before(async () => {
   config = app.context.resolve("config");
   db = app.context.resolve("dbClient").db;
   httpClient = new testUtil.HttpClient(fastify);
+  zcredVerifierManager = app.context.resolve("zcredVerifierManager");
 });
 
 test.after(async () => {
@@ -67,7 +70,8 @@ test("success flow", async () => {
   const provingResul = await createProvingResult({
     credential: testUtil.creds.SybilPassportEth,
     signMessage: testUtil.ethereum.signMessage,
-    proposal: proposal
+    proposal: proposal,
+    jalId: jalId
   });
   const verificationBody = await getVerificationResult({
     result: provingResul,
@@ -313,10 +317,13 @@ async function getProposal(input: {
 async function createProvingResult(input: {
   credential: Record<string, any>;
   proposal: Proposal;
-  signMessage: (message: string) => Promise<string>
+  signMessage: (message: string) => Promise<string>;
+  jalId: string;
 }): Promise<ProvingResultDto> {
   const { credential, proposal, signMessage } = input;
-  const { zkProgram, PublicInput, verificationKey } = await testUtil.o1js.initZkProgram(proposal.program);
+  const meta = await zcredVerifierManager.getO1JSZkProgramMeta(input.jalId);
+  if (!meta) throw Error(`o1js zk program not found by jalId: ${input.jalId}`);
+  const { zkProgram, PublicInput, verificationKey } = meta;
   const setup = {
     private: {
       credential: credential,

@@ -32,7 +32,6 @@
     "react-scripts": "5.0.1",
     "react-spinners": "^0.13.8",
     "sass": "^1.57.1",
-    "typescript": "^4.9.4",
     "uint8arrays": "4.0.3",
     "wagmi": "^0.12.1",
     "web-vitals": "^2.1.4"
@@ -57,6 +56,7 @@
   "devDependencies": {
     "dotenv": "^16.0.3",
     "prettier": "^2.8.3",
-    "tsm": "^2.3.0"
+    "tsm": "^2.3.0",
+    "typescript": "^5.6.3"
   }
 }

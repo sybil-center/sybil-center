@@ -4,7 +4,6 @@ import { ProvingResult } from "../types/index.js";
 import vm from "node:vm";
 import type {
   Bool,
-  CircuitString,
   Field,
   JsonProof,
   PrivateKey,
@@ -20,7 +19,7 @@ import sortKeys from "sort-keys";
 import { ID_TYPES, IdType } from "@zcredjs/core";
 import { IZkProofVerifier } from "../types/zk-proof-verifier.js";
 
-type O1Type = Field | UInt64 | Signature | PublicKey | Bool | PrivateKey | CircuitString
+type O1Type = Field | UInt64 | Signature | PublicKey | Bool | PrivateKey
 
 
 type ZkProgramType = {
