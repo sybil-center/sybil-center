@@ -25,9 +25,9 @@ export class SecretService {
     publicJWK: jose.JWK;
   }> {
     const bytes = u8a.fromString(input.secretPrefix + this.secret);
-    const privateKey = crypto.createHash("sha256")
+    const privateKey = new Uint8Array(crypto.createHash("sha256")
       .update(bytes)
-      .digest();
+      .digest());
     if (input.alg === "ES256K") {
       const publicKey = secp256k1.getPublicKey(privateKey, false).slice(1);
       const x = Buffer.from(publicKey.slice(0, 32)).toString("base64url");
