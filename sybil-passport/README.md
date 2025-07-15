@@ -1,18 +1,33 @@
 # Sybil Passport
 
-Sybil Passport input schema, description and so on
+The library will help you create a zk-program for user passport authentication based on the [`zCred
+protocol`](https://github.com/zcred-org/ZCIPs/)
 
-## Dev
+## Create JAL program
 
-### Create JAL program
+A JAL program is a JSON zk-program description that contains public and private inputs and a list of
+constraints that the Passport credential must satisfy.
 
 ```typescript
-import { DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA } from "@sybil-center/passport";
+import { getPassportSandbox } from "@sybil-center/passport";
+import { assert, not, toJAL } from "@jaljs/js-zcred";
 
 const {
-  credential,
-  context
-} = DEV_O1JS_ETH_PASSPORT_INPUT_SCHEMA;
+  issuerURI, // issuer URI to get ZK Passpor
+  inputSchema: {
+    credential,
+    context
+  },
+  olderThanYears,
+  youngerThanYears,
+  genderIs,
+  fromCountry,
+  passportNotExpired,
+} = getPassportSandbox({
+  subjectKeyType: "ethereum:address",
+  zkProofSystem: "o1js",
+  // isDev: true //for Dev purpuse
+});
 const attributes = credential.attributes;
 const jalProgram = toJAL({
   target: "o1js:zk-program.cjs",
@@ -24,12 +39,11 @@ const jalProgram = toJAL({
     context.now
   ],
   commands: [
-    assert(
-      greaterOrEqual(
-        sub(context.now, attributes.subject.birthDate),
-        mul(Static(18, ["uint64-mina:field"]), Const("year"))
-      )
-    )
+    assert(olderThanYears(18)),
+    assert(youngerThanYears(45)),
+    assert(genderIs("male")),
+    assert(not(fromCountry("USA"))),
+    assert(passportNotExpired())
   ],
   options: {
     signAlgorithm: "mina:pasta",
@@ -37,3 +51,7 @@ const jalProgram = toJAL({
   }
 });
 ```
+
+## How to use
+
+[Demo application example](https://github.com/zcred-org/third-app/tree/main)
