@@ -111,7 +111,7 @@ const ATTRIBUTES_DEF = {
   },
   countryCode: "country code",
   document: {
-    id: "passport id (should be private)",
+    id: "passport id [!WARNING!]",
     sybilId: "sybil id"
   },
 };
