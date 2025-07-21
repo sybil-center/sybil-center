@@ -14,6 +14,48 @@
       font-family: sans-serif;
     }
 
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 18px;
+      text-align: center;
+      background-color: #fff;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      font-family: Arial, sans-serif;
+    }
+
+    thead {
+      background-color: #4c54af;
+      color: white;
+      font-weight: bold;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      font-weight: normal;
+    }
+
+    tr {
+      transition: background-color 0.3s ease;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    caption {
+      caption-side: top;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
     .content {
       display: flex;
       flex-direction: column;
@@ -26,7 +68,7 @@
       font-size: 20px;
     }
 
-    .close-message {
+    .message {
       font-size: 16px;
     }
   </style>
@@ -50,7 +92,9 @@
         return resp.json();
       })
       .then((body) => {
-        window.location = body.redirectURL;
+        setTimeout(() => {
+          window.location = body.redirectURL;
+        }, 4000)
       })
       .catch(() => console.log("something went wrong"));
   </script>
@@ -58,9 +102,64 @@
 <body>
 <div class="content">
   <div class="thanks">
-    <span>Thank you for your authorization</span>
+    <span>This page serves as a stub for the KYC procedure.</span>
   </div>
-  <div class="close-message">
+  <div>
+    <span>Now you get default digital passport with properties:</span>
+  </div>
+  <div>
+    <table>
+      <thead>
+      <tr>
+        <th>Attribute</th>
+        <th>Value</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <th>type</th>
+        <th>passport</th>
+      </tr>
+      <tr>
+        <th>first name</th>
+        <th>John</th>
+      </tr>
+      <tr>
+        <th>last name</th>
+        <th>Smith</th>
+      </tr>
+      <tr>
+        <th>birth date</th>
+        <th>1995-01-01</th>
+      </tr>
+      <tr>
+        <th>gender</th>
+        <th>male</th>
+      </tr>
+      <tr>
+        <th>country code</th>
+        <th>GBR</th>
+      </tr>
+      <tr>
+        <th>document id</th>
+        <th>test-passport:123456</th>
+      </tr>
+      <tr>
+        <th>valid from</th>
+        <th>2015-01-01</th>
+      </tr>
+      <tr>
+        <th>valid until</th>
+        <th>2030-01-01</th>
+      </tr>
+      <tr>
+        <th>sybil id</th>
+        <th>zqvg9dLUQLpTPCXanojTPRhaFhZ</th>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="message">
     <span>If ok page close automatically</span>
   </div>
 </div>
