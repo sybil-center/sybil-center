@@ -36,7 +36,7 @@ import { IIssuer } from "../../types/issuer.js";
 import { ILogger } from "../../backbone/logger.js";
 import { sha256Hmac } from "../../util/crypto.js";
 import { CacheClient } from "../../backbone/cache-client.js";
-import { StubPassportKYC } from "./kyc/stub-passport-kyc.js";
+import { NeuroVisionPassportKYC } from "./kyc/neuro-vision-passport-kyc.js";
 
 type Session = {
   reference: string;
@@ -122,7 +122,6 @@ export type PassportIssuer = Issuer;
 export class Issuer
   implements IIssuer<PassportCredential> {
 
-  // @ts-expect-error TODO change for production
   private readonly secret: string;
   private readonly sessionCache: Keyv<Session>;
   public readonly passportKYC: IPassportKYCService;
@@ -145,12 +144,13 @@ export class Issuer
   ) {
     this.secret = config.secret;
     // TODO change to Neuro-Vision for production
-    // this.passportKYC = new NeuroVisionPassportKYC(
-    //   config,
-    //   cacheClient,
-    //   (clientKey) => {return toSessionId(clientKey, this.secret);}
-    // );
-    this.passportKYC = new StubPassportKYC(config);
+    this.passportKYC = new NeuroVisionPassportKYC(
+      config,
+      cacheClient,
+      (clientKey) => {return toSessionId(clientKey, this.secret)},
+      logger
+    );
+    // this.passportKYC = new StubPassportKYC(config);
     logger.info(`Issuer "passport" initialized`);
     this.sessionCache = cacheClient.createTtlCache<Session>({
       ttl: config.kycSessionTtl,
